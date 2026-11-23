@@ -1,2 +1,2 @@
-v1
-Primera versión
+v2
+Nueva dirección de descarga

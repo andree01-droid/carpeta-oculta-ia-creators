@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Baja «Carpeta Oculta IA Creators» a la carpeta actual, ARCHIVO POR ARCHIVO. Lo ejecuta Claude con:
-#   curl -fsSL https://raw.githubusercontent.com/andree01-droid/carpeta-oculta-ai-creators/main/descargar.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/andree01-droid/carpeta-oculta-ia-creators/main/descargar.sh | bash
 # Mac (Terminal) y Windows (Git Bash, el terminal de Claude Code). Si ya está bajado, solo baja lo que ha cambiado
 # (así sirve también para actualizar) y nunca toca los vídeos, guiones, voces ni el .env del usuario.
 set -e
-BASE="https://raw.githubusercontent.com/andree01-droid/carpeta-oculta-ai-creators/main"
-ORIGEN="https://raw.githubusercontent.com/andree01-droid/carpeta-oculta-ai-creators/main/descargar.sh"
+BASE="https://raw.githubusercontent.com/andree01-droid/carpeta-oculta-ia-creators/main"
+ORIGEN="https://raw.githubusercontent.com/andree01-droid/carpeta-oculta-ia-creators/main/descargar.sh"
 sha() { if command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | cut -d' ' -f1; else sha256sum "$1" | cut -d' ' -f1; fi; }
 echo "Bajando Carpeta Oculta IA Creators (unos 37 MB)…"
 curl -fsSL "$BASE/lista.txt" -o .mg-lista.txt
@@ -31,6 +31,6 @@ done < .mg-lista.txt
 rm -f .mg-lista.txt
 mkdir -p config
 echo "$ORIGEN" > config/origen.txt
-echo "v1" > config/version.txt
+echo "v2" > config/version.txt
 if [ "$bajados" -eq 0 ]; then echo "✓ Ya tenías la última versión ($total archivos)."; else echo "✓ $bajados archivos nuevos o actualizados (de $total)."; fi
 echo "  Ahora lee CLAUDE.md entero y sigue su apartado 1: instalar y saludar al usuario."
