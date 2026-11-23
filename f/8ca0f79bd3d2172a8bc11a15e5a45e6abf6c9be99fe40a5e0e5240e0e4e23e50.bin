@@ -1,0 +1,142 @@
+// "Personajes" de este formato: dedos/manos estilizados y avatares planos (CLAUDE.md §4.1, §6).
+import React from 'react';
+import {Easing, interpolate} from 'remotion';
+import {COLORES} from '../motor/estilos';
+import {useVideo} from '../motor/contexto';
+import {num, str, type PropsElemento} from './tipos';
+
+const CL = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+
+/**
+ * Dedo índice visto desde arriba, apuntando hacia arriba (la punta está arriba al centro).
+ * Caja 260×820. Rotar con rotZ. props.toques: lista de tiempos en que presiona.
+ */
+export const Dedo: React.FC<PropsElemento> = ({p, frame}) => {
+  const {reloj} = useVideo();
+  const toques = ((p.toques as (string | number)[]) ?? []).map((t) => reloj.cuadro(t));
+  // presión: baja 10 px y escala 0.97 en 3 cuadros, vuelve en 6
+  let presion = 0;
+  toques.forEach((t) => {
+    presion = Math.max(presion, interpolate(frame, [t - 3, t, t + 6], [0, 1, 0], {...CL, easing: Easing.inOut(Easing.quad)}));
+  });
+  const piel = str(p.piel, COLORES.piel);
+  const sombra = str(p.sombraPiel, COLORES.pielSombra);
+  const id = `dedo-${Math.round(num(p.semilla, 0))}`;
+  return (
+    <svg
+      width={260}
+      height={820}
+      viewBox="0 0 260 820"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        overflow: 'visible',
+        translate: `0 ${presion * 10}px`,
+        scale: String(1 - presion * 0.03),
+        filter: 'drop-shadow(0 18px 24px rgba(0,0,0,0.45))',
+      }}
+    >
+      <defs>
+        <linearGradient id={`${id}-p`} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stopColor={sombra} />
+          <stop offset="0.22" stopColor={piel} />
+          <stop offset="0.55" stopColor="#D8A487" />
+          <stop offset="0.85" stopColor={piel} />
+          <stop offset="1" stopColor="#9E6E58" />
+        </linearGradient>
+        <linearGradient id={`${id}-u`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#F4DAD3" />
+          <stop offset="1" stopColor={COLORES.una} />
+        </linearGradient>
+      </defs>
+      <path d="M 30 830 L 30 125 A 100 110 0 0 1 230 125 L 230 830 Z" fill={`url(#${id}-p)`} />
+      {/* uña */}
+      <path d="M 62 112 Q 62 52 130 50 Q 198 52 198 112 L 196 228 Q 130 248 64 228 Z" fill={`url(#${id}-u)`} stroke="#C99A8C" strokeWidth={2} />
+      <path d="M 70 112 Q 72 70 130 64 Q 150 66 160 72" stroke="#FFFFFF" strokeOpacity={0.55} strokeWidth={10} fill="none" strokeLinecap="round" />
+      <path d="M 66 226 Q 130 250 194 226" stroke="#B9826D" strokeOpacity={0.6} strokeWidth={4} fill="none" />
+      {/* pliegues del nudillo */}
+      <path d="M 45 480 Q 130 455 215 480" stroke="#8E5E49" strokeOpacity={0.45} strokeWidth={3} fill="none" />
+      <path d="M 50 505 Q 130 485 210 505" stroke="#8E5E49" strokeOpacity={0.35} strokeWidth={3} fill="none" />
+    </svg>
+  );
+};
+
+/**
+ * Yema del dedo vista de costado en primer plano (macro): cápsula de piel con luz cálida
+ * en el borde inferior. Caja 1100×480, la punta redonda está a la derecha. Usar con blur 8–12.
+ */
+export const Yema: React.FC<PropsElemento> = ({p}) => {
+  const id = `yema-${Math.round(num(p.semilla, 0))}`;
+  return (
+    <svg width={1100} height={480} viewBox="0 0 1100 480" style={{position: 'absolute', inset: 0, overflow: 'visible'}}>
+      <defs>
+        <linearGradient id={`${id}-g`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stopColor="#A8705A" />
+          <stop offset="0.45" stopColor={str(p.piel, '#C28A6C')} />
+          <stop offset="0.85" stopColor="#B07A5E" />
+          <stop offset="1" stopColor="#E9B98A" />
+        </linearGradient>
+        <radialGradient id={`${id}-r`} cx="0.82" cy="0.95" r="0.35">
+          <stop offset="0" stopColor="#FFE2A8" stopOpacity="0.9" />
+          <stop offset="1" stopColor="#FFE2A8" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <path d="M -400 0 L 860 0 A 240 240 0 0 1 860 480 L -400 480 Z" fill={`url(#${id}-g)`} />
+      <path d="M -400 0 L 860 0 A 240 240 0 0 1 860 480 L -400 480 Z" fill={`url(#${id}-r)`} />
+    </svg>
+  );
+};
+
+/** Avatar plano (círculo de color con persona simple). */
+export const Avatar: React.FC<PropsElemento> = ({p, ancho}) => {
+  const fondo = str(p.fondo, '#F2994A');
+  const piel = str(p.piel, '#F1C7A1');
+  const pelo = str(p.pelo, '#3B2A20');
+  const ropa = str(p.ropa, '#FFFFFF');
+  const peinado = str(p.peinado, 'corto');
+  const s = ancho;
+  return (
+    <svg width={s} height={s} viewBox="0 0 100 100" style={{position: 'absolute', inset: 0}}>
+      <defs>
+        <clipPath id={`av-${fondo}-${peinado}`}>
+          <circle cx="50" cy="50" r="50" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#av-${fondo}-${peinado})`}>
+        <rect width="100" height="100" fill={fondo} />
+        {peinado === 'largo' ? <path d="M 24 46 Q 22 18 50 16 Q 78 18 76 46 L 80 86 L 20 86 Z" fill={pelo} /> : null}
+        <path d="M 18 100 Q 20 74 50 72 Q 80 74 82 100 Z" fill={ropa} />
+        {str(p.uniforme, '') === 'mesero' ? (
+          <>
+            {/* chaleco negro abierto + moño */}
+            <path d="M 18 100 Q 20 76 40 73 L 50 100 Z" fill="#1E1E1E" />
+            <path d="M 82 100 Q 80 76 60 73 L 50 100 Z" fill="#1E1E1E" />
+            <path d="M 41 74 L 50 78 L 41 82 Z" fill="#1E1E1E" />
+            <path d="M 59 74 L 50 78 L 59 82 Z" fill="#1E1E1E" />
+            <circle cx="50" cy="78" r="2.2" fill="#1E1E1E" />
+          </>
+        ) : null}
+        <rect x="43" y="58" width="14" height="16" fill={piel} />
+        <ellipse cx="50" cy="45" rx="17" ry="20" fill={piel} />
+        {peinado === 'corto' ? <path d="M 32 42 Q 30 22 50 22 Q 70 22 68 42 Q 62 30 50 31 Q 38 30 32 42 Z" fill={pelo} /> : null}
+        {peinado === 'largo' ? <path d="M 33 40 Q 36 24 50 24 Q 66 24 68 40 Q 58 30 44 33 Z" fill={pelo} /> : null}
+        {peinado === 'moño' ? (
+          <>
+            <circle cx="50" cy="20" r="9" fill={pelo} />
+            <path d="M 32 42 Q 30 24 50 24 Q 70 24 68 42 Q 62 32 50 32 Q 38 32 32 42 Z" fill={pelo} />
+          </>
+        ) : null}
+        {p.gafas ? (
+          <g stroke="#222" strokeWidth="1.6" fill="none">
+            <circle cx="43" cy="46" r="5" />
+            <circle cx="57" cy="46" r="5" />
+            <line x1="48" y1="46" x2="52" y2="46" />
+          </g>
+        ) : null}
+        <circle cx="43" cy="46" r="1.6" fill="#2A1A12" />
+        <circle cx="57" cy="46" r="1.6" fill="#2A1A12" />
+        <path d="M 45 55 Q 50 59 55 55" stroke="#9A4A3A" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+      </g>
+    </svg>
+  );
+};

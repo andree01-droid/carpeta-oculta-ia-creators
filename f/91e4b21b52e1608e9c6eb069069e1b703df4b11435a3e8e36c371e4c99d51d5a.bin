@@ -1,0 +1,485 @@
+# Carpeta Oculta IA Creators — tu fábrica de vídeos verticales
+
+(Este archivo existe dos veces con el mismo contenido: CLAUDE.md lo lee Claude Code y AGENTS.md lo lee Codex.)
+
+Con esta carpeta, TÚ (el agente de IA del usuario) eres su **fábrica de vídeos verticales explicativos**
+(«¿Sabías esto de…?») para Reels, TikTok y Shorts. El usuario te dice un **tema** («hazme uno sobre por qué el pan
+se pone duro») y tú haces todo: guion, voz, animación, efectos de sonido, revisión y el MP4 final.
+
+## 0. Cómo tratar al usuario (lo más importante)
+
+Quien usa esta carpeta puede **empezar de cero**: quizá no haya abierto nunca un terminal ni sepa qué es una «API».
+Trátalo como un buen profesor particular: cercano, paciente y claro. Tutéalo. Responde SIEMPRE en español llano.
+
+- **Hazlo tú.** Instalar, descargar, escribir, montar, revisar: todo lo haces tú sin pedírselo. Nunca le pidas que
+  escriba una orden, que instale un programa ni que edite código.
+- **Lo que solo él puede hacer** (crear una cuenta, copiar una clave, decidir) se lo pones fácil: el enlace exacto,
+  pasos numerados de una sola acción cada uno y qué hacer al terminar («cuando lo tengas, escríbeme “hecho”»).
+- **Un paso cada vez.** Termina cada mensaje con UNA sola pregunta o UNA sola cosa que tiene que hacer.
+- **Sin jerga.** Si necesitas una palabra técnica, explícala en una frase la primera vez.
+- **Tiempo y dinero, siempre antes.** Antes de un paso largo, di cuánto tarda («unos 8 minutos»). La voz con Gemini
+  tiene un nivel gratis; si algo cuesta dinero, dilo antes y espera su «sí».
+- **Que sepa por dónde vas.** Una línea corta al empezar y al terminar cada paso («**Paso 3 de 7 · Voz** — …»).
+  Nunca más de 2-3 minutos sin decir nada.
+
+## 1. Al empezar CADA conversación
+
+1. Mira si existe `mg.cmd` (Windows) o `mg` (Mac) en la raíz. **Si no existe, instálalo tú.** Antes, dile en dos
+   frases qué vas a hacer y que tarda de 5 a 15 minutos:
+   - Windows: `powershell -ExecutionPolicy Bypass -File instalar/instalar.ps1`
+   - Mac: `bash instalar/instalar.sh`
+
+   Todo se instala DENTRO de esta carpeta (Node, Python, ffmpeg, el motor de vídeo y el modelo que escucha la voz):
+   no toca el resto del ordenador. Si un día borra la carpeta, no queda nada. Si la instalación se corta, repítela:
+   completa lo que falte.
+2. **¿Hay versión nueva?** `bash instalar/version.sh` (tarda 1-2 s). Si dice «HAY UNA VERSIÓN NUEVA», díselo en una
+   línea («Hay una versión nueva con mejoras; tarda 1 minuto y no toca tus vídeos. ¿La pongo?») y, si dice que sí,
+   `bash instalar/actualizar.sh` y vuelve a leer este archivo entero (puede haber cambiado). Si dice que no, sigue.
+3. **¿Ha hecho ya la Misión 1?** Si NO existe `config/mision1.txt`, la conversación empieza SIEMPRE por la
+   **Misión 1** (apartado 1b), aunque el usuario pida otra cosa. Si existe, pregúntale de qué tema quiere su vídeo.
+4. Si un día se corta la conversación y escribe «sigue», mira `config/mision1.txt`, `videos_referencia/`,
+   `fabrica/videos/fuentes/` y `fabrica/out/` para ver por dónde ibais.
+
+**La clave de Gemini** (voz natural) se pide cuando hace falta, en el paso de la voz, no antes. Si `.env` no tiene
+`GEMINI_API_KEY=`, guíale para sacarla (https://aistudio.google.com/apikey → «Create API key» → copiar). **Nunca la
+pidas por el chat:** créale el archivo `.env` con la línea `GEMINI_API_KEY=` y ábreselo para que pegue la clave
+detrás del `=` y guarde. Comprueba que está sin mostrarla. Sin clave también funciona, con la voz de Microsoft (más
+robótica): §12, paso 3.
+
+## 1b. Misión 1: replicar un vídeo (OBLIGATORIA, la primera vez)
+
+Antes de hacer vídeos con temas libres, cada usuario **replica un vídeo de Instagram o TikTok** que le guste. Así
+aprende cómo está hecho un vídeo viral por dentro y la fábrica aprende su gusto. **No hay atajos:** si pide otra cosa
+antes de terminarla, explícale en una frase por qué va primero («replicando uno aprendes en 30 minutos lo que tardarías
+semanas en descubrir solo») y vuelve a pedirle el enlace. Saludo inicial (tras instalar):
+
+> «¡Listo! Tu fábrica de vídeos ya está instalada. Empezamos con tu **Misión 1**: vamos a replicar un vídeo que te
+> guste, para que veas cómo se hace uno viral por dentro. **Pégame el enlace de un Reel de Instagram o de un TikTok**
+> (mejor si es de los que explican algo: «¿Sabías por qué…?»).»
+
+Son 6 pasos. Di siempre en cuál estáis («**Paso 2 de 6 · Estudiar** — …»):
+
+1. **El enlace.** Si el enlace no es de Instagram ni de TikTok, pídele uno de esas redes. (YouTube Shorts vale si
+   insiste.) Elige un `id` corto con el tema (`pan-duro`).
+2. **Estudiar.** `./mg.cmd python herramientas/estudiar.py "<enlace>" --nombre <id>` (unos 2-4 minutos). Si no se
+   puede bajar (Instagram a veces lo bloquea), guíale para descargarlo él y dejarlo en `videos_referencia/originales/`,
+   y repite con la ruta del archivo. Lee `RESUMEN.md`, mira TODAS las hojas y las tiras de `planos/`, y explícale en
+   5-6 líneas llanas cómo está hecho: el gancho, cuántos planos y cada cuánto cambia, qué se ve (ilustración, 3D,
+   fotos, texto), cómo se mueve la cámara, la voz (ritmo, tono) y los subtítulos.
+3. **Guion.** El mismo tema, la misma estructura (gancho → misterio → revelación → explicación → remate → CTA) y
+   la misma duración aproximada, pero **escrito con sus palabras**: nunca copies frases literales del original. Los
+   datos, compruébalos. Enséñaselo y espera su «sí».
+4. **Voz.** Aquí, si falta, se pide la clave de Gemini (apartado 1). Luego §12, paso 3, con un tono parecido al del
+   original (masculina o femenina, rápida o pausada).
+5. **Animación.** Un plano tuyo por cada plano del original, cortando más o menos en los mismos segundos y con el
+   mismo tipo de imagen y de movimiento. Método §13b (canvas) si el original es ilustración; §12 (JSON) si es más de
+   interfaz, datos o texto. **Nunca** metas imágenes, vídeo ni audio del original en el vídeo final: se recrea todo.
+6. **Comparar y entregar.** `./mg.cmd python herramientas/comparar.py videos_referencia/<id>/video.mp4 fabrica/out/<id>.mp4 comparaciones/<id>.png <6-8 segundos>`,
+   ábrele la hoja (ORIGINAL | SUYO) y pregúntale qué cambiaría. Corrige hasta que diga que le gusta. Entonces:
+   escribe `config/mision1.txt` con el `id` y la fecha, felicítale de verdad (es su primer vídeo) y dile que desde
+   ahora puede pedirte cualquier tema: «hazme un vídeo sobre…».
+
+Si al final quiere publicarlo, recuérdale que la idea y el estilo son libres, pero que mencione la inspiración si
+el original es muy reconocible.
+
+## 2. Cómo se ejecutan las órdenes en esta carpeta
+
+Node, Python y ffmpeg viven DENTRO de la carpeta. **Todas las órdenes se lanzan con el atajo delante**, desde la raíz:
+
+| Windows (Claude Code usa Git Bash) | Mac |
+|---|---|
+| `./mg.cmd python herramientas/voz.py …` | `./mg python herramientas/voz.py …` |
+| `./mg.cmd npm --prefix fabrica run render -- <id>` | `./mg npm --prefix fabrica run render -- <id>` |
+| `./mg.cmd npx --prefix fabrica tsc --noEmit -p fabrica` | `./mg npx --prefix fabrica tsc --noEmit -p fabrica` |
+
+Donde la guía de abajo diga `.venv\Scripts\python.exe herramientas\x.py`, usa `./mg.cmd python herramientas/x.py`
+(o `./mg python …` en Mac). Donde diga `cd fabrica; npm run …`, usa `./mg.cmd npm --prefix fabrica run …`.
+
+**Ejemplos incluidos** (para aprender de ellos, no para entregarlos):
+- `propina-mesero`: vídeo hecho con el método JSON del §12 (`fabrica/videos/propina-mesero.json`).
+- `electro`: el método por planos en `<canvas>` del §13b (`fabrica/src/v3d/electro/`).
+- `avion-comido-en`: un vídeo reciente con ese mismo método, que reutiliza dibujos de varias carpetas de `fabrica/src/v3d/`.
+
+Al crear un vídeo con el método §13b, regístralo en `fabrica/src/Root.tsx` igual que los ejemplos.
+
+## 3. Lo que hay que saber
+
+- **HyperFrames (§13)** es opcional. Si el usuario lo pide y no tienes las skills `hyperframes` y `media-use`,
+  la primera vez haz el `hyperframes init` del §13 SIN `HYPERFRAMES_SKIP_SKILLS` (así las instala). Si no se puede,
+  dile que es opcional y sigue con Remotion.
+- Las carpetas `videos_referencia/` y `comparaciones/` empiezan vacías: los vídeos virales originales no se reparten.
+  Si el usuario quiere estudiar un vídeo suyo de referencia, ponlo en `videos_referencia/originales/`.
+- Actualizar a la última versión (no toca sus vídeos, guiones, voces ni su `.env`): `bash instalar/actualizar.sh`.
+- Copias el ESTILO (ritmo, colores, letras, forma de moverse), nunca el contenido de otro creador.
+
+---
+
+# CLAUDE.md — Guía de estilo y producción
+
+Este proyecto produce **videos verticales explicativos** ("¿Sabías esto de…?") con Remotion, copiando el estilo de 4 videos virales de referencia. El análisis completo con segundos exactos está en [ANALISIS.md](ANALISIS.md). **Esta guía manda:** todo video nuevo sigue estas reglas sin que el usuario tenga que describir nada.
+
+Unidades: px a **1080×1920**, tiempos en **cuadros a 30 fps** (1 s = 30 f).
+
+---
+
+## 1. Formato fijo
+
+| Parámetro | Valor |
+|---|---|
+| Resolución | **1080 × 1920** (9:16) |
+| FPS | **30** |
+| Duración | **30–90 s** (ideal 45–75 s). Siempre la duración de la voz + **0,5 s** (15 f) |
+| Códec de render | H.264, CRF 18, yuv420p, audio AAC 192 kbps |
+| Zona segura de UI de Instagram/TikTok | No poner nada importante en y > 1650 ni en x > 960 en y 900–1650 (botones laterales) |
+
+## 2. Estilos visuales (elegir 1 por video)
+
+### 2.1 `estudio-oscuro`: objetos físicos, mecanismos, cuerpo, física
+- **Fondo:** `#0F0F0F` liso. **Glow** radial detrás del objeto: centro `#3A2C17` (cálido) o `#1E232A` (frío, para electricidad/agua), radio 55 % del ancho, cae a transparente con curva suave. Viñeta: negro al 45 % en los bordes.
+- **Polvo:** 40–70 puntos blancos de 1,5–3 px con opacidad 0,15–0,5 y deriva de 2–6 px/s.
+- **Objeto:** 3D (react-three-fiber) o SVG con sombreado. Metal gris `#8C8C8C`→`#5A5A5A`, latón `#D8BD7C`, plástico negro `#1A1A1A`, cinta amarilla `#F2C94C`, madera `#C59E63`, hormigón `#B9B9B6`.
+- **Acentos:** dorado `#D8BD7C` (brillo `#F2D07B`), turquesa `#8EEDE1`, coral de error `#CF5D60`.
+- **Temas:** herramientas, objetos de casa, física, química, cuerpo humano, "por qué X está hecho así".
+
+### 2.2 `interfaz-grid`: tecnología, apps, móviles, software, datos
+- **Fondo:** `#101010` con **cuadrícula** de líneas de 1,5 px `#FFFFFF` al **3 %**, celda de **120 px**, alineada al centro. Viñeta: negro al 35 %.
+- **Elementos:** UI plana estilo iOS oscuro: tecla `#6B6B6B` (radio 10 px, sombra inferior `#3A3A3A` de 3 px), texto de tecla `#FFFFFF` 44 px; mockup de iPhone negro `#0A0A0A` con borde `#2A2A2A` de 4 px y radio 90 px.
+- **Acentos:** ámbar `#EFA32D` (zonas activas, con glow), ámbar oscuro `#A36E21`, rojo de cifra `#E5484D`, gris de etiqueta `#9A9A9A`.
+- **Temas:** smartphones, teclados, apps, internet, IA, algoritmos, ciberseguridad, números de diseño.
+
+### 2.3 `mapa-satelite`: geografía, viajes, aviones, clima, escalas, astronomía
+- **Fondo:** espacio, degradado vertical `#000116` → `#04102E`, con **150 estrellas** de 1–2 px al 20–70 %.
+- **Tierra:** textura satelital (NASA Blue Marble, dominio público, en `public/texturas/`) sobre globo (three.js) o plano (mapa). Atmósfera: halo `#3B6FD8` al 40 %, 30 px.
+- **Rutas:** "lo que crees" en blanco punteado de 2,5 px (trazo 10, hueco 8); "lo real" en dorado `#F2D07B` de 5 px con glow; tramo de error en rojo `#D45951`.
+- **Etiquetas de ciudad:** pastilla con fondo `#141414` al 85 %, borde de 1,5 px `#C9A35A`, texto `#F3D998` 26 px peso 600, radio 10 px, margen 8×14 px, punto luminoso `#FFE7A8` en la ciudad.
+- **Resaltados:** país 1 `#F9AA42`, país 2 `#BFE3FF`, al 85 % con borde blanco de 2 px.
+- **Temas:** países, mapas, vuelos, distancias, océanos, clima, planetas, tamaños comparados.
+
+**Si dudas:** objeto físico → `estudio-oscuro`; algo de pantalla → `interfaz-grid`; algo con lugares → `mapa-satelite`. Un video puede **pedir prestada una escena** de otro estilo (por ejemplo, la naranja del video de mapas), pero el fondo base y la paleta de acentos no cambian.
+
+## 3. Subtítulos (componente `Subtitulos`, obligatorio en todos los videos)
+
+| Regla | Valor |
+|---|---|
+| Fuente | **Google Sans** (`@remotion/google-fonts/GoogleSans`, pesos 400/700) |
+| Tamaño | **68 px** |
+| Interlineado | **82 px** |
+| Posición | centrado en x = 540; **línea base de la 1.ª línea en y = 383** |
+| Ancho máximo | **840 px**, máximo **2 líneas** |
+| Palabra que suena | `#FFFFFF`, peso **700** |
+| Palabras ya dichas o futuras | `#FFFFFF` al **45 %**, peso **400** |
+| Entrada de palabra | en el cuadro de su `start`: desenfoque 9 px → 0 y opacidad 0,7 → 1 en **2 f**, sin moverse |
+| Salida de palabra | al llegar a su `end`: pasa a gris de golpe (0 f) |
+| Reacomodo | al sumarse una palabra, la línea se recentra **sin animación** |
+| Líneas | 2–4 palabras, **≤ 21 caracteres**; se corta antes de una palabra de enlace (de, que, es, la, y, hay…) si la línea ya tiene ≥ 11 caracteres, o tras una coma si tiene ≥ 12 |
+| Bloques | **máx. 2 líneas y 7 palabras**; bloque nuevo al terminar oración (`. ? !`), tras pausa > 0,35 s o en `subtitulos.cortes` |
+| Fin de bloque | desaparece de golpe y quedan **2 f** vacíos antes del siguiente |
+| Sombra | ninguna. Solo si el fondo es claro en esa zona: sombra `0 2px 12px rgba(0,0,0,.6)` |
+
+### Palabra clave: caja de selección estilo Figma
+- **Máximo 1 por bloque** y **1 cada 1,5–2,5 s** (≈ 25–30 % de los bloques llevan 2, el resto 1 o 0, pero el promedio da 1 cada 2 s).
+- Se elige la palabra con más peso: el sustantivo del tema, el adjetivo sorprendente, la cifra, el verbo de acción, la negación clave ("roto", "invisible", "44", "torcido").
+- **Diseño:** borde de **3 px** `#3A77D5`, radio **4 px**, relleno `#3A77D5` al **18 %**, margen interior **12 px** (horizontal) y **9 px** (vertical). **Manijas:** círculos de **12 px** con relleno `#3A77D5` y borde blanco de **2 px**, centrados en la esquina **superior izquierda** y en la **inferior derecha**.
+- **Animación (desde el `start` de la palabra):** f0–1 las manijas pasan de escala 0,3 a 1 (ease-out); f2–3 el borde se dibuja desde ambas manijas; f3 relleno de 0 a 18 %. Se queda hasta el final del bloque. Dentro de la caja la palabra **siempre** va blanca y en negrita.
+- **Emoji** (opcional, ~1 de cada 8 palabras clave, solo con objetos concretos: 👍 ⚡ 🧤 💧 🎯 💦 🔥 ❄️): 56 px, a la izquierda de la palabra, con 6 px de separación, dentro de la caja.
+
+## 4. Cámara (componente `Camara`)
+
+- **Siempre en movimiento.** Durante toda escena hay un **empuje lento** de escala 1,00 → 1,06 por cada 3 s, lineal (o ease-out en la primera mitad).
+- **Movimientos de cambio de plano:** duran **8–12 f** y usan la curva `Easing.bezier(0.65, 0, 0.35, 1)`. Tipos permitidos:
+  - `zoomIn` a un detalle: escala ×1,8–3, con el punto de interés llevado al centro de la zona útil (540, 1150).
+  - `zoomOut` para dar contexto: escala ×0,4–0,6.
+  - `orbita`: rotación Y de 45–90° (3D) o skew/perspective de 25° (2D).
+  - `inclinar`: de vista cenital a perspectiva de 55° (rotateX).
+  - `pan`: traslación de 300–700 px.
+- **Desenfoque de movimiento:** en todo movimiento rápido, desenfoque = velocidad × 0,08 px (máximo 14 px).
+- **Zona útil del objeto:** caja de y = 620 a 1700 y x = 60 a 1020. El centro visual del objeto va en **(540, 1150)**.
+
+## 5. Transiciones (componente `Transicion`)
+
+| Tipo | Uso | Receta exacta |
+|---|---|---|
+| `empujeDesenfoque` (por defecto, ~80 %) | Cambio de escena | **8 f**. Escena A: escala 1 → 1,15 y desenfoque 0 → 22 px (f0–4, ease-in). Corte en f4. Escena B: escala 0,92 → 1 y desenfoque 22 → 0 px (f4–8, ease-out). Opacidad siempre al 100 % |
+| `morph` | El mismo objeto se transforma (mapa → globo, pantalla → rejilla) | 15–30 f, ease-in-out, sin desenfoque |
+| `cambioColor` | El objeto cambia de estado ("roto", "error") | fundido de color en **3 f**, en el `start` de la palabra |
+| `corte` | Analogías o golpes de textura | 0 f; solo 1–2 por video |
+
+**Regla:** la transición empieza **4 f antes** del `start` de la primera palabra de la escena nueva, para que el máximo desenfoque caiga justo cuando arranca la frase.
+
+## 6. Elementos animados (biblioteca de componentes)
+
+| Componente | Especificación |
+|---|---|
+| `Etiqueta` | Texto en MAYÚSCULAS, 22 px, peso 600, tracking 0,22 em, `#FFFFFF`. Línea guía de 1,5 px `#FFFFFF` al 70 % que va del texto al objeto. **Entrada:** la línea crece en 6 f (ease-out) y el texto aparece con fundido en 4 f desde el f3. **Salida:** fundido de 4 f. Variante minúscula (teclado): 26 px, peso 600 |
+| `Contador` | Número en negrita (peso 700, `tabular-nums`), 64–110 px. Cuenta de A a B en **15–25 f** con `Easing.out(Easing.cubic)`. Separador de miles "." (es-ES). Unidad al lado: 0,5× el tamaño, color `#9A9A9A` |
+| `Pastilla` | Fondo `#141414` al 85 %, borde de 1,5 px `#3A3A3A`, radio 14 px, margen 12×22 px, texto 44 px peso 500 en color de acento. **Entrada:** escala 0,8 → 1 + fundido en 6 f, `Easing.out(Easing.back(1.4))` |
+| `Ruta` | Trazo SVG de 5 px (sólido de color) o 2,5 px (punteado blanco). Se dibuja con `strokeDashoffset` en **20–40 f**, ease-in-out. Glow: copia del trazo con blur 10 px al 60 %. Objeto opcional que recorre la punta (avión, punto) orientado a la tangente |
+| `Flecha` | Flecha blanca de 4 px, 70 px de largo, cabeza de 18 px. Entra con fundido en 4 f y se desliza 30 px en su dirección en 12 f (ease-out). Se repite cada 20 f mientras dura la acción |
+| `PlanoReferencia` | Rectángulo `#8EEDE1` al 22 % con borde de 3 px `#8EEDE1` y glow de 12 px; rótulo "0" de 54 px peso 600 encima. Entrada: scaleY 0 → 1 en 8 f |
+| `Corchete` | Corchete de 2,5 px en ámbar `#EFA32D` o blanco, patas de 14 px. Se dibuja en 6 f |
+| `AnilloFoco` | Círculo de 3 px (dorado o turquesa) con glow; se dibuja girando de 0 a 360° en 10 f y queda latiendo (escala 1 ↔ 1,03 cada 30 f) |
+| `Resaltado` | Relleno de una zona con color de acento al 85 % + glow de 16 px. Fundido de 5 f en el `start` de la palabra que lo nombra |
+| `Dedo` | Dedo índice SVG: piel `#C48E6F`, sombra `#AD897E`, uña `#E8C8C0` con brillo blanco al 60 %. Entra desde abajo a la derecha en 12 f (ease-out). **Toque:** baja 8 px + escala 0,97 + onda circular de 2 px `#FFFFFF` al 50 % que crece de 20 a 90 px en 12 f |
+| `Particulas` | Polvo del fondo (ver estilos) |
+| `TelefonoUI` | Mockup de iPhone para el CTA y escenas de UI |
+| `CTACompartir` | Secuencia final fija (ver §8) |
+
+**Densidad:** **algo nuevo en pantalla cada 0,8–1,2 s** (etiqueta, contador, resaltado, cambio de color, movimiento de cámara o caja de palabra clave). Si pasan **más de 45 f** sin ningún evento nuevo, agregar uno (un empuje de cámara, una etiqueta o un resaltado).
+
+## 7. Ritmo
+
+| Regla | Valor |
+|---|---|
+| Duración de escena | **75–150 f** (2,5–5 s), media **120 f** |
+| Cambio de escena | en un límite de frase, nunca a mitad de palabra |
+| Primer cambio visual | antes de **f30** (1 s) |
+| Primer cambio de escena | antes de **f120** (4 s) |
+| Dato sorprendente con cifra | cada **10–15 s** |
+| Escena más larga permitida | 6 s (180 f), y solo con 3 o más eventos internos |
+
+## 8. Guion: estructura paso a paso
+
+**Largo:** 110–300 palabras (≈ 30–90 s a 205 ppm). **Ideal: 180–240 palabras.**
+
+1. **GANCHO (f0–90, 1 frase, 7–14 palabras).** Usar una de estas tres fórmulas:
+   - A. `¿Por qué [objeto cotidiano] [hace algo que parece un error]?`
+   - B. `[Dato que contradice la intuición], en segunda persona.` ("Cada tecla… es más pequeña que tu pulgar.")
+   - C. `[Lo que sí hace] + "Pero si…" + [lo que no hace].`
+   Sin saludo, sin "hoy te explico", sin presentarse.
+2. **MISTERIO (≈3–8 s).** Negar la explicación obvia ("No, no está roto.") o re-preguntar ("Entonces, ¿cómo es posible?").
+3. **REVELACIÓN (≈8–12 s).** Una frase corta y tajante con la respuesta en abstracto ("Porque las teclas que ves no son las que tocas.").
+4. **EXPLICACIÓN (hasta el 80 %).** De 3 a 6 pasos. Cada paso es 1–2 frases con una imagen concreta. Usar al menos: 1 situación cotidiana ("Imagina que…"), 1 analogía física y 2 cifras concretas. Conectores: *Así que, Porque, Pero, Y por eso, Cada vez que, O sea*.
+5. **BONUS (opcional, ≈8 s).** "Y además…" / "Por eso también…".
+6. **REMATE (1–2 frases).** Vuelve a la pregunta del gancho y la da vuelta ("Así que sí, está suelto, pero a propósito.").
+7. **CTA (última frase, 3–5 s):** `Sígueme y envíaselo a ese amigo que [comportamiento gracioso relacionado con el tema].` Variante de captación: `Si quieres aprender a hacer este tipo de video, comenta la palabra IA…`.
+
+**Lenguaje:** español de España neutro ("móvil", "envíaselo"); tú; frases de 5–14 palabras; cifras con punto de miles ("1.400"); nada de "increíble", "impresionante" ni muletillas.
+
+## 9. Voz
+
+- Voz **masculina, grave, español de España**, tono de narrador cómplice y seguro, emoción moderada.
+- **205 ppm** (rango 180–220). Pausas de 0,1–0,4 s entre frases y ninguna más larga de 0,7 s.
+- Normalizar a **−14 LUFS**, picos ≤ −1 dBTP.
+- **Sin música.** Efectos de sonido suaves en cada evento visual (ver "Efectos de sonido" en §12; los pidió el usuario aunque los originales casi no tienen).
+- Voz natural con Gemini TTS (voz Achird), no la de Microsoft: el usuario la encontró robótica.
+- Los timestamps por palabra se sacan con `herramientas/transcribir.py` (faster-whisper). Hay que **borrar las alucinaciones finales** de Whisper ("Gracias por ver el video", "Gracias").
+
+## 10. CTA visual (últimos 3–5 s, siempre igual)
+
+1. La última escena se encoge (escala 1 → 0,62 en 12 f, ease-in-out) dentro de un **mockup de iPhone** centrado (ancho 600 px), con la UI de reels de Instagram encima (iconos laterales, usuario, "Seguir").
+2. Entra un `Dedo` desde abajo a la derecha y **toca "Seguir"** cuando suena "Sígueme" (el botón pasa a "Siguiendo" gris).
+3. Toca el icono de **compartir** cuando suena "envíaselo". Sube la hoja de compartir (`#1C1C1E`, radio 28 px) con 4 avatares planos de colores (`#F2994A`, `#3A77D5`, `#27AE60`, `#EB5757`) y nombres (Sofía, Javi, Marta, Dani).
+4. Toca un avatar (aparece un check azul) y después "Enviar" (`#0095F6`), que pasa a "✓ Enviado" gris.
+
+---
+
+## 11. Estructura del proyecto
+
+```
+motion_graphics_ia/
+├── CLAUDE.md                     ← esta guía
+├── ANALISIS.md                   ← análisis de los videos de referencia
+├── videos_referencia/            ← originales, fotogramas, hojas, transcripciones (+ voces nuevas)
+├── comparaciones/                ← hojas ORIGINAL | RENDER de la prueba
+├── herramientas/                 ← Python (.venv): transcribir, voz, comparar, palabras_json…
+└── fabrica/                      ← proyecto Remotion (Node)
+    ├── videos/<id>.json          ← UN video = UN json (guion, palabras, escenas, estilo)
+    ├── public/voz/<id>.mp3       ← voz de cada video
+    ├── out/<id>.mp4              ← renders
+    ├── scripts/render.mjs        ← npm run render -- <id>
+    └── src/
+        ├── Video.tsx             ← composición: escenas + subtítulos + audio
+        ├── motor/                ← tipos del JSON, reloj (@palabra), animación, escena/cámara, estilos
+        ├── componentes/          ← Subtitulos (caja Figma), Fondo
+        └── elementos/            ← catálogo de elementos (registro.ts)
+```
+
+Terminal: todas las órdenes van con el atajo `./mg.cmd` (Windows) o `./mg` (Mac) delante (ver «Cómo se ejecutan las órdenes» al principio). Python es el de `.venv`, que el atajo ya pone delante.
+
+## 12. CÓMO HACER UN VIDEO NUEVO
+
+Cuando el usuario diga solo un **tema** ("hazme uno sobre por qué el pan se pone duro"), Claude hace TODO esto sin preguntar nada más:
+
+### Paso 1 · Elegir estilo
+Con la regla de §2: objeto físico → `estudio-oscuro`; algo de pantalla/tecnología → `interfaz-grid`; lugares/mapas → `mapa-satelite`.
+
+### Paso 2 · Escribir el guion (§8)
+- 180–240 palabras, español de España, tú. Gancho A/B/C → misterio → revelación → 3–6 pasos con 1 situación "Imagina que…", 1 analogía y ≥ 2 cifras → (bonus) → remate que vuelve al gancho → CTA "Sígueme y envíaselo a ese amigo que…".
+- Verificar los datos (buscar en la web si hay dudas; comprobar las cuentas: restas, porcentajes). Si un dato tiene un matiz legal o técnico importante, decirlo en una frase corta para no desinformar.
+- **Público:** si el tema o el usuario apunta a latinos / EE. UU. / Latinoamérica, escribir en español neutro latino ("mesero", "celular", "mándaselo") en vez de España.
+- Cifras en el guion con dígitos: "2.13 dólares", "86%", "1991" (la voz las lee bien).
+- Guardar en `fabrica/videos/fuentes/<id>.txt` (id en minúsculas con guiones, ej. `pan-duro`).
+
+### Ritmo y dinamismo (obligatorio, aprendido del video propina-mesero)
+El usuario pidió explícitamente MÁS motion graphics: un video "correcto pero quieto" se siente aburrido.
+- Escenas de **2–4 s** (≈17 escenas por minuto). Alternar transiciones: `empujeDesenfoque`, `barrido`, `zoomGolpe`.
+- **Algo nuevo cada ~0,7 s**: ícono que rebota, tipografía cinética, partículas, sello, cambio de expresión, movimiento de cámara.
+- **Personaje recurrente** (`Mesero` u otro) que reacciona: feliz al inicio, sorpresa en el dato, triste/enojado en el giro, saludo en el CTA.
+- Fondo con vida: `Rayos` detrás del objeto principal, `Ondas` en datos importantes, `Particulas` (monedas/billetes/chispas/confeti/emoji) en cada cifra o remate.
+- Cada palabra clave ya produce un **golpe de cámara** automático (zoom +5 % y sacudida); la cámara además deriva sola.
+- Elementos importantes con `flotar` (6–14) u `oscilar` (4–10). Entradas enérgicas: `rebote`, `caer`, `volarIzq/Der`, `girar`.
+- No hacer zoom de cámara que meta contenido claro (tickets, pantallas blancas) debajo de los subtítulos: el texto blanco deja de leerse.
+- **Emojis:** Windows no dibuja banderas (🇺🇸) ni emojis nuevos (🫵, 🧑‍💼). Usar clásicos: 🗽 👔 💸 🧊 🏠 🍔 ⛽ 🎈 👀 📉 🧾 🏪 ✂️ 🤔 🥶.
+
+### Efectos de sonido (automáticos)
+`src/motor/sonidos.ts` agrega solos: whoosh/whip en cada transición, golpe en `Sello`/`TextoCinetico`, pop en íconos y entradas `pop`/`rebote`, clic en toques del dedo, tics en `Contador`, impresora en `Ticket`, cristales en `PrecioCongelado`, caja registradora en `PantallaPropina`, monedas en `Particulas`. Extras a mano en `"sonidos": [{"t": "@palabra", "sfx": "subida|error|papel|ding|moneda|…", "vol": 0.3}]`. Catálogo: oficiales de Remotion (https://remotion.media/…) + sintéticos de `herramientas/sfx.py` en `public/sfx/`. Volumen general `MASTER = 0.62` en `Video.tsx`; verificar siempre con:
+```
+.venv\Scripts\python.exe herramientas\mezcla.py fabrica\out\<id>.mp4 fabrica\public\voz\<id>.mp3
+```
+(pico total ≤ −1 dBFS; efectos ~15–20 dB bajo la voz). Sin música de fondo, como los originales.
+
+### Paso 3 · Voz y tiempos
+```
+.venv\Scripts\python.exe herramientas\voz.py <id> --archivo fabrica\videos\fuentes\<id>.txt
+.venv\Scripts\python.exe herramientas\palabras_json.py videos_referencia\transcripciones\<id>.json > fabrica\videos\fuentes\<id>.palabras.json
+```
+**Motor por defecto: Gemini TTS** (voz natural y amigable; clave `GEMINI_API_KEY` en `.env`, que nunca se copia al chat ni a otros archivos). Modelo `gemini-3.8-flash-tts`, voz **Achird** (masculina, cálida). El estilo de actuación va en inglés y corto (ver `ESTILO` en voz.py): si es largo o en español, Gemini lo lee en voz alta. Las cifras del guion se escriben como se dicen ("dos dólares con trece centavos", "veintinueve por ciento") y los años con dígitos ("1991").
+
+| Caso | Opciones de voz.py |
+|---|---|
+| Por defecto (Gemini, latino amigable) | `--motor=gemini --voz=Achird` (alternativas: Puck, Fenrir, Sadachbia) |
+| Sin internet / sin clave (más robótica) | `--motor=edge --voz=es-US-AlonsoNeural --velocidad=+40%` o `--voz=es-ES-AlvaroNeural --velocidad=+18%` |
+
+Después de generar, revisar la transcripción con `herramientas\voz_stats.py <id>` (que no haya leído instrucciones de más) y corregir errores de Whisper con `palabras_json.py ... --cambiar=noxtra:extra`. (Los valores con signo van siempre con `=`.) La voz queda en `fabrica/public/voz/<id>.mp3` (−14 LUFS, objetivo 195–215 ppm: si da menos, subir la velocidad). `palabras_json.py` une solas las cifras dichas en palabras ("dos dólares con trece centavos" → `$2.13`, "ochenta y seis por ciento" → `86%`), como se ven en los originales. Si voz.py avisa que el número de palabras no coincide, no pasa nada: el texto lo da Whisper y los tiempos sirven. Si el usuario trae su propia voz (mp3), copiarla a `public/voz/` y usar `herramientas\transcribir.py`.
+
+### Paso 4 · Guion visual
+Partir el guion en escenas de 2,5–5 s (§7), una por frase o idea, cortando siempre en límite de frase. Para cada escena decidir: qué objeto/interfaz se ve, qué movimiento de cámara (§4), qué elementos aparecen y **en qué palabra** (`"@palabra"`). Cumplir: algo nuevo cada 0,8–1,2 s; palabra clave cada ~2 s; transición `empujeDesenfoque` entre escenas; 1–2 `corte` como máximo; CTA final con `CTACompartir`.
+
+### Paso 5 · Escribir el JSON
+Escribir `fabrica/videos/fuentes/<id>.escenas.json` (todo menos `palabras`) y unirlo con las palabras:
+```
+.venv\Scripts\python.exe herramientas\armar_video.py <id>      → fabrica/videos/<id>.json
+```
+Ejemplo completo de un video real: `fabrica/videos/fuentes/propina-mesero.escenas.json` (12 escenas, 75 s). Campos:
+
+| Campo | Qué es |
+|---|---|
+| `titulo`, `estilo` | id y estilo (§2) |
+| `audio` | `"voz/<id>.mp3"` · `audioDesde` (s) si se recorta |
+| `palabras` | array de `{word, start, end}` (paso 3) |
+| `claves` | palabras con caja azul: `"tocas"`, `"letra#1"` (1.ª aparición) |
+| `emojis` | `{"pulgar": "👍"}` (solo palabras clave, ~1 de cada 8) |
+| `subtitulos.cortes` | forzar inicio de bloque: `["@del", "@que#2"]` (opcional) |
+| `escenas[]` | `desde`, `transicion`, `fondo`, `empuje`, `perspectiva`, `camara[]`, `elementos[]`, `encima[]` |
+
+**Tiempos** (en cualquier campo `t`, `desde`, `hasta`, `toques`): segundos (`3.5`) o palabra (`"@tocas"`, `"@tocas#2"`, `"@tocas:fin"`, `"@tocas+0.2"`).
+
+**Elemento**: `{tipo, id, x, y, z, ancho, alto, escala, rotX, rotY, rotZ, opacidad, blur, desde, hasta, entrada, salida, props, anim, hijos}`. `x,y` = centro en px del lienzo 1080×1920. `entrada`/`salida`: `fundido | escala | pop | subir | bajar | desenfoque` (8 f por defecto, o `{tipo, dur}`).
+
+**Animación** (`anim` en elementos, `camara` en escenas): lista de claves `{t, dur, curva, ...valores}` = "a partir de t, ir a estos valores en dur segundos". `dur: 0` = cambio instantáneo (sirve también para textos, booleanos y modos). Curvas: `suave` (cámara, por defecto), `salida`, `entrada`, `lineal`, `rebote`, `muelle`.
+
+**Cámara**: `{t, dur, x, y, zoom, rotX, rotY, rotZ}` → el punto (x, y) del lienzo queda en el centro de la pantalla. El desenfoque de movimiento sale solo según la velocidad. `empuje` = zoom lento por segundo (0,02 por defecto; 0 si hay elementos en `encima` alineados con la escena).
+
+**`encima`**: elementos fijos en pantalla, por encima de lo 3D y sin cámara (etiquetas, fundidos, hilos, yemas desenfocadas en primer plano).
+
+**Catálogo de elementos** (`src/elementos/registro.ts`):
+
+| tipo | props principales |
+|---|---|
+| `Grupo` | contenedor 3D para `hijos` (coordenadas propias) |
+| `Texto` | texto, tamano, peso, color, mayus, tracking |
+| `Etiqueta` | texto, dx, dy (codo de la línea guía), tamano, mayus, punto |
+| `Contador` | de, a, dur (f), cuentaDesde, tamano, color, unidad, decimales, prefijo |
+| `Pastilla` | texto, color, borde, fondo, tamano |
+| `Ruta` | d (path SVG), color, grosor, punteado, dur o progreso, brillo |
+| `Flecha` | dir (grados), largo, color |
+| `PlanoReferencia` | rotulo, color |
+| `Corchete` | vertical, pata, color |
+| `AnilloFoco` | color |
+| `Resaltado` | forma (rect/elipse), color, intensidad, radio, brillo, borde |
+| `Reticula` | toques[], dura |
+| `Brillo` | color (rgba) |
+| `Caja` | fondo (cualquier CSS: color o degradado), radio, borde, sombra |
+| `Imagen` | src (en public/), ajuste, radio |
+| `Dedo` | toques[], piel — dedo índice visto desde arriba, punta arriba |
+| `Yema` | piel — yema de costado en primer plano (usar blur 8–12) |
+| `Avatar` | fondo, piel, pelo, ropa, peinado (corto/largo/moño), gafas |
+| `Telefono` | pantalla, radio + hijos dentro de la pantalla |
+| `TecladoIOS` | modo (teclas/zonas/ranuras/contornos), mayusculas, campo, campoColor, campoY, campoDentro, burbuja, sugerencias, pulsada ("d,shift"), popup, fondoZonas, zonaGrande, zonaFactor, colorZonas, deformar, semilla, profundidad, invertirTexto |
+| `HilosTeclado` | arriba/abajo {x,y,escala,rotX}, perspectiva, progreso |
+| `CTACompartir` | tSeguir, tCompartir, tAmigo, tEnviar, usuario, descripcion + hijos (contenido del reel) |
+| `Ticket` | titulo, subtitulo, lineas[{texto, valor, destacar, cambiaEn, nuevo, colorNuevo}], total, dur o impresion — sale de una impresora; una línea puede tacharse y cambiar de texto |
+| `Billete` | valor, division (0..1), separar (0..1), tinteIzq, tinteDer, izquierda/derecha {valor, etiqueta, color} — billete que se parte en dos |
+| `PantallaPropina` | total, botones[], seleccion, seleccionEn, pregunta — terminal de pago con propina |
+| `PrecioCongelado` | texto, subtexto, hielo (0..1) — etiqueta de precio que se congela |
+| `Sello` | texto, color, giro, tamano — sello de goma que cae |
+| `GraficaLineas` | ejeX[], series[{nombre, color, puntos [[x,y] 0..1], en, dur, grosor, punteado}] |
+| `BarraPorcentaje` | valor (0..100, animable), etiqueta, color, texto, fondo — se pueden apilar varias en el mismo x,y |
+| `MapaEEUU` | marcas[{estado ("NE"), en, color, valor}], celda — mapa de cuadritos 12×8 (celda 84 → 1008×672); centro de un estado = (col·84+42, fila·84+42) desde la esquina del mapa |
+
+| `Mesero` | expresion (feliz/triste/sorpresa/enojado/neutral, animable con `dur: 0`), brazo (bandeja/saludo/abajo), bandeja, lagrima — personaje de cuerpo entero 420×760 que respira y parpadea |
+| `TextoCinetico` | texto ("¡NO\| MANCHES!": tras "\|" usa color2), tamano, color, color2, estilo (golpe/subir/maquina), escalon |
+| `Particulas` | tipo (monedas/billetes/chispas/confeti/emoji), emoji, modo (explosion/lluvia), cantidad, tamano, dur, color, sonido, semilla |
+| `Icono` | emoji, tamano, fondo (burbuja de color) — entra con rebote |
+| `Rayos` | color, rayos, velocidad, intensidad — destello giratorio detrás del protagonista |
+| `Ondas` | color, cada, grosor — pulsos expansivos |
+
+Todo elemento acepta además `flotar` (px) y `oscilar` (grados) para movimiento continuo, y las entradas `rebote`, `caer`, `volarIzq`, `volarDer`, `girar`. Escenas: `transicion` puede ser `barrido` o `zoomGolpe`; `deriva` (px, por defecto 6) y `golpes` (true/false).
+
+`Contador` acepta además `agrupar: false` (años: 1991) y `locale: "en-US"` (dólares: $2.13). `Avatar` acepta `uniforme: "mesero"`.
+
+Si el tema necesita un objeto que no existe (una tostadora, un avión, un globo terráqueo), **crear un componente nuevo** en `src/elementos/` siguiendo las reglas de estilo (§2, sombreado suave, glow en lo activo), registrarlo en `registro.ts` y agregarlo a esta tabla.
+
+### Paso 6 · Revisar y renderizar
+```
+cd fabrica
+npm run render -- <id> --cuadro=3.5      ← PNG de un segundo concreto para revisar
+npm run render -- <id>                   ← MP4 final en fabrica/out/<id>.mp4
+npx tsc --noEmit                         ← si se tocó código
+```
+Hoja de revisión de 12 cuadros (uno o dos por escena) en un solo paso, sin re-renderizar:
+```
+.venv\Scripts\python.exe herramientas\revisar.py fabrica\out\<id>.mp4 comparaciones\<id>_revision.png 2.2 4.8 9 16 19 22.5 28.8 36.4 44 51 66 70.3
+```
+Ojo: en la hoja, dos miniaturas vecinas pueden parecer una sola imagen "duplicada"; ante la duda, extraer el cuadro a resolución completa con ffmpeg. Revisar como mínimo 6 cuadros (gancho, cada cambio de escena grande, CTA) contra las reglas: subtítulos legibles en y≈383, nada importante en y > 1650, una sola idea por plano, algo nuevo cada ~1 s. `npm run dev` abre Remotion Studio para verlo en vivo.
+
+### Paso 7 · Entregar
+Decirle al usuario la ruta del MP4, la duración, el estilo elegido y el guion en 2 líneas.
+
+## 13. Alternativa: hacer el video con HyperFrames
+
+Cuando el usuario pida HyperFrames (o un video con fotos de stock / mapas reales), el video se arma en `hyperframes/<id>/` en vez de `fabrica/`. Leer antes las skills `hyperframes` y `media-use` (en `~/.claude/skills`). Ejemplo completo: `hyperframes/teclado-fj/`.
+
+1. **Guion, voz y palabras**: igual que en §12, pasos 2–3 (`voz.py` con Gemini; `voz.py` ahora verifica que Gemini no lea el estilo en voz alta y reintenta).
+2. **Proyecto**: `cd hyperframes; $env:HYPERFRAMES_SKIP_SKILLS="1"; npx hyperframes init <id> --example=blank --resolution=portrait --non-interactive`. Copiar la voz a `assets/audio/voz.mp3`.
+3. **Imágenes de stock** (licencias libres de Openverse, con crédito automático en `CREDITOS.md`):
+   `.venv\Scripts\python.exe herramientas\stock.py buscar "<consulta en inglés>"` y luego `stock.py bajar <id> hyperframes\<id>\assets\stock\<nombre>.jpg --creditos hyperframes\<id>\CREDITOS.md`. Revisar las candidatas en una hoja de contacto antes de usarlas.
+4. **Mapas reales**: `node hyperframes\bake-basemap-vertical.mjs` (copia vertical 1080×1920 del script oficial) con `NAME, STYLE=satellite, COUNTRIES="United States of America:#3A77D5,Mexico:#27AE60", PROJECTION=globe, FROM, CENTER, ZSTART, ZEND, DUR, HOLD, OUT=assets/mapa` y `CHROME="C:\Program Files\Google\Chrome\Application\chrome.exe"`. Escribe un MP4 y las fronteras en `-coords.json` (`herramientas\centros_mapa.py` da los centros); dibujarlas como SVG encima, con crédito "Esri, Maxar, Earthstar Geographics".
+5. **Música**: Lyria (Google) con la misma clave: `lyria-recipe.py` de la skill media-use, ~100 bpm, latina alegre, volumen 0.14 bajo la voz.
+6. **Subtítulos** (estilo de la casa): `.venv\Scripts\python.exe herramientas\hf_subtitulos.py <palabras.json> hyperframes\<id>\compositions\subtitulos.html --claves "…" --emojis "…" --duracion <s>`.
+7. **Escenas**: una por archivo en `compositions/` (todo dentro de `<template>`, raíz `#root`, timeline GSAP pausado registrado en `window.__timelines["<id>"]`, `fromTo` siempre, nada de `Math.random`). Tiempos locales = segundo de la palabra − inicio de la escena. Reglas del §12 "Ritmo y dinamismo".
+8. **Efectos**: los 21 incluidos en la skill media-use (`audio/assets/sfx/`) como `<audio id="sfx-NN">` en `index.html`; luego `herramientas\hf_sfx_duraciones.py` y `herramientas\hf_sfx_pistas.py` (duraciones reales y sin superposiciones).
+9. **Revisión**: `herramientas\hf_check.py hyperframes\<id> --ignorar contrast_aa_failure,composition_file_too_large,timeline_track_too_dense` y `npx hyperframes snapshot --at <segundos>` (mirar la hoja `contact-sheet`). Ojo con `fromTo` cuyo estado inicial se ve antes de tiempo: usar `immediateRender: false` o sacar el elemento del cuadro.
+10. **Entrega**: `npx hyperframes preview --background` (Studio en http://localhost:3002 para que el usuario edite) y `npx hyperframes render`. Copiar el MP4 a `fabrica/out/<id>.mp4`. Medir: `ffmpeg -i <mp4> -af ebur128=peak=true -f null -` (≈ −16 a −14 LUFS, pico ≤ −1 dBFS).
+
+### HyperFrames sin fotos (estilo de los videos de referencia)
+Ejemplo: `hyperframes/teclado-fj/` (14 escenas, 72 s, todo dibujado con código), generado por `herramientas/hf_teclado_fj.py`. Para temas con un objeto que se repite en muchas escenas, escribir un generador así (el objeto como función Python que devuelve HTML, una función `escena()` por plano, tiempos con `t("palabra")` relativos al inicio de cada escena y cortes de escena por número de palabra `wi(n)`), y después correr `hf_subtitulos.py`, `hf_sfx_duraciones.py`, `hf_sfx_pistas.py` y `hf_check.py`.
+- **Nunca** usar en un elemento interno el mismo id que la escena (p. ej. `id="s11-tacto"` dentro de la escena `s11-tacto`): la escena sale en negro sin ningún error.
+- `data-motion-blur="on"` en la raíz no causa problemas, pero no hace falta; los desenfoques de entrada se hacen con `filter: blur` en el `.cam` de cada escena.
+- Mejoras de estilo que funcionaron: teclas 3D con canto y sombra, brillo ámbar/turquesa por mano, primer plano macro de la tecla al nombrar un detalle, dedos que caen en su lugar, contadores "1 / 6", sonido de tecla en cada letra nombrada, música lo-fi de Lyria a 0.13.
+
+## 13b. MÉTODO ACTUAL (modelo "electrocutarte") — usar este antes que §14
+
+Análisis completo: `videos_referencia/electro/BIBLIOTECA_PLANOS.md` (32 planos, recetas R1–R11, números del modelo).
+- El estilo viral NO es render 3D realista: es **ilustración 2D/2,5D con brillo**, con un mundo siempre animado (arcos de carga que oscilan, partículas, valores que tiemblan) y la **cámara casi quieta** (mediana 0,5 px/cuadro) salvo ráfagas de 0,2–0,4 s entre planos. Planos de ~2,1 s. Cero carteles grandes: solo etiquetas finas en MAYÚSCULAS con línea de 1 px.
+- Técnica: un `<canvas>` en Remotion dibujado cuadro a cuadro con una función pura `dibujar(g, s)` (ver `fabrica/src/v3d/ElectroP01.tsx`). Renderiza 3,7 s en segundos, sin Blender.
+- Flujo por video: guion → **guion gráfico (un cuadro fijo por plano, aprobado por el usuario)** → animación por planos con las recetas → `herramientas/comparar.py` y `herramientas/camara_ref.py` contra el modelo.
+- **Ejemplo completo**: `fabrica/src/v3d/electro/` (composición `electro`, 83 s, 28 planos). `dibujo.ts` = primitivas (corte con arcos vivos, dedo con guante/rayos X/remolino, boli y chispas, mano con guante + teléfono y sus pantallas, malla de cables, rejilla en perspectiva con lecturas, tejido); `ElectroCompleto.tsx` = lista de planos anclados a palabras con `w(índice, 'texto')` (verifica la palabra; `herramientas/fijar_indices.py` corrige índices corridos). Transición = desenfoque 0,14 s a cada lado del corte. Medido: cámara mediana 0,6 px/cuadro (original 0,5), plano mediano 2,5 s (original 2,1), cuadros quietos 19 % (original 23 %).
+- En canvas, usar la fuente `FF` de `dibujo.ts` (con comillas y respaldo); con la variable sola sale serif.
+- Blender no viene instalado; solo haría falta para objetos realistas y no hace falta para este estilo.
+
+## 14. Videos en 3D real con Remotion (el look de los virales)
+
+Los videos de referencia son renders 3D: cámara que nunca para, objetos con volumen, luz, sombras y brillos. Con capas 2D el resultado se siente "plano" (medido con `herramientas\movimiento.py`: mi versión 2D de HyperFrames tenía cambio medio 0,72 contra 1,56 de "teclado" y 3,98 de "electrocutarte"). **Para objetos físicos, usar 3D.** (El ejemplo 3D `teclado-fj-3d` no se reparte; las reglas siguen valiendo.)
+
+- **Stack**: `@remotion/three` + `three` + `@react-three/fiber@9` + `@react-three/drei@10` (`RoundedBox`). Renderizar siempre con `--gl=angle`.
+- **No usar** `@react-three/postprocessing` (en Remotion sale todo negro) ni el `<Text>` de drei (carga la fuente asíncrona y el cuadro sale en blanco). En su lugar: letras como `CanvasTexture` dibujadas con `<canvas>` (`texLetra` en `mundo.tsx`), brillo con planos aditivos de halo (`texHalo`), viñeta y desenfoque de movimiento con CSS sobre el canvas (desenfoque = velocidad de la cámara).
+- **Cámara**: una sola toma continua definida como lista `TOMAS = [segundo, posición, objetivo, curva]` (posición y objetivo SIEMPRE juntos; si se interpolan por separado la cámara apunta a otra escena antes de tiempo) + deriva senoidal pequeña. Cambios de plano de 0,4–0,8 s con curva `suave`, tramos lentos `lineal` entre ellos.
+- **Todo depende de `s` (segundos)**: el estado de cada tecla, dedo, arco u onda es una función pura de `s` y de los tiempos de las palabras (`T.palabra = w(índice)`), con ayudantes `kf`, `rampa`, `pulso`, `resorte` (`src/v3d/tiempo.ts`). Prohibido `useFrame`.
+- **Formato vertical**: un objeto ancho (teclado de 20 unidades) no entra entero; encuadrar partes (macro), mirar desde un costado para que las cosas se alineen hacia el fondo (torres) o apilar arriba/abajo.
+- **Revisión rápida**: `node scripts/cuadros.mjs <id> 1.0,2.9,8.5,...` (un solo empaquetado, varios cuadros) + `herramientas\hoja.py`. Un render completo de 72 s en 3D tarda varios minutos.
+- **Textos sobre 3D**: los títulos grandes (`tipo: 'golpe'`) llevan placa oscura semitransparente (`rgba(12,12,14,0.78)`, radio 36) y hay una franja oscura arriba (0–30 % del alto) para que los subtítulos se lean sobre teclas encendidas. Si un título tapa el objeto del que se habla, bajar el encuadre apuntando la cámara detrás del objeto (objetivo con z negativo) en vez de achicar el texto; si dos rótulos compiten, que el segundo reemplace al primero.
+- **Piezas disponibles** en `mundo.tsx`: `Tecla`, `Teclado`, `Numpad`, `PanelNumerico`, `Dedo`, `Arco` (tubo de luz que se dibuja), `Onda`, `Pin`, `Monitor`, `Torre`.
+
+### Prueba de referencia
+`fabrica/videos/teclado-15s.json` recrea los primeros 15 s de "teclado" con la voz original (`public/voz/teclado_ref.mp3`). Comparación final en `comparaciones/final_teclado_15s.png` (generada con `herramientas/comparar.py`). Diferencia media por píxel: 5–13 en las escenas de interfaz (0–255) y 20–55 en el plano macro con la yema desenfocada, que es la parte más difícil de imitar con 2D.

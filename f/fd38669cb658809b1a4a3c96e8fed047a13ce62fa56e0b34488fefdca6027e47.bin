@@ -1,0 +1,86 @@
+// Composición principal: arma un video completo a partir de un VideoSpec (JSON).
+import React, {useMemo} from 'react';
+import {AbsoluteFill, Sequence, staticFile, useVideoConfig, type CalculateMetadataFunction} from 'remotion';
+import {Audio} from '@remotion/media';
+import {calcularSonidos, srcSfx} from './motor/sonidos';
+import {VideoCtx} from './motor/contexto';
+import {crearReloj, normalizar} from './motor/reloj';
+import {Escena} from './motor/Escena';
+import {Subtitulos} from './componentes/Subtitulos';
+import type {Palabra, VideoSpec} from './motor/tipos';
+
+export type PropsVideo = {spec: VideoSpec};
+
+/** Volumen general: Remotion reproduce la voz mono +3 dB más fuerte; 0.7 (−3 dB) evita saturar. Verificar con herramientas/mezcla.py */
+const MASTER = 0.62;
+
+/** Marca las palabras clave y emojis declarados en spec.claves / spec.emojis. */
+export const prepararPalabras = (spec: VideoSpec): Palabra[] => {
+  const ps = spec.palabras.map((p) => ({...p}));
+  (spec.claves ?? []).forEach((c) => {
+    const [texto, nStr] = c.split('#');
+    const objetivo = normalizar(texto);
+    const n = nStr ? parseInt(nStr, 10) : 0; // 0 = todas
+    let k = 0;
+    ps.forEach((p) => {
+      if (normalizar(p.word) === objetivo) {
+        k++;
+        if (n === 0 || n === k) p.clave = true;
+      }
+    });
+  });
+  Object.entries(spec.emojis ?? {}).forEach(([palabra, emoji]) => {
+    const objetivo = normalizar(palabra);
+    ps.forEach((p) => {
+      if (normalizar(p.word) === objetivo && p.clave) p.emoji = emoji;
+    });
+  });
+  return ps;
+};
+
+export const duracionVideo = (spec: VideoSpec) => {
+  if (spec.duracion) return spec.duracion;
+  const ult = spec.palabras[spec.palabras.length - 1];
+  return (ult ? ult.end : 5) + 0.5;
+};
+
+export const calcularMetadatos: CalculateMetadataFunction<PropsVideo> = ({props}) => ({
+  durationInFrames: Math.max(1, Math.ceil(duracionVideo(props.spec) * 30)),
+  fps: 30,
+  width: 1080,
+  height: 1920,
+  defaultOutName: props.spec.titulo,
+});
+
+export const Video: React.FC<PropsVideo> = ({spec}) => {
+  const {fps, durationInFrames} = useVideoConfig();
+  const reloj = useMemo(() => crearReloj(spec.palabras, fps), [spec.palabras, fps]);
+  const palabras = useMemo(() => prepararPalabras(spec), [spec]);
+  const escenas = useMemo(
+    () =>
+      spec.escenas.map((e, i) => {
+        const f0 = reloj.cuadro(e.desde);
+        const sig = spec.escenas[i + 1];
+        const f1 = e.hasta !== undefined ? reloj.cuadro(e.hasta) : sig ? reloj.cuadro(sig.desde) : durationInFrames;
+        return {e, f0, f1, transicionSalida: sig ? (sig.transicion ?? 'empujeDesenfoque') : undefined};
+      }),
+    [spec.escenas, reloj, durationInFrames],
+  );
+  const sonidos = useMemo(() => calcularSonidos(spec, reloj), [spec, reloj]);
+  return (
+    <VideoCtx.Provider value={{spec, reloj, estilo: spec.estilo, palabras}}>
+      <AbsoluteFill style={{background: '#000'}}>
+        {escenas.map(({e, f0, f1, transicionSalida}, i) => (
+          <Escena key={e.id ?? i} e={e} f0={f0} f1={f1} transicionSalida={transicionSalida} esPrimera={i === 0} />
+        ))}
+        <Subtitulos palabras={palabras} config={spec.subtitulos} />
+        {spec.audio ? <Audio src={staticFile(spec.audio)} volume={MASTER} trimBefore={Math.round((spec.audioDesde ?? 0) * fps)} /> : null}
+        {sonidos.map((s, i) => (
+          <Sequence key={`sfx-${i}`} from={s.f} durationInFrames={s.dur ? Math.max(1, Math.round(s.dur * fps)) : undefined} layout="none">
+            <Audio src={srcSfx(s.sfx)} volume={s.vol * MASTER} />
+          </Sequence>
+        ))}
+      </AbsoluteFill>
+    </VideoCtx.Provider>
+  );
+};

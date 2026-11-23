@@ -1,0 +1,31 @@
+// Registra una composición por cada archivo de fabrica/videos/*.json
+// (la lista la genera scripts/registrar.mjs → src/videos.generated.ts).
+import React from 'react';
+import {Composition} from 'remotion';
+import {Video, calcularMetadatos} from './Video';
+import {VIDEOS} from './videos.generated';
+import {DURACION_ELECTRO, ElectroCompleto} from './v3d/electro/ElectroCompleto';
+import {Comido, DURACION_COMIDO} from './v3d/comido/Comido';
+
+export const RemotionRoot: React.FC = () => {
+  return (
+    <>
+      {/* Videos por planos en canvas (método §13b): un import y una línea por video nuevo */}
+      <Composition id="avion-comido-en" component={Comido} durationInFrames={Math.ceil(DURACION_COMIDO * 30)} fps={30} width={1080} height={1920} />
+      <Composition id="electro" component={ElectroCompleto} durationInFrames={Math.ceil(DURACION_ELECTRO * 30)} fps={30} width={1080} height={1920} />
+      {VIDEOS.map(({id, spec}) => (
+        <Composition
+          key={id}
+          id={id}
+          component={Video}
+          durationInFrames={300}
+          fps={30}
+          width={1080}
+          height={1920}
+          defaultProps={{spec}}
+          calculateMetadata={calcularMetadatos}
+        />
+      ))}
+    </>
+  );
+};

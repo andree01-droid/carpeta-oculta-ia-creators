@@ -1,0 +1,63 @@
+// Interpolación de fotogramas clave.
+// Regla (fácil de escribir a mano en el JSON):
+//   cada clave {t, dur?, curva?, ...valores} significa "a partir de t, ir hacia estos valores
+//   en dur segundos (por defecto 0.5) con esa curva". Antes de la primera clave vale el valor base.
+import {interpolate} from 'remotion';
+import {curva, type Reloj} from './reloj';
+import type {Clave, Curva} from './tipos';
+
+type Tramo = {f0: number; f1: number; curva?: Curva; valor: unknown};
+
+const RESERVADAS = new Set(['t', 'dur', 'curva']);
+
+export const tramosPorPropiedad = (claves: Clave[] | undefined, reloj: Reloj) => {
+  const mapa = new Map<string, Tramo[]>();
+  (claves ?? []).forEach((c) => {
+    const f0 = reloj.cuadro(c.t);
+    const dur = typeof c.dur === 'number' ? c.dur : 0.5;
+    const f1 = f0 + Math.max(0, Math.round(dur * reloj.fps));
+    Object.entries(c).forEach(([k, v]) => {
+      if (RESERVADAS.has(k)) return;
+      const lista = mapa.get(k) ?? [];
+      lista.push({f0, f1, curva: c.curva, valor: v});
+      mapa.set(k, lista);
+    });
+  });
+  mapa.forEach((l) => l.sort((a, b) => a.f0 - b.f0));
+  return mapa;
+};
+
+export const valorEn = (base: unknown, tramos: Tramo[] | undefined, frame: number): unknown => {
+  if (!tramos || tramos.length === 0) return base;
+  let actual = base;
+  for (const tr of tramos) {
+    if (frame < tr.f0) break;
+    if (typeof actual === 'number' && typeof tr.valor === 'number' && tr.f1 > tr.f0) {
+      if (frame >= tr.f1) {
+        actual = tr.valor;
+      } else {
+        return interpolate(frame, [tr.f0, tr.f1], [actual, tr.valor], {
+          easing: curva(tr.curva),
+          extrapolateLeft: 'clamp',
+          extrapolateRight: 'clamp',
+        });
+      }
+    } else {
+      actual = tr.valor;
+    }
+  }
+  return actual;
+};
+
+/** Resuelve todas las propiedades animadas de un objeto en un cuadro. */
+export const resolver = <T extends Record<string, unknown>>(
+  base: T,
+  tramos: Map<string, Tramo[]>,
+  frame: number,
+): T => {
+  const out: Record<string, unknown> = {...base};
+  tramos.forEach((lista, k) => {
+    out[k] = valorEn(base[k], lista, frame);
+  });
+  return out as T;
+};

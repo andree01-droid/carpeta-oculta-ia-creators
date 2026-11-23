@@ -1,0 +1,130 @@
+"""Genera la biblioteca de efectos de sonido sintéticos en fabrica/public/sfx/*.wav (44.1 kHz, mono).
+
+Uso: .venv/Scripts/python.exe herramientas/sfx.py
+Los whoosh/whip/clic/ding "de catálogo" se usan desde https://remotion.media/ (ver fabrica/src/motor/sonidos.ts).
+"""
+import os, wave
+import numpy as np
+
+SR = 44100
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(RAIZ, "fabrica", "public", "sfx")
+os.makedirs(OUT, exist_ok=True)
+rng = np.random.default_rng(7)
+
+
+def t(d):
+    return np.arange(int(SR * d)) / SR
+
+
+def env(n, a, d_curve=4.0, a_frac=0.01):
+    """envolvente: ataque lineal y caída exponencial."""
+    x = np.linspace(0, 1, n)
+    ata = np.clip(x / max(a_frac, 1e-4), 0, 1)
+    return ata * np.exp(-d_curve * x) * a
+
+
+def filtro_paso(x, corte, alto=False):
+    """filtro 1 polo simple (pasa-bajos o pasa-altos)."""
+    rc = 1 / (2 * np.pi * corte)
+    a = (1 / SR) / (rc + 1 / SR)
+    y = np.zeros_like(x)
+    acc = 0.0
+    for i, v in enumerate(x):
+        acc += a * (v - acc)
+        y[i] = acc
+    return x - y if alto else y
+
+
+def guardar(nombre, x, gain_db=-3):
+    x = x / (np.max(np.abs(x)) + 1e-9) * (10 ** (gain_db / 20))
+    fade = min(len(x), int(0.004 * SR))
+    x[-fade:] *= np.linspace(1, 0, fade)
+    with wave.open(os.path.join(OUT, nombre + ".wav"), "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
+        w.writeframes((x * 32767).astype(np.int16).tobytes())
+    print(nombre, f"{len(x)/SR:.2f}s")
+
+
+# pop: burbuja que revienta (seno con caída de tono)
+tt = t(0.12)
+f = 900 * np.exp(-tt * 28) + 220
+pop = np.sin(2 * np.pi * np.cumsum(f) / SR) * env(len(tt), 1, 18, 0.02)
+guardar("pop", pop)
+
+# golpe: sello / impacto grave
+tt = t(0.45)
+f = 110 * np.exp(-tt * 6) + 45
+golpe = np.sin(2 * np.pi * np.cumsum(f) / SR) * env(len(tt), 1, 7, 0.005)
+golpe += filtro_paso(rng.standard_normal(len(tt)), 900) * env(len(tt), 0.9, 30, 0.002)
+guardar("golpe", golpe)
+
+# caja registradora: campanita metálica + ruido de cajón
+tt = t(0.9)
+caja = np.zeros(len(tt))
+for fr, amp in [(2093, 1), (2637, 0.7), (3136, 0.5), (4186, 0.3), (5274, 0.2)]:
+    caja += amp * np.sin(2 * np.pi * fr * tt) * env(len(tt), 1, 5, 0.003)
+cajon = filtro_paso(rng.standard_normal(len(tt)), 2500) * np.where(tt < 0.12, 1, 0) * env(len(tt), 0.5, 20, 0.002)
+guardar("caja", 0.8 * caja + cajon)
+
+# hielo: destellos cristalinos aleatorios + crujido
+tt = t(1.0)
+hielo = np.zeros(len(tt))
+for k in range(26):
+    ini = int(rng.uniform(0, 0.75) * SR)
+    fr = rng.uniform(3000, 7500)
+    n = int(0.12 * SR)
+    seg = np.sin(2 * np.pi * fr * np.arange(n) / SR) * env(n, rng.uniform(0.3, 1), 9, 0.01)
+    hielo[ini:ini + n] += seg[: len(hielo) - ini]
+cruj = filtro_paso(rng.standard_normal(len(tt)), 4000, alto=True) * (rng.random(len(tt)) > 0.985) * 3
+hielo += cruj * env(len(tt), 0.6, 2.5, 0.05)
+guardar("hielo", hielo, -6)
+
+# impresora: zumbido rítmico de cabezal térmico
+tt = t(1.4)
+mod = (np.sin(2 * np.pi * 34 * tt) > 0.2).astype(float)
+imp = filtro_paso(rng.standard_normal(len(tt)), 3500) * mod * 0.6 + 0.25 * np.sin(2 * np.pi * 180 * tt) * mod
+imp *= np.clip(tt / 0.05, 0, 1) * np.clip((1.4 - tt) / 0.1, 0, 1)
+guardar("impresora", imp, -8)
+
+# tic: clic de contador
+tt = t(0.03)
+tic = np.sin(2 * np.pi * 2400 * tt) * env(len(tt), 1, 40, 0.01)
+guardar("tic", tic)
+
+# conteo: ráfaga de tics que se frena (1.2 s)
+tt = t(1.2)
+conteo = np.zeros(len(tt))
+pos = 0.0
+paso = 0.035
+while pos < 1.1:
+    i = int(pos * SR)
+    n = len(tic)
+    conteo[i:i + n] += tic[: len(conteo) - i]
+    pos += paso
+    paso *= 1.07
+guardar("conteo", conteo, -6)
+
+# subida: riser corto (tensión antes de un dato)
+tt = t(0.8)
+f = 200 + 900 * (tt / 0.8) ** 2
+sub = np.sin(2 * np.pi * np.cumsum(f) / SR) * (tt / 0.8) ** 1.5 * 0.5
+sub += filtro_paso(rng.standard_normal(len(tt)), 6000, alto=True) * (tt / 0.8) ** 2 * 0.4
+guardar("subida", sub, -6)
+
+# swoosh suave (complemento del whoosh de catálogo)
+tt = t(0.4)
+ruido = rng.standard_normal(len(tt))
+sw = filtro_paso(ruido, 1800) * np.sin(np.pi * tt / 0.4) ** 2
+guardar("swoosh", sw, -6)
+
+# moneda: tintineo corto
+tt = t(0.35)
+mon = (np.sin(2 * np.pi * 3520 * tt) + 0.6 * np.sin(2 * np.pi * 5280 * tt)) * env(len(tt), 1, 12, 0.003)
+guardar("moneda", mon, -6)
+
+# error: dos tonos descendentes (dato "malo")
+tt = t(0.45)
+err = np.sin(2 * np.pi * np.where(tt < 0.2, 330, 247) * tt) * env(len(tt), 1, 4, 0.01)
+err = np.tanh(err * 2)
+guardar("error", err, -8)

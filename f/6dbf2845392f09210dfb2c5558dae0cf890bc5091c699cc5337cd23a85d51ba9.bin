@@ -1,0 +1,37 @@
+// Hilos verticales que unen cada tecla de un teclado inclinado con su zona en la capa de abajo.
+// Se dibuja en pantalla (2D) proyectando las teclas con la misma perspectiva CSS de la escena.
+// props: arriba {x,y,escala,rotX}, abajo {x,y,escala,rotX}, perspectiva, progreso (0..1)
+import React from 'react';
+import {random} from 'remotion';
+import {PANEL_H, PANEL_W, TECLAS} from './TecladoIOS';
+import {num, type PropsElemento} from './tipos';
+
+type Plano = {x: number; y: number; escala: number; rotX: number};
+
+const proyectar = (pl: Plano, kx: number, ky: number, P: number) => {
+  const dx = (kx - PANEL_W / 2) * pl.escala;
+  const dy = (ky - PANEL_H / 2) * pl.escala;
+  const t = (pl.rotX * Math.PI) / 180;
+  const y2 = dy * Math.cos(t);
+  const z2 = dy * Math.sin(t);
+  const s = P / (P - z2);
+  return {x: 540 + (pl.x + dx - 540) * s, y: 960 + (pl.y + y2 - 960) * s};
+};
+
+export const HilosTeclado: React.FC<PropsElemento> = ({p}) => {
+  const arriba = p.arriba as Plano;
+  const abajo = p.abajo as Plano;
+  const P = num(p.perspectiva, 3300);
+  const prog = num(p.progreso, 1);
+  return (
+    <svg width={1080} height={1920} style={{position: 'absolute', inset: 0, overflow: 'visible'}}>
+      {TECLAS.filter((k) => k.letra).map((k, i) => {
+        const desf = (random(`hilo-${i}`) - 0.5) * 24;
+        const a = proyectar(arriba, k.x + k.w / 2 + desf, k.y + k.h * 0.6, P);
+        const b = proyectar(abajo, k.x + k.w / 2 + desf, k.y + k.h * 0.5, P);
+        const y2 = a.y + (b.y - a.y) * prog;
+        return <line key={k.id} x1={a.x} y1={a.y} x2={a.x + (b.x - a.x) * prog} y2={y2} stroke="rgba(255,255,255,0.45)" strokeWidth={1.5} />;
+      })}
+    </svg>
+  );
+};

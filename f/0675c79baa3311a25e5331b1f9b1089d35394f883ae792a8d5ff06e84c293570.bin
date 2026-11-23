@@ -1,0 +1,10 @@
+import {loadFont} from '@remotion/google-fonts/GoogleSans';
+
+// Google Sans: la tipografía de los videos de referencia (CLAUDE.md §3).
+export const {fontFamily: FUENTE} = loadFont('normal', {
+  weights: ['400', '500', '600', '700'],
+  subsets: ['latin', 'latin-ext'],
+});
+
+/** Fuente de interfaz tipo iOS (teclados, UI de teléfono). */
+export const FUENTE_UI = `-apple-system, "SF Pro Text", "Helvetica Neue", Arial, ${FUENTE}, sans-serif`;

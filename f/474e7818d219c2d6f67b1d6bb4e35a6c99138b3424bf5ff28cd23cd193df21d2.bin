@@ -1,0 +1,361 @@
+// Mundo "tormenta" para Roy Sullivan v2: cielo con volumen, lluvia en capas, rayos fractales con descargas de retorno,
+// impactos con chispas, niebla, etiquetas finas y una capa de luz (borde + sombra propia) para dar volumen a las figuras.
+// Inspirado en las referencias (ref6 / electrocutarte): objetos grandes, mundo siempre vivo, datos dentro del mundo.
+import {G, W, H, FF, rnd, cl, lerp, glow, pantalla} from '../cripto/dibujo';
+import {contextoHD} from '../hd';
+
+// ------------------------------------------------------------------ paletas de cielo
+export type Tono = 'tormenta' | 'violeta' | 'fuego' | 'oro' | 'atardecer' | 'rojo' | 'lago' | 'noche';
+type Pal = {top: string; mid: string; hor: string; nubeLuz: string; nubeOsc: string; luz: string; niebla: string};
+export const TONOS: Record<Tono, Pal> = {
+  tormenta: {top: '#04060e', mid: '#18213f', hor: '#3c4677', nubeLuz: '102,114,166', nubeOsc: '18,22,40', luz: '175,205,255', niebla: '120,140,200'},
+  violeta: {top: '#07040f', mid: '#24124a', hor: '#5d3a92', nubeLuz: '128,96,178', nubeOsc: '26,14,48', luz: '215,175,255', niebla: '150,110,210'},
+  fuego: {top: '#0d0503', mid: '#3a1407', hor: '#9a4212', nubeLuz: '186,104,48', nubeOsc: '40,14,6', luz: '255,180,90', niebla: '230,130,60'},
+  oro: {top: '#0e0902', mid: '#3d2a08', hor: '#b4841f', nubeLuz: '214,170,84', nubeOsc: '52,34,8', luz: '255,222,140', niebla: '240,200,110'},
+  atardecer: {top: '#101a3c', mid: '#5a3a6a', hor: '#f0a060', nubeLuz: '250,170,130', nubeOsc: '70,44,80', luz: '255,214,160', niebla: '250,190,150'},
+  rojo: {top: '#0c0206', mid: '#3e0a1a', hor: '#94202e', nubeLuz: '178,70,84', nubeOsc: '40,8,16', luz: '255,150,150', niebla: '220,90,100'},
+  lago: {top: '#020c14', mid: '#0b2e40', hor: '#1f6a7a', nubeLuz: '70,130,146', nubeOsc: '8,26,36', luz: '170,235,255', niebla: '110,190,210'},
+  noche: {top: '#020308', mid: '#0c1124', hor: '#1e2a52', nubeLuz: '70,80,128', nubeOsc: '10,12,24', luz: '170,200,255', niebla: '90,110,170'},
+};
+
+// ------------------------------------------------------------------ cielo con nubes de volumen (en pantalla)
+type Bola = [number, number, number];
+const BANCOS: Bola[][] = [0, 1, 2, 3].map((b) => Array.from({length: 26}, (_, i) => [
+  -260 + (i / 25) * (W + 520) + (rnd(i * 3.1 + b * 17) - 0.5) * 90,
+  (rnd(i * 5.3 + b * 11) - 0.5) * (70 + b * 30),
+  110 + rnd(i * 7.7 + b * 5) * (90 + b * 70),
+] as Bola));
+
+/** cielo de tormenta. y = altura de los bancos (0..1 de pantalla), luz = destello (0..1), fx = punto del destello */
+export function cielo(g: G, s: number, tono: Tono, o: {luz?: number; fx?: number; fy?: number; hor?: number; nubes?: number; dx?: number; relampagos?: boolean} = {}) {
+  const P = TONOS[tono];
+  const {luz = 0, fx = 540, fy = 500, hor = 1500, nubes = 1, dx = 0, relampagos = true} = o;
+  pantalla(g);
+  const gr = g.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, P.top); gr.addColorStop(hor / H * 0.55, P.mid); gr.addColorStop(Math.min(0.99, hor / H), P.hor); gr.addColorStop(1, P.mid);
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  // relámpagos lejanos que iluminan las nubes por dentro
+  let lejano = 0, lx = 540;
+  if (relampagos) {
+    const ciclo = Math.floor(s / 1.7), u = s - ciclo * 1.7, sem = ciclo * 9.13;
+    if (rnd(sem) > 0.35 && u < 0.35) { lejano = (u < 0.06 ? 1 : u < 0.12 ? 0.35 : u < 0.18 ? 0.8 : 1 - u / 0.35) * (0.35 + 0.4 * rnd(sem + 1)); lx = 100 + rnd(sem + 2) * 880; }
+  }
+  const L = Math.max(luz, lejano * 0.6);
+  if (L > 0) glow(g, luz >= lejano ? fx : lx, luz >= lejano ? fy : 380, 1200, P.luz, L * 0.9);
+  if (nubes > 0) {
+    for (let b = 3; b >= 0; b--) {
+      const y0 = 140 + b * 170, par = 0.25 + b * 0.25;
+      for (const [bx, by, br] of BANCOS[b]) {
+        const x = ((bx + s * 9 * par + dx * par) % (W + 520) + (W + 520)) % (W + 520) - 260;
+        const y = y0 + by + Math.sin(s * 0.4 + bx) * 6;
+        const ill = cl(L * (1.1 - Math.hypot(x - (luz >= lejano ? fx : lx), y - fy) / 1400)) * 0.9;
+        const [lr, lg, lb] = P.nubeLuz.split(',').map(Number), [or, og, ob] = P.nubeOsc.split(',').map(Number);
+        const k = 0.35 + 0.65 * (1 - b / 4);
+        const c1 = `rgba(${Math.round(lerp(lr * k, 255, ill))},${Math.round(lerp(lg * k, 255, ill))},${Math.round(lerp(lb * k, 255, ill))},${0.95 * nubes})`;
+        const c2 = `rgba(${or},${og},${ob},${0.97 * nubes})`;
+        const rg = g.createRadialGradient(x - br * 0.25, y - br * 0.45, br * 0.1, x, y, br);
+        rg.addColorStop(0, c1); rg.addColorStop(0.55, c2); rg.addColorStop(1, `rgba(${or},${og},${ob},0)`);
+        g.fillStyle = rg; g.beginPath(); g.arc(x, y, br, 0, 7); g.fill();
+      }
+    }
+    // panza oscura de la tormenta
+    const pz = g.createLinearGradient(0, 0, 0, 900); pz.addColorStop(0, `rgba(${P.nubeOsc},${0.9 * nubes})`); pz.addColorStop(1, `rgba(${P.nubeOsc},0)`);
+    g.fillStyle = pz; g.fillRect(0, 0, W, 900);
+  }
+  return L;
+}
+
+// ------------------------------------------------------------------ montañas Blue Ridge con perspectiva atmosférica (mundo)
+export function cordillera(g: G, s: number, y0: number, tono: Tono, o: {x0?: number; x1?: number; luz?: number; capas?: number; pinos?: boolean} = {}) {
+  const P = TONOS[tono]; const {x0 = -700, x1 = 1780, luz = 0, capas = 4, pinos = true} = o;
+  const [nr, ng, nb] = P.niebla.split(',').map(Number);
+  for (let c = 0; c < capas; c++) {
+    const lejos = 1 - c / (capas - 1 || 1), yy = y0 - lejos * 330, amp = 120 + lejos * 160;
+    const k = 0.1 + 0.18 * lejos, lu = luz * (0.4 + 0.5 * lejos);
+    g.fillStyle = `rgb(${Math.round(lerp(nr * k, 230, lu * 0.5))},${Math.round(lerp(ng * k, 235, lu * 0.5))},${Math.round(lerp(nb * k, 255, lu * 0.5))})`;
+    g.beginPath(); g.moveTo(x0, y0 + 1200);
+    for (let x = x0; x <= x1; x += 30) {
+      const f = 0.0028 + c * 0.0012, sem = c * 3.7;
+      g.lineTo(x, yy - amp * (0.55 + 0.45 * Math.sin(x * f + sem)) * (0.75 + 0.25 * Math.sin(x * f * 3.1 + sem * 2)));
+    }
+    g.lineTo(x1, y0 + 1200); g.closePath(); g.fill();
+    // niebla entre capas
+    const ng2 = g.createLinearGradient(0, yy - 60, 0, yy + 260); ng2.addColorStop(0, `rgba(${P.niebla},0)`); ng2.addColorStop(0.5, `rgba(${P.niebla},${0.16 * lejos + 0.04})`); ng2.addColorStop(1, `rgba(${P.niebla},0)`);
+    g.fillStyle = ng2; g.fillRect(x0, yy - 60, x1 - x0, 320);
+  }
+  if (pinos) for (let i = 0; i < 26; i++) { const px = x0 + rnd(i * 4.1) * (x1 - x0), h = 140 + rnd(i * 6.1) * 200; pinoSil(g, s, px, y0 + 30 + rnd(i * 2.3) * 80, h, `rgb(${Math.round(nr * 0.06)},${Math.round(ng * 0.07)},${Math.round(nb * 0.06)})`, luz); }
+}
+/** pino en silueta con borde iluminado por el relámpago */
+export function pinoSil(g: G, s: number, x: number, y: number, h: number, col: string, luz = 0) {
+  g.save(); g.translate(x, y); g.rotate(Math.sin(s * 1.4 + x * 0.01) * 0.025);
+  g.fillStyle = col; g.fillRect(-h * 0.025, -h * 0.12, h * 0.05, h * 0.12);
+  g.beginPath(); g.moveTo(0, -h);
+  for (let i = 0; i <= 6; i++) { const yy = -h + (i / 6) * h * 0.9, ww = h * (0.06 + 0.3 * (i / 6)); g.lineTo(ww, yy + h * 0.05); g.lineTo(ww * 0.55, yy + h * 0.02); }
+  for (let i = 6; i >= 0; i--) { const yy = -h + (i / 6) * h * 0.9, ww = h * (0.06 + 0.3 * (i / 6)); g.lineTo(-ww * 0.55, yy + h * 0.02); g.lineTo(-ww, yy + h * 0.05); }
+  g.closePath(); g.fill();
+  if (luz > 0.05) { g.strokeStyle = `rgba(200,220,255,${0.5 * luz})`; g.lineWidth = 3; g.stroke(); }
+  g.restore();
+}
+
+// ------------------------------------------------------------------ lluvia en 3 capas + salpicaduras (en pantalla)
+export function lluvia(g: G, s: number, o: {dens?: number; viento?: number; suelo?: number; luz?: number; col?: string} = {}) {
+  const {dens = 1, viento = 0.18, suelo = 1800, luz = 0, col = '190,210,255'} = o;
+  pantalla(g); g.save(); g.lineCap = 'round';
+  const capas: [number, number, number, number][] = [[80, 2, 0.16, 1500], [55, 3.5, 0.24, 2100], [22, 7, 0.16, 2800]];
+  capas.forEach(([n, w, a, v], c) => {
+    g.lineWidth = w; g.strokeStyle = `rgba(${col},${Math.min(0.9, a + luz * 0.4)})`;
+    g.beginPath();
+    for (let i = 0; i < n * dens; i++) {
+      const L0 = (40 + rnd(i * 4.3 + c) * 60) * (1 + c * 0.6), x0 = rnd(i * 2.9 + c * 7) * (W + 400) - 100;
+      const y = ((rnd(i * 1.3 + c * 3) * (H + 400) + s * v) % (H + 400)) - 200;
+      const x = x0 - (y + 200) * viento;
+      g.moveTo(x, y); g.lineTo(x + L0 * viento, y - L0);
+    }
+    g.stroke();
+  });
+  // salpicaduras
+  if (suelo < H) for (let i = 0; i < 26 * dens; i++) {
+    const per = 0.5 + rnd(i * 3.3) * 0.4, u = ((s + rnd(i * 7.1) * per) % per) / per, x = rnd(i * 5.9 + Math.floor((s + rnd(i * 7.1) * per) / per)) * W;
+    if (u > 0.5) continue; const q = u / 0.5;
+    g.strokeStyle = `rgba(${col},${0.45 * (1 - q)})`; g.lineWidth = 2.5;
+    g.beginPath(); g.ellipse(x, suelo + rnd(i) * 80, 8 + q * 30, 3 + q * 8, 0, Math.PI, 0); g.stroke();
+  }
+  g.restore();
+}
+
+/** bandas de niebla que se deslizan (mundo) */
+export function niebla(g: G, s: number, y: number, col: string, a = 0.3, ancho = 2400) {
+  for (let i = 0; i < 5; i++) {
+    const x = ((i * 520 + s * (20 + i * 9)) % (ancho + 800)) - 800 - 300, yy = y + Math.sin(i * 1.7) * 60;
+    const r = 380 + rnd(i) * 240;
+    const gr = g.createRadialGradient(x, yy, 0, x, yy, r); gr.addColorStop(0, `rgba(${col},${a})`); gr.addColorStop(1, `rgba(${col},0)`);
+    g.save(); g.translate(x, yy); g.scale(1.9, 0.45); g.translate(-x, -yy); g.fillStyle = gr; g.fillRect(x - r, yy - r, r * 2, r * 2); g.restore();
+  }
+}
+
+/** partículas desenfocadas que flotan (en pantalla) */
+export function bokeh(g: G, s: number, col: string, n = 24, a = 0.35) {
+  pantalla(g);
+  for (let i = 0; i < n; i++) {
+    const r = 10 + rnd(i * 3.3) * 46, x = (rnd(i * 1.9) * W + Math.sin(s * 0.3 + i) * 50), y = ((rnd(i * 2.7) * H - s * (12 + rnd(i) * 30)) % H + H) % H;
+    const tw = 0.5 + 0.5 * Math.sin(s * (0.8 + rnd(i * 5)) + i);
+    const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(${col},${a * tw})`); gr.addColorStop(0.7, `rgba(${col},${a * tw * 0.5})`); gr.addColorStop(1, `rgba(${col},0)`);
+    g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+  }
+}
+
+// ------------------------------------------------------------------ rayo fractal con descargas de retorno
+type Seg = {pts: [number, number][]; nivel: number; desde: number};
+const CACHE = new Map<number, Seg[]>();
+/** rayo en coordenadas normalizadas: de (0,0) a (0,1). desde = progreso (0..1) en que nace la rama */
+function fractal(sem: number): Seg[] {
+  const c = CACHE.get(sem); if (c) return c;
+  const segs: Seg[] = [];
+  const canal = (x0: number, y0: number, x1: number, y1: number, nivel: number, desde: number, k: number) => {
+    let pts: [number, number][] = [[x0, y0], [x1, y1]];
+    let amp = Math.hypot(x1 - x0, y1 - y0) * 0.22;
+    for (let it = 0; it < 7; it++) {
+      const nv: [number, number][] = [pts[0]];
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [ax, ay] = pts[i], [bx, by] = pts[i + 1], dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy) || 1;
+        const o = (rnd(k + it * 13.7 + i * 1.91) - 0.5) * amp;
+        nv.push([(ax + bx) / 2 - dy / L * o, (ay + by) / 2 + dx / L * o], pts[i + 1]);
+      }
+      pts = nv; amp *= 0.52;
+    }
+    segs.push({pts, nivel, desde});
+    if (nivel < 2) {
+      const nr = nivel === 0 ? 7 : 3;
+      for (let r = 0; r < nr; r++) {
+        const u = 0.1 + rnd(k + r * 5.3 + 1) * 0.75, i0 = Math.floor(u * (pts.length - 1)), [bx, by] = pts[i0];
+        const ang = Math.atan2(y1 - y0, x1 - x0) + (rnd(k + r * 3.1 + 2) > 0.5 ? 1 : -1) * (0.35 + rnd(k + r * 2.2) * 0.6);
+        const lr = Math.hypot(x1 - x0, y1 - y0) * (0.12 + rnd(k + r * 7.7) * 0.25) * (nivel ? 0.7 : 1);
+        canal(bx, by, bx + Math.cos(ang) * lr, by + Math.sin(ang) * lr, nivel + 1, desde + u * (1 - desde) * (nivel ? 1 : 0.9), k + r * 31 + 7);
+      }
+    }
+  };
+  canal(0, 0, 0, 1, 0, 0, sem * 17.3);
+  CACHE.set(sem, segs);
+  return segs;
+}
+/** intensidad de las descargas de retorno a los u segundos del impacto (0..1) */
+export function pulsoRayo(u: number, dur = 0.5) {
+  if (u < 0 || u > dur + 0.3) return 0;
+  const p = (t0: number, k: number) => (u >= t0 ? Math.exp(-(u - t0) * k) : 0);
+  return cl(Math.max(p(0, 18), 0.85 * p(0.07, 22), 0.7 * p(0.15, 16), 0.35 * (1 - u / (dur + 0.3))));
+}
+/** rayo que cae en t (con líder de 0,1 s antes). Devuelve la luz que emite (0..1) */
+export function rayoF(g: G, s: number, t: number, x0: number, y0: number, x1: number, y1: number, sem: number, o: {ancho?: number; col?: string; dur?: number; ramas?: number} = {}) {
+  const {ancho = 10, col = '175,205,255', dur = 0.5, ramas = 1} = o;
+  const u = s - t, LID = 0.1;
+  if (u < -LID || u > dur + 0.3) return 0;
+  const segs = fractal(sem), dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy), ca = dy / L, sa = -dx / L;
+  const map = ([px, py]: [number, number]): [number, number] => [x0 + (px * ca - py * sa) * L, y0 + (px * sa + py * ca) * L];
+  const lider = u < 0, prog = lider ? (u + LID) / LID : 1, I = lider ? 0.35 : pulsoRayo(u, dur);
+  g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+  g.globalCompositeOperation = 'lighter';
+  for (const sg of segs) {
+    if (sg.nivel > 0 && (ramas <= 0 || sg.nivel > ramas + 1)) continue;
+    if (prog < sg.desde) continue;
+    const pr = cl((prog - sg.desde) / (1 - sg.desde + 0.0001)), n = Math.max(2, Math.floor(sg.pts.length * (sg.nivel ? Math.min(1, pr * 1.3) : pr)));
+    const fuerza = sg.nivel === 0 ? I : I * (lider ? 0.8 : 0.45) * (sg.nivel === 1 ? 1 : 0.6);
+    const w = ancho * (sg.nivel === 0 ? 1 : sg.nivel === 1 ? 0.45 : 0.25);
+    if (fuerza <= 0.01) continue;
+    const traza = (lw: number, c: string) => { g.strokeStyle = c; g.lineWidth = lw; g.beginPath(); const [ax, ay] = map(sg.pts[0]); g.moveTo(ax, ay); for (let i = 1; i < n; i++) { const [bx, by] = map(sg.pts[i]); g.lineTo(bx, by); } g.stroke(); };
+    traza(w * 7, `rgba(${col},${0.07 * fuerza})`);
+    traza(w * 3.2, `rgba(${col},${0.22 * fuerza})`);
+    traza(w * 1.4, `rgba(${col},${0.75 * fuerza})`);
+    traza(w * 0.55, `rgba(255,255,255,${Math.min(1, 1.1 * fuerza)})`);
+  }
+  g.restore();
+  if (!lider && I > 0.05) glow(g, x1, y1, 420 * (0.6 + I), col, I);
+  return lider ? 0.15 : I;
+}
+
+/** impacto en el suelo: anillo, chispas con gravedad y humo */
+export function impacto(g: G, s: number, t: number, x: number, y: number, col = '200,225,255', F = 1) {
+  const d = s - t; if (d < 0 || d > 1.6) return;
+  g.save();
+  if (d < 0.45) { const q = d / 0.45; g.strokeStyle = `rgba(${col},${0.8 * (1 - q)})`; g.lineWidth = 10 * (1 - q) + 2; g.beginPath(); g.ellipse(x, y, 40 + q * 420 * F, 12 + q * 110 * F, 0, 0, 7); g.stroke(); }
+  g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+  for (let i = 0; i < 34; i++) {
+    const a = -Math.PI * (0.08 + rnd(i * 1.7 + t) * 0.84), v = (380 + rnd(i * 3.1 + t) * 900) * F, vida = 0.5 + rnd(i * 2.3) * 0.7;
+    if (d > vida) continue; const q = d / vida;
+    const px = x + Math.cos(a) * v * d, py = y + Math.sin(a) * v * d + 1400 * d * d;
+    const vx = Math.cos(a) * v, vy = Math.sin(a) * v + 2800 * d, vl = Math.hypot(vx, vy) || 1;
+    g.strokeStyle = `rgba(255,${Math.round(230 - 90 * q)},${Math.round(180 - 140 * q)},${1 - q})`; g.lineWidth = 4 * (1 - q) + 1.5;
+    g.beginPath(); g.moveTo(px, py); g.lineTo(px - vx / vl * 26, py - vy / vl * 26); g.stroke();
+  }
+  g.globalCompositeOperation = 'source-over';
+  humo(g, s, x, y - 20, cl((d - 0.1) / 0.3) * (1 - cl((d - 0.8) / 0.8)), 1.2 * F, t);
+  g.restore();
+}
+
+/** humo suave que sube enroscándose */
+export function humo(g: G, s: number, x: number, y: number, a: number, sc = 1, sem = 0) {
+  if (a <= 0) return;
+  for (let i = 0; i < 12; i++) {
+    const ph = ((s * 0.35 + i / 12 + rnd(sem + i)) % 1), r = (30 + ph * 140) * sc;
+    const hx = x + Math.sin(ph * 5 + i * 1.3 + s * 0.6) * 50 * sc * ph, hy = y - ph * 520 * sc;
+    const gr = g.createRadialGradient(hx, hy, 0, hx, hy, r); gr.addColorStop(0, `rgba(150,150,165,${0.32 * a * (1 - ph)})`); gr.addColorStop(1, 'rgba(150,150,165,0)');
+    g.fillStyle = gr; g.beginPath(); g.arc(hx, hy, r, 0, 7); g.fill();
+  }
+}
+
+/** brasas que suben (fuego, pelo quemado) */
+export function brasas(g: G, s: number, x: number, y: number, w: number, a = 1, n = 30) {
+  if (a <= 0) return;
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < n; i++) {
+    const ph = (s * (0.5 + rnd(i) * 0.6) + rnd(i * 3.7)) % 1, px = x + (rnd(i * 2.1) - 0.5) * w + Math.sin(s * 3 + i) * 20, py = y - ph * 600;
+    const r = 2 + rnd(i * 5.5) * 5;
+    g.fillStyle = `rgba(255,${Math.round(200 - ph * 120)},80,${a * (1 - ph)})`; g.beginPath(); g.arc(px, py, r, 0, 7); g.fill();
+  }
+  g.restore();
+}
+
+// ------------------------------------------------------------------ etiqueta fina (MAYÚSCULAS + línea de 1,5 px)
+export function etiqueta(g: G, s: number, t: number, txt: string, tx: number, ty: number, ox: number, oy: number, o: {col?: string; tam?: number; hasta?: number; punto?: boolean} = {}) {
+  const {col = '255,255,255', tam = 34, hasta = 1e9, punto = true} = o;
+  const d = s - t; if (d < 0 || s > hasta + 0.15) return;
+  const sal = s > hasta ? 1 - (s - hasta) / 0.15 : 1;
+  const pl = cl(d / 0.2), pt = cl((d - 0.1) / 0.15) * sal;
+  g.save(); pantalla(g);
+  g.font = `700 ${tam}px ${FF}`; g.letterSpacing = `${tam * 0.2}px`;
+  const tw = g.measureText(txt).width, izq = tx < ox;
+  // la caja de texto siempre dentro de la pantalla; la línea llega a su borde
+  const bx = Math.max(52, Math.min(W - 52 - tw, izq ? tx - tw - 18 : tx + 18));
+  const ex = izq ? bx + tw + 14 : bx - 14;
+  g.strokeStyle = `rgba(${col},${0.75 * sal})`; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(ox, oy); g.lineTo(lerp(ox, ex, pl), lerp(oy, ty, pl)); g.stroke();
+  if (punto) { g.fillStyle = `rgba(${col},${sal})`; g.beginPath(); g.arc(ox, oy, 7, 0, 7); g.fill(); g.strokeStyle = `rgba(${col},${0.5 * sal})`; g.beginPath(); g.arc(ox, oy, 7 + 10 * ((s * 1.5) % 1), 0, 7); g.stroke(); }
+  if (pt > 0) {
+    g.globalAlpha = pt;
+    g.fillStyle = 'rgba(8,10,16,0.62)'; g.beginPath(); g.roundRect(bx - 12, ty - tam * 0.95, tw + 24, tam * 1.5, 8); g.fill();
+    g.fillStyle = `rgb(${col})`; g.textBaseline = 'middle'; g.fillText(txt, bx, ty - tam * 0.18);
+    g.letterSpacing = '0px';
+  }
+  g.restore();
+}
+
+// ------------------------------------------------------------------ capa de luz: borde iluminado + sombra propia + tinte de escena
+const CAPAS: HTMLCanvasElement[] = [];
+const nativo = (x: G, ...m: number[]) => (CanvasRenderingContext2D.prototype.setTransform as unknown as (...a: number[]) => void).apply(x, m);
+const capa = (g: G, i: number) => {
+  const c = g.canvas; let o = CAPAS[i];
+  if (!o || o.width !== c.width || o.height !== c.height) { o = document.createElement('canvas'); o.width = c.width; o.height = c.height; CAPAS[i] = o; }
+  const x = contextoHD(o, c.width / W);
+  nativo(x, 1, 0, 0, 1, 0, 0);
+  x.globalCompositeOperation = 'source-over'; x.globalAlpha = 1; x.filter = 'none';
+  x.clearRect(0, 0, o.width, o.height);
+  return x;
+};
+export type Luz = {borde?: string; bordeA?: number; ang?: number; ancho?: number; sombra?: number; tinte?: string; tinteA?: number};
+/** dibuja dib() con luz de borde (ang = dirección hacia la luz, en radianes de pantalla) y sombra propia del lado contrario */
+export function iluminar(g: G, dib: (x: G) => void, o: Luz = {}) {
+  const {borde = '200,225,255', bordeA = 0.9, ang = -Math.PI / 2, ancho = 7, sombra = 0.45, tinte = '', tinteA = 0} = o;
+  const R = g.canvas.width / W, m = g.getTransform();
+  const A = capa(g, 0);
+  nativo(A, m.a, m.b, m.c, m.d, m.e, m.f);
+  A.save(); dib(A); A.restore();
+  nativo(A, 1, 0, 0, 1, 0, 0);
+  const lx = Math.cos(ang), ly = Math.sin(ang);
+  const borde_ = (col: string, alfa: number, k: number, blur: number, signo: number) => {
+    if (alfa <= 0) return;
+    const B = capa(g, 1);
+    B.drawImage(A.canvas, 0, 0);
+    B.globalCompositeOperation = 'source-in'; B.fillStyle = col; B.fillRect(0, 0, B.canvas.width, B.canvas.height);
+    B.globalCompositeOperation = 'destination-out'; B.drawImage(A.canvas, -lx * k * R * signo, -ly * k * R * signo);
+    A.save(); A.globalCompositeOperation = 'source-atop'; A.globalAlpha = alfa; if (blur > 0) A.filter = `blur(${blur * R}px)`; A.drawImage(B.canvas, 0, 0); A.restore();
+  };
+  if (tinte && tinteA > 0) { A.save(); A.globalCompositeOperation = 'source-atop'; A.fillStyle = `rgba(${tinte},${tinteA})`; A.fillRect(0, 0, A.canvas.width, A.canvas.height); A.restore(); }
+  borde_('rgb(10,12,22)', sombra, ancho * 6, ancho * 2.5, -1);
+  borde_(`rgb(${borde})`, bordeA, ancho, ancho * 0.35, 1);
+  g.save(); nativo(g, 1, 0, 0, 1, 0, 0); g.drawImage(A.canvas, 0, 0); g.restore();
+}
+
+/** sombra de contacto en el suelo */
+export function sombraSuelo(g: G, x: number, y: number, w: number, a = 0.5) {
+  const gr = g.createRadialGradient(x, y, 0, x, y, w); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.save(); g.translate(x, y); g.scale(1, 0.18); g.translate(-x, -y); g.fillStyle = gr; g.fillRect(x - w, y - w, w * 2, w * 2); g.restore();
+}
+
+// ------------------------------------------------------------------ libreta del guardabosques: 7 renglones que se queman
+export type Renglon = {t: number; anio: string; parte: string};
+export function libreta(g: G, s: number, x: number, y: number, sc: number, filas: Renglon[], o: {luz?: number; rot?: number; foco?: number} = {}) {
+  const {luz = 0, rot = 0, foco = -1} = o;
+  g.save(); g.translate(x, y); g.rotate(rot); g.scale(sc, sc);
+  // sombra y tapas
+  g.fillStyle = 'rgba(0,0,0,0.5)'; g.filter = 'blur(18px)'; g.beginPath(); g.roundRect(-430, -560, 880, 1160, 30); g.fill(); g.filter = 'none';
+  g.fillStyle = '#3d2a18'; g.beginPath(); g.roundRect(-440, -580, 880, 1160, 26); g.fill();
+  const pg = g.createLinearGradient(-420, 0, 420, 0); pg.addColorStop(0, '#e9dcbc'); pg.addColorStop(0.08, '#f6ecd2'); pg.addColorStop(1, '#efe2c2');
+  g.fillStyle = pg; g.beginPath(); g.roundRect(-410, -555, 820, 1110, 10); g.fill();
+  // textura de papel
+  for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(120,90,50,${0.03 + rnd(i * 3.1) * 0.05})`; g.beginPath(); g.arc(-400 + rnd(i * 1.7) * 800, -540 + rnd(i * 2.9) * 1080, 2 + rnd(i * 5.3) * 10, 0, 7); g.fill(); }
+  // encabezado
+  g.fillStyle = '#7a2a1a'; g.font = `800 44px ${FF}`; g.letterSpacing = '6px'; g.textAlign = 'center'; g.fillText('RANGER LOG · R. SULLIVAN', 0, -470); g.letterSpacing = '0px';
+  g.strokeStyle = 'rgba(122,42,26,0.6)'; g.lineWidth = 3; g.beginPath(); g.moveTo(-370, -440); g.lineTo(370, -440); g.stroke();
+  // renglones
+  for (let i = 0; i < 7; i++) {
+    const yy = -360 + i * 135;
+    g.strokeStyle = 'rgba(70,110,170,0.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(-380, yy + 40); g.lineTo(380, yy + 40); g.stroke();
+    g.fillStyle = 'rgba(60,50,40,0.45)'; g.font = `700 40px ${FF}`; g.textAlign = 'left'; g.fillText(`#${i + 1}`, -370, yy + 22);
+    const f = filas[i]; if (!f) continue;
+    const d = s - f.t; if (d < 0) continue;
+    const q = cl(d / 0.5), quema = Math.exp(-d * 2.2), es = i === foco;
+    // marca de quemado
+    if (quema > 0.02) { glow(g, -40, yy + 10, 380, '255,150,60', quema * (es ? 1 : 0.6)); }
+    g.save(); g.beginPath(); g.rect(-300, yy - 50, 700 * q, 100); g.clip();
+    g.fillStyle = quema > 0.25 ? `rgb(255,${Math.round(lerp(60, 200, quema))},${Math.round(lerp(30, 120, quema))})` : '#2a1a10';
+    g.shadowColor = `rgba(255,140,40,${quema})`; g.shadowBlur = 30 * quema;
+    g.font = `900 70px ${FF}`; g.fillText(f.anio, -290, yy + 28);
+    g.font = `700 46px ${FF}`; g.fillStyle = quema > 0.25 ? g.fillStyle : '#5a3a22'; g.fillText(f.parte, -40, yy + 24);
+    g.restore();
+    // rayo dibujado al margen
+    if (q >= 1) { g.fillStyle = '#c0381e'; g.save(); g.translate(340, yy + 5); g.scale(0.9, 0.9); g.beginPath(); g.moveTo(8, -40); g.lineTo(-18, 5); g.lineTo(0, 5); g.lineTo(-10, 40); g.lineTo(20, -8); g.lineTo(2, -8); g.lineTo(14, -40); g.closePath(); g.fill(); g.restore(); }
+  }
+  g.textAlign = 'left';
+  // luz del relámpago sobre la hoja
+  if (luz > 0) { g.fillStyle = `rgba(210,225,255,${0.35 * luz})`; g.beginPath(); g.roundRect(-410, -555, 820, 1110, 10); g.fill(); }
+  g.restore();
+}

@@ -1,0 +1,12 @@
+# Render final de un video canvas (4K + 1080p CRF 15 + copia para celular).
+# Uso: powershell -File herramientas\render_canvas.ps1 <id>
+param([Parameter(Mandatory = $true)][string]$id)
+$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')
+Set-Location (Join-Path $PSScriptRoot '..\fabrica')
+npx remotion render src/index.ts $id "out/$id-4k-raw.mp4" --scale=2 --jpeg-quality=100 --crf=16 --concurrency=4 --log=error
+if (-not (Test-Path "out/$id-4k-raw.mp4")) { Write-Error "Fallo el render de $id"; exit 1 }
+ffmpeg -y -v error -i "out/$id-4k-raw.mp4" -c:v copy -af "volume=1.1,alimiter=limit=0.6:level=disabled" -c:a aac -b:a 192k "out/$id-4k.mp4"
+ffmpeg -y -v error -i "out/$id-4k.mp4" -vf "scale=1080:1920:flags=lanczos" -c:v libx264 -preset slow -profile:v high -crf 15 -pix_fmt yuv420p -c:a copy -movflags +faststart "out/$id-1080p.mp4"
+ffmpeg -y -v error -i "out/$id-4k.mp4" -vf "scale=1080:1920:flags=lanczos" -c:v libx264 -preset slow -profile:v high -crf 24 -pix_fmt yuv420p -c:a copy -movflags +faststart "out/$id-1080p-celular.mp4"
+Remove-Item "out/$id-4k-raw.mp4"
+Get-ChildItem "out/$id-*" -File | Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB,1)}}

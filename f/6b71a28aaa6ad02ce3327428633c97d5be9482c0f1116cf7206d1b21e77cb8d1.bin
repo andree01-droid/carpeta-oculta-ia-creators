@@ -1,0 +1,68 @@
+import {Easing} from 'remotion';
+import type {Curva, Palabra, Tiempo} from './tipos';
+
+/** Quita tildes, signos y mayúsculas para comparar palabras. */
+export const normalizar = (s: string) =>
+  s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9ñ]/g, '');
+
+export type Reloj = {
+  fps: number;
+  /** convierte un Tiempo a segundos */
+  seg: (t: Tiempo | undefined, defecto?: number) => number;
+  /** convierte un Tiempo a cuadro */
+  cuadro: (t: Tiempo | undefined, defecto?: number) => number;
+};
+
+export const crearReloj = (palabras: Palabra[], fps: number): Reloj => {
+  const seg = (t: Tiempo | undefined, defecto = 0): number => {
+    if (t === undefined || t === null) return defecto;
+    if (typeof t === 'number') return t;
+    const m = /^\s*([^+\-]+?)(?:([+\-])\s*([\d.]+))?\s*$/.exec(t);
+    if (!m) throw new Error(`Tiempo inválido: ${t}`);
+    const [, base, signo, desfase] = m;
+    let valor: number;
+    if (base.startsWith('@')) {
+      const [cuerpo, sufijo] = base.slice(1).split(':');
+      const [texto, nStr] = cuerpo.split('#');
+      const n = nStr ? parseInt(nStr, 10) : 1;
+      const objetivo = normalizar(texto);
+      const coincidencias = palabras.filter((p) => normalizar(p.word) === objetivo);
+      const p = coincidencias[n - 1];
+      if (!p) throw new Error(`No encuentro la palabra "${texto}" (#${n}) en la voz`);
+      valor = sufijo === 'fin' ? p.end : p.start;
+    } else {
+      valor = parseFloat(base);
+      if (Number.isNaN(valor)) throw new Error(`Tiempo inválido: ${t}`);
+    }
+    if (signo && desfase) valor += (signo === '+' ? 1 : -1) * parseFloat(desfase);
+    return valor;
+  };
+  return {
+    fps,
+    seg,
+    cuadro: (t, defecto = 0) => Math.round(seg(t, defecto / fps) * fps),
+  };
+};
+
+/** Curvas de animación de la guía de estilo (CLAUDE.md §4–§6). */
+export const curva = (nombre: Curva | undefined): ((x: number) => number) => {
+  switch (nombre) {
+    case 'lineal':
+      return Easing.linear;
+    case 'entrada':
+      return Easing.in(Easing.cubic);
+    case 'salida':
+      return Easing.out(Easing.cubic);
+    case 'rebote':
+      return Easing.out(Easing.back(1.4));
+    case 'muelle':
+      return Easing.bezier(0.16, 1, 0.3, 1);
+    case 'suave':
+    default:
+      return Easing.bezier(0.65, 0, 0.35, 1);
+  }
+};

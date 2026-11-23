@@ -1,0 +1,81 @@
+// Paletas y medidas fijas de la guía (CLAUDE.md §2). No inventar colores fuera de aquí.
+import type {FondoSpec, NombreEstilo} from './tipos';
+
+export const ANCHO = 1080;
+export const ALTO = 1920;
+export const FPS = 30;
+
+export const COLORES = {
+  blanco: '#FFFFFF',
+  grisSub: 'rgba(255,255,255,0.45)',
+  azulSeleccion: '#3A77D5',
+  ambar: '#EFA32D',
+  ambarOscuro: '#A36E21',
+  dorado: '#D8BD7C',
+  doradoBrillo: '#F2D07B',
+  turquesa: '#8EEDE1',
+  coral: '#CF5D60',
+  rojo: '#E5484D',
+  rojoLinea: '#DB4F3C',
+  piel: '#C48E6F',
+  pielSombra: '#AD897E',
+  una: '#E8C8C0',
+  tecla: '#6B6B6B',
+  teclaOscura: '#4A4A4A',
+  panelTeclado: '#2C2C2E',
+  grisEtiqueta: '#9A9A9A',
+  azulIOS: '#0A84FF',
+  azulInstagram: '#0095F6',
+  paisAmbar: '#F9AA42',
+  paisCeleste: '#BFE3FF',
+  pastillaTexto: '#F3D998',
+  pastillaBorde: '#C9A35A',
+} as const;
+
+export const FONDOS: Record<NombreEstilo, Required<FondoSpec>> = {
+  'estudio-oscuro': {
+    color: '#0F0F0F',
+    cuadricula: false,
+    celda: 120,
+    brillo: 'calido',
+    brilloX: 540,
+    brilloY: 1150,
+    brilloRadio: 600,
+    brilloIntensidad: 1,
+    polvo: 55,
+    vineta: 0.45,
+    estrellas: 0,
+  },
+  'interfaz-grid': {
+    color: '#101010',
+    cuadricula: true,
+    celda: 120,
+    brillo: 'ninguno',
+    brilloX: 540,
+    brilloY: 1150,
+    brilloRadio: 600,
+    brilloIntensidad: 1,
+    polvo: 0,
+    vineta: 0.35,
+    estrellas: 0,
+  },
+  'mapa-satelite': {
+    color: '#000116',
+    cuadricula: false,
+    celda: 120,
+    brillo: 'ninguno',
+    brilloX: 540,
+    brilloY: 1150,
+    brilloRadio: 600,
+    brilloIntensidad: 1,
+    polvo: 0,
+    vineta: 0.3,
+    estrellas: 150,
+  },
+};
+
+export const COLOR_BRILLO: Record<string, string> = {
+  calido: '58,44,23', // #3A2C17
+  frio: '30,35,42', // #1E232A
+  ambar: '163,110,33', // #A36E21
+};

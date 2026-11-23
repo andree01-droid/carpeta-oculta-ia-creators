@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Instala «Carpeta Oculta IA Creators» en el Mac DENTRO de esta carpeta (Node portátil, Python con uv, ffmpeg,
+# motor de vídeo y modelo de voz). Lo ejecuta Claude con «bash instalar/instalar.sh». Si se repite, completa lo que falte.
+set -e
+cd "$(dirname "$0")/.."
+RAIZ="$PWD"
+NODE_V="v24.22.1"
+echo "== Carpeta Oculta IA Creators: instalación (Mac) =="
+mkdir -p .cache
+export npm_config_cache="$RAIZ/.cache/npm" UV_CACHE_DIR="$RAIZ/.cache/uv" UV_PYTHON_INSTALL_DIR="$RAIZ/python" HF_HOME="$RAIZ/.cache/huggingface" HF_HUB_DISABLE_SYMLINKS_WARNING=1
+ARQ="arm64"; [ "$(uname -m)" = "x86_64" ] && ARQ="x64"
+
+# 1) Node portátil
+if [ ! -x "node/bin/node" ]; then
+  echo "Descargo Node $NODE_V ($ARQ)…"
+  curl -fsSL "https://nodejs.org/dist/$NODE_V/node-$NODE_V-darwin-$ARQ.tar.gz" -o node.tar.gz
+  mkdir -p node && tar -xzf node.tar.gz -C node --strip-components=1 && rm node.tar.gz
+fi
+export PATH="$RAIZ/node/bin:$PATH"
+
+# 2) ffmpeg portátil
+if [ ! -x "ffmpeg/bin/ffmpeg" ]; then
+  echo "Descargo ffmpeg (el programa que corta y mide audio y vídeo)…"
+  ARQ_FF="arm64"; [ "$ARQ" = "x64" ] && ARQ_FF="amd64"
+  mkdir -p ffmpeg/bin
+  for p in ffmpeg ffprobe; do
+    curl -fsSL "https://ffmpeg.martin-riedl.de/redirect/latest/macos/$ARQ_FF/release/$p.zip" -o "$p.zip"
+    unzip -o -q "$p.zip" -d ffmpeg/bin && rm "$p.zip"
+  done
+  chmod +x ffmpeg/bin/*
+  xattr -dr com.apple.quarantine ffmpeg 2>/dev/null || true
+fi
+
+# 3) Motor de vídeo (Remotion) y HyperFrames
+echo "Instalo el motor de vídeo (unos minutos la primera vez)…"
+npm ci --prefix fabrica --no-audit --no-fund --loglevel=error
+(cd fabrica && npx remotion browser ensure >/dev/null 2>&1) || echo "  (el navegador del motor se descargará en el primer vídeo)"
+if [ -f hyperframes/package-lock.json ]; then
+  npm ci --prefix hyperframes --no-audit --no-fund --loglevel=error || echo "  (HyperFrames no se pudo instalar; es opcional)"
+fi
+
+# 4) Python con uv portátil
+if [ ! -x "uv/uv" ]; then
+  echo "Descargo uv (gestor de Python)…"
+  ARQ_UV="aarch64-apple-darwin"; [ "$ARQ" = "x64" ] && ARQ_UV="x86_64-apple-darwin"
+  mkdir -p uv
+  curl -fsSL "https://github.com/astral-sh/uv/releases/latest/download/uv-$ARQ_UV.tar.gz" | tar -xz -C uv --strip-components=1
+fi
+echo "Preparo Python y las librerías…"
+[ -x .venv/bin/python ] || uv/uv venv .venv --python 3.12 --quiet
+uv/uv pip install --quiet --python .venv/bin/python -r instalar/requirements.txt
+
+# 5) Carpetas y el atajo «./mg»
+mkdir -p videos_referencia/originales videos_referencia/transcripciones comparaciones fabrica/out fabrica/public/voz fabrica/videos/fuentes
+cat > mg <<'LANZ'
+#!/usr/bin/env bash
+R="$(cd "$(dirname "$0")" && pwd)"
+export PATH="$R/node/bin:$R/ffmpeg/bin:$R/.venv/bin:$PATH" HF_HOME="$R/.cache/huggingface" npm_config_cache="$R/.cache/npm" PYTHONUTF8=1 HF_HUB_DISABLE_SYMLINKS_WARNING=1
+exec "$@"
+LANZ
+chmod +x mg
+
+echo "Descargo el modelo que escucha la voz (~1,6 GB, solo la primera vez)…"
+.venv/bin/python -c "from faster_whisper import WhisperModel; WhisperModel('large-v3-turbo', device='cpu', compute_type='int8')" >/dev/null 2>&1 || echo "  (se descargará con la primera voz)"
+
+echo
+./mg node --version
+./mg ffmpeg -version | head -1
+./mg python -c "import numpy, cv2, PIL, faster_whisper, edge_tts, yt_dlp; print('Python OK')"
+echo "== Listo =="

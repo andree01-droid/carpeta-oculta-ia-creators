@@ -1,0 +1,70 @@
+<template>
+  <style>
+#root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; background: #0E0E10; }
+.fondo { position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.035) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,0.035) 1.5px, transparent 1.5px);
+  background-size: 120px 120px; background-position: -60px -60px; }
+.halo { position: absolute; left: -300px; top: 300px; width: 1680px; height: 1680px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(239,163,45,0.22) 0%, rgba(239,163,45,0.06) 40%, transparent 70%); }
+.vineta { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 62% at 50% 55%, transparent 55%, rgba(0,0,0,0.75) 100%); pointer-events: none; }
+.cam { position: absolute; inset: 0; }
+.persp { position: absolute; inset: 0; perspective: 1800px; perspective-origin: 540px 1000px; }
+.tablero { position: absolute; width: 1000px; height: 392px; transform-style: preserve-3d; }
+.base { position: absolute; left: -36px; top: -36px; right: -36px; bottom: -36px; border-radius: 42px;
+  background: linear-gradient(180deg, #1d1d20, #141416); box-shadow: 0 30px 0 #0a0a0b, 0 50px 90px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06); }
+.k { position: absolute; width: 88px; height: 88px; border-radius: 16px;
+  background: linear-gradient(180deg, #3b3b3f 0%, #2c2c30 100%);
+  box-shadow: 0 10px 0 #17171a, 0 16px 24px rgba(0,0,0,0.55), inset 0 2px 0 rgba(255,255,255,0.09);
+  color: #d7d7da; font-weight: 600; font-size: 40px; display: grid; place-items: center; }
+.k.esp { width: 520px; }
+.k .g { position: absolute; inset: 0; border-radius: 16px; opacity: 0; display: grid; place-items: center; color: #1a1206; font-weight: 800; }
+.k .b { position: absolute; left: 30px; width: 28px; bottom: 14px; height: 6px; border-radius: 3px; background: #6a6a70;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+.fila { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+.chip { padding: 14px 38px; border-radius: 999px; font-weight: 800; font-size: 50px; white-space: nowrap; }
+.etq { position: absolute; font-weight: 800; font-size: 40px; color: #fff; white-space: nowrap; }
+.dedo { position: absolute; width: 74px; height: 104px; border-radius: 37px 37px 30px 30px;
+  background: linear-gradient(180deg, #E8B496 0%, #C98B6B 100%); box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
+.dedo::after { content: ""; position: absolute; left: 14px; right: 14px; top: 8px; height: 40px; border-radius: 20px 20px 12px 12px;
+  background: linear-gradient(180deg, #F6D9CF, #E7C1B3); opacity: 0.9; }
+.anillo { position: absolute; border-radius: 50%; border: 4px solid #EFA32D; }
+</style>
+  <div data-hf-id="hf-6srx" id="root" data-composition-id="s12-cinco" data-width="1080" data-height="1920" data-layout-allow-overlap data-layout-allow-overflow>
+
+    <div data-hf-id="hf-anbe" class="fondo"></div><div data-hf-id="hf-d1uq" class="halo"></div>
+    <div data-hf-id="hf-4ja1" class="cam" id="s12-cam">
+      <div data-hf-id="hf-w1x2" class="fila" style="top:560px"><div data-hf-id="hf-jz2z" id="s12-raro" style="font-weight:900;font-size:110px;color:#FF5C8A;white-space:nowrap">🤯 LO RARO</div></div>
+      <div data-hf-id="hf-aqwk" class="persp"><div data-hf-id="hf-fnny" class="tablero" id="s12a-tab" style="left:395px;top:820px;width:284px;height:382px;scale:1.0"><div data-hf-id="hf-9327" class="base"></div><div data-hf-id="hf-qmga" class="k" id="s12a-n7" style="left:0px;top:0px">7<div data-hf-id="hf-gxje" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">7</div></div><div data-hf-id="hf-grtt" class="k" id="s12a-n8" style="left:98px;top:0px">8<div data-hf-id="hf-m3ir" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">8</div></div><div data-hf-id="hf-l9da" class="k" id="s12a-n9" style="left:196px;top:0px">9<div data-hf-id="hf-mhts" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">9</div></div><div data-hf-id="hf-10cl" class="k" id="s12a-n4" style="left:0px;top:98px">4<div data-hf-id="hf-hbuf" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">4</div></div><div data-hf-id="hf-sabc" class="k" id="s12a-n5" style="left:98px;top:98px">5<div data-hf-id="hf-hq5g" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">5</div><div data-hf-id="hf-goiq" class="b"></div></div><div data-hf-id="hf-p9nl" class="k" id="s12a-n6" style="left:196px;top:98px">6<div data-hf-id="hf-gj8d" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">6</div></div><div data-hf-id="hf-6k4a" class="k" id="s12a-n1" style="left:0px;top:196px">1<div data-hf-id="hf-jbdk" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">1</div></div><div data-hf-id="hf-u2zl" class="k" id="s12a-n2" style="left:98px;top:196px">2<div data-hf-id="hf-i4gh" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">2</div></div><div data-hf-id="hf-y7hy" class="k" id="s12a-n3" style="left:196px;top:196px">3<div data-hf-id="hf-iiri" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">3</div></div><div data-hf-id="hf-aqdz" class="k" id="s12a-n0" style="left:0px;top:294px">0<div data-hf-id="hf-ix2j" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">0</div></div></div></div>
+      <div data-hf-id="hf-xrrm" id="s12-tel" style="position:absolute;left:80px;top:1180px;width:400px;padding:30px 0;text-align:center">
+        <div data-hf-id="hf-v2mg" class="etq" style="position:relative;font-size:44px;margin-bottom:16px">📞 Teléfono</div>
+      </div>
+      <div data-hf-id="hf-285b" id="s12-atm" style="position:absolute;left:600px;top:1180px;width:400px;padding:30px 0;text-align:center">
+        <div data-hf-id="hf-o8f4" class="etq" style="position:relative;font-size:44px;margin-bottom:16px">🏧 Cajero</div>
+      </div>
+      <div data-hf-id="hf-u1u4" class="persp"><div data-hf-id="hf-ekhh" class="tablero" id="s12t-tab" style="left:110px;top:1280px;width:284px;height:382px;scale:0.72"><div data-hf-id="hf-ykzj" class="base"></div><div data-hf-id="hf-vfrp" class="k" id="s12t-n1" style="left:0px;top:0px">1<div data-hf-id="hf-y9ps" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">1</div></div><div data-hf-id="hf-ha0s" class="k" id="s12t-n2" style="left:98px;top:0px">2<div data-hf-id="hf-uqh1" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">2</div></div><div data-hf-id="hf-8pgt" class="k" id="s12t-n3" style="left:196px;top:0px">3<div data-hf-id="hf-50ma" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">3</div></div><div data-hf-id="hf-1nx4" class="k" id="s12t-n4" style="left:0px;top:98px">4<div data-hf-id="hf-1hdj" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">4</div></div><div data-hf-id="hf-q1nf" class="k" id="s12t-n5" style="left:98px;top:98px">5<div data-hf-id="hf-lhzw" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">5</div><div data-hf-id="hf-ys5i" class="b"></div></div><div data-hf-id="hf-epaw" class="k" id="s12t-n6" style="left:196px;top:98px">6<div data-hf-id="hf-4pyp" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">6</div></div><div data-hf-id="hf-fjk9" class="k" id="s12t-n7" style="left:0px;top:196px">7<div data-hf-id="hf-9v9q" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">7</div></div><div data-hf-id="hf-54x4" class="k" id="s12t-n8" style="left:98px;top:196px">8<div data-hf-id="hf-odrn" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">8</div></div><div data-hf-id="hf-9t89" class="k" id="s12t-n9" style="left:196px;top:196px">9<div data-hf-id="hf-elrs" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">9</div></div><div data-hf-id="hf-f08o" class="k" id="s12t-n*" style="left:0px;top:294px">*<div data-hf-id="hf-ey09" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">*</div></div><div data-hf-id="hf-7atn" class="k" id="s12t-n0" style="left:98px;top:294px">0<div data-hf-id="hf-8kp7" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">0</div></div><div data-hf-id="hf-4h76" class="k" id="s12t-n#" style="left:196px;top:294px">#<div data-hf-id="hf-c5v2" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">#</div></div></div><div data-hf-id="hf-8iol" class="tablero" id="s12c-tab" style="left:630px;top:1280px;width:284px;height:382px;scale:0.72"><div data-hf-id="hf-y6oi" class="base"></div><div data-hf-id="hf-8ers" class="k" id="s12c-n1" style="left:0px;top:0px">1<div data-hf-id="hf-x2sp" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">1</div></div><div data-hf-id="hf-ulrj" class="k" id="s12c-n2" style="left:98px;top:0px">2<div data-hf-id="hf-vxe4" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">2</div></div><div data-hf-id="hf-khyk" class="k" id="s12c-n3" style="left:196px;top:0px">3<div data-hf-id="hf-5exb" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">3</div></div><div data-hf-id="hf-ovm7" class="k" id="s12c-n4" style="left:0px;top:98px">4<div data-hf-id="hf-132i" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">4</div></div><div data-hf-id="hf-ty4m" class="k" id="s12c-n5" style="left:98px;top:98px">5<div data-hf-id="hf-kb2t" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">5</div><div data-hf-id="hf-z6gj" class="b"></div></div><div data-hf-id="hf-1kan" class="k" id="s12c-n6" style="left:196px;top:98px">6<div data-hf-id="hf-5wvs" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">6</div></div><div data-hf-id="hf-au9k" class="k" id="s12c-n7" style="left:0px;top:196px">7<div data-hf-id="hf-a9kr" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">7</div></div><div data-hf-id="hf-swnr" class="k" id="s12c-n8" style="left:98px;top:196px">8<div data-hf-id="hf-nzgm" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">8</div></div><div data-hf-id="hf-9f8c" class="k" id="s12c-n9" style="left:196px;top:196px">9<div data-hf-id="hf-deup" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">9</div></div><div data-hf-id="hf-5a01" class="k" id="s12c-n*" style="left:0px;top:294px">*<div data-hf-id="hf-avfh" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">*</div></div><div data-hf-id="hf-oa2k" class="k" id="s12c-n0" style="left:98px;top:294px">0<div data-hf-id="hf-86e6" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">0</div></div><div data-hf-id="hf-cdjz" class="k" id="s12c-n#" style="left:196px;top:294px">#<div data-hf-id="hf-zooi" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D">#</div></div></div></div>
+    </div>
+    <div data-hf-id="hf-3ox1" class="vineta"></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    const T0 = 58.86;
+    const at = (s) => Math.max(0, s - T0);
+
+    tl.fromTo("#s12-cam", {x: -500, filter: "blur(16px)"}, {x: 0, filter: "blur(0px)", duration: 0.3, ease: "power3.out"}, 0);
+    tl.fromTo("#s12-raro", {scale: 2.4, opacity: 0, rotation: -6}, {scale: 1, opacity: 1, rotation: -3, duration: 0.25, ease: "power4.in"}, at(59.72) - 0.2);
+    tl.fromTo("#s12a-tab", {scale: 0, rotationX: 0}, {scale: 1.2, duration: 0.45, ease: "back.out(1.8)"}, at(60.52) - 0.3);
+    tl.fromTo("#s12a-n5 .b", {background: "#6a6a70"}, {background: "#FFE2A8", boxShadow: "0 0 20px #FFC04D", duration: 0.25}, at(60.52));
+    tl.fromTo("#s12a-n5 .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(61.3));
+tl.fromTo("#s12a-n5", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(61.3));
+    tl.to("#s12-raro", {opacity: 0, duration: 0.25}, at(62.82));
+    tl.to("#s12a-tab", {y: -180, scale: 0.85, duration: 0.5, ease: "power3.inOut"}, at(62.82));
+    tl.fromTo(["#s12-tel", "#s12t-tab"], {y: 600, opacity: 0}, {y: 0, opacity: 1, duration: 0.45, ease: "expo.out"}, at(64.06));
+    tl.fromTo(["#s12-atm", "#s12c-tab"], {y: 600, opacity: 0}, {y: 0, opacity: 1, duration: 0.45, ease: "expo.out"}, at(64.62));
+    tl.fromTo("#s12t-n5 .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(64.46000000000001));
+tl.fromTo("#s12t-n5", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(64.46000000000001));tl.fromTo("#s12c-n5 .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(65.02000000000001));
+tl.fromTo("#s12c-n5", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(65.02000000000001));
+
+    window.__timelines["s12-cinco"] = tl;
+  </script>
+</template>

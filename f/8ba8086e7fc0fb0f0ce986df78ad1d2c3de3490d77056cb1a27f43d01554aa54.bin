@@ -1,0 +1,16 @@
+# Genera hojas de contacto (grillas de fotogramas cada 0.5 s con el segundo escrito)
+# y un CSV con el puntaje de cambio de escena por cuadro.
+$root = Split-Path $PSScriptRoot -Parent
+$orig = Join-Path $root "videos_referencia\originales"
+$out  = Join-Path $root "videos_referencia\hojas"
+$esc  = Join-Path $root "videos_referencia\escenas"
+New-Item -ItemType Directory -Force $out | Out-Null
+$font = "C\:/Windows/Fonts/arialbd.ttf"
+foreach ($f in Get-ChildItem "$orig\*.mp4") {
+  $n = $f.BaseName
+  $vf = "fps=2,scale=240:-2,drawtext=fontfile='$font':text='%{pts\:hms}':x=4:y=4:fontsize=18:fontcolor=yellow:box=1:boxcolor=black@0.7,tile=6x3"
+  ffmpeg -v error -y -i $f.FullName -vf $vf "$out\${n}_%02d.jpg"
+  # puntaje de escena por cuadro
+  ffmpeg -hide_banner -i $f.FullName -vf "select='gte(scene,0)',metadata=print:file='$($esc -replace '\\','/' -replace ':','\:')/${n}_scores.txt'" -an -f null - 2>$null
+  Write-Output "$n listo"
+}

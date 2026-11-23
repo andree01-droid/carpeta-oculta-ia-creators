@@ -1,0 +1,44 @@
+"""Hace una voz más ágil: recorta los silencios entre palabras a un máximo y acelera un poco (sin cambiar el tono).
+
+Uso: acortar_pausas.py <voz.mp3> <palabras.json> <salida.mp3> <salida.palabras.json> [--max=0.28] [--tempo=1.08]
+Los tiempos de las palabras se recalculan (mismo número e índices de palabras).
+"""
+import json, subprocess, sys
+import numpy as np
+
+SR = 24000
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+opt = {a.split("=")[0][2:]: float(a.split("=")[1]) for a in sys.argv[1:] if a.startswith("--")}
+maxp, tempo = opt.get("max", 0.28), opt.get("tempo", 1.08)
+voz_in, json_in, voz_out, json_out = args
+
+raw = subprocess.run(["ffmpeg", "-v", "error", "-i", voz_in, "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], capture_output=True, check=True).stdout
+A = np.frombuffer(raw, dtype=np.float32)
+P = json.load(open(json_in, encoding="utf-8-sig"))
+
+trozos, nuevas = [], []
+pos = 0.0      # posición leída en el original
+t_nuevo = 0.0  # duración ya escrita
+for i, p in enumerate(P):
+    if i > 0:
+        hueco = p["start"] - P[i - 1]["end"]
+        if hueco > maxp:
+            # conserva maxp de silencio centrado en el hueco
+            corte_a = P[i - 1]["end"] + maxp / 2
+            corte_b = p["start"] - maxp / 2
+            trozos.append(A[int(pos * SR): int(corte_a * SR)])
+            t_nuevo += corte_a - pos
+            pos = corte_b
+    desfase = t_nuevo - pos
+    nuevas.append({"word": p["word"], "start": p["start"] + desfase, "end": p["end"] + desfase})
+trozos.append(A[int(pos * SR):])
+voz = np.concatenate(trozos)
+
+subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "f32le", "-ac", "1", "-ar", str(SR), "-i", "-",
+                "-af", f"atempo={tempo}", "-b:a", "192k", voz_out], input=voz.tobytes(), check=True)
+for p in nuevas:
+    p["start"] = round(p["start"] / tempo, 3)
+    p["end"] = round(p["end"] / tempo, 3)
+open(json_out, "w", encoding="utf-8").write(json.dumps(nuevas, ensure_ascii=False))
+dur = len(voz) / SR / tempo
+print(f"{dur:.2f}s · {len(nuevas)} palabras · {len(nuevas) / dur * 60:.0f} ppm")

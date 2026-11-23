@@ -1,0 +1,380 @@
+# ANÁLISIS DE LOS 4 VIDEOS DE REFERENCIA
+
+Archivos analizados (copiados en `videos_referencia/originales/`):
+
+| Clave | Archivo original | Tema |
+|---|---|---|
+| `metros` | Sabías esto de los metros.mp4 | Por qué el gancho del metro está suelto |
+| `ia_aprender` | ¿Quieres aprender hacer este tipo de video…mp4 | Por qué los aviones no vuelan en línea recta |
+| `teclado` | Sabías esto de tu teclado…mp4 | Zonas táctiles invisibles del teclado del iPhone |
+| `electrocutarte` | Crees ahora que vas a electrocutarte…mp4 | Cómo funciona una pantalla táctil capacitiva |
+
+Material generado:
+- `videos_referencia/frames/<clave>/f_XXXX.jpg` → 1 fotograma cada 0,5 s (f_0001 = 0,0 s; f_000N = (N−1)·0,5 s).
+- `videos_referencia/hojas/<clave>_NN.jpg` → hojas de contacto 6×3 con el segundo escrito en cada cuadro.
+- `videos_referencia/escenas/` → cortes por ffmpeg (`<clave>.txt`), puntaje de cambio por cuadro (`*_scores.txt`) y picos (`eventos.json`).
+- `videos_referencia/transcripciones/<clave>.json` → transcripción con tiempo por palabra (faster-whisper large-v3-turbo).
+- `videos_referencia/fullres/` → fotogramas a resolución completa, ampliaciones y tiras cuadro a cuadro.
+- `herramientas/` → scripts usados (se pueden volver a correr).
+
+---
+
+## 1. Datos técnicos (ffprobe)
+
+| Video | Duración | Resolución | FPS | Cuadros | Audio |
+|---|---|---|---|---|---|
+| metros | 30,67 s | 720×1280 | 30 | 917 | AAC 44,1 kHz, estéreo (contenido mono) |
+| ia_aprender | 63,23 s | 720×1280 | 30 | 1894 | igual |
+| teclado | 84,33 s | 720×1280 | 30 | 2527 | igual |
+| electrocutarte | 87,26 s | 720×1280 | 30 | 2614 | igual |
+
+Todos son **9:16, 30 fps**. La resolución de 720×1280 es la que entrega Instagram al descargar; el original casi seguro era **1080×1920**. Todas las medidas en px de este documento están en la escala 720 y **×1,5** para 1080.
+
+## 2. Cortes de escena (ffmpeg `select='gt(scene,0.25)'`)
+
+| Video | Cortes duros detectados | Qué pasa en el corte |
+|---|---|---|
+| metros | 7,60 s | Del gancho en vista lateral, a la tabla de madera |
+| ia_aprender | 24,97 s · 28,40 s | Globo → naranja sobre madera (corte duro) · naranja → mapa Mercator |
+| teclado | 63,47 s | Patente en papel blanco → teclas naranjas en primer plano |
+| electrocutarte | 68,40 s · 69,37 s | Mano con guante → tejido de lana a pantalla completa → corte transversal |
+
+**Conclusión:** casi no hay cortes duros (1 o 2 por video). El 90 % de los cambios de escena son **transiciones con movimiento y desenfoque** (ver §7), que ffmpeg no detecta como corte. Con un umbral más bajo (0,08) aparecen 4 a 16 "eventos" por video (`eventos.json`). La lista real de escenas, hecha mirando los fotogramas, está en §9.
+
+## 3. Transcripciones y voz
+
+| Video | Palabras | Velocidad | Pausas > 0,3 s | Duración media por palabra |
+|---|---|---|---|---|
+| metros | 112 | **220 ppm** | 3 (media 0,34 s) | 0,24 s |
+| ia_aprender | 184 | **178 ppm** | 13 (media 0,39 s) | 0,30 s |
+| teclado | 289 | **208 ppm** | 2 (media 0,35 s) | 0,26 s |
+| electrocutarte | 303 | **209 ppm** | 2 (media 0,67 s) | 0,27 s |
+
+- **Promedio: ~205 palabras por minuto.** Es rápido: no hay silencios; entre frases hay de 0,1 a 0,4 s.
+- **Acento:** español de España ("móvil", "boli", "envíaselo", "tard con uve doble"). Voz masculina, grave y limpia. Suena a voz sintética de alta calidad (tipo ElevenLabs): ritmo uniforme, sin respiraciones audibles ni muletillas.
+- **Tono:** de narrador que cuenta un secreto, seguro y tranquilo, con algo de complicidad ("ni un pelo más", "ni se entera", "se vuelve loca"). La emoción es moderada. Sube un poco en el gancho y en el remate final.
+- **Música:** **no hay**. El audio es mono (la diferencia L−R está en −180 dB). En los huecos entre palabras el nivel cae a entre −56 y −100 dB: silencio total.
+- **Efectos de sonido:** prácticamente ninguno. Hay unos pocos picos sin voz, muy cortos (por ejemplo teclado 21,2–22,1 s, mientras deletrea "T, A, R, D"), que parecen colas de la voz o clics muy suaves. **Regla: solo voz.**
+- **Volumen:** voz normalizada, mediana −19 dBFS, picos de −12 dBFS (aprox. −14 LUFS).
+- **Error de Whisper:** al final de `metros` ("Gracias por ver el video", 30,08 s) y de `electrocutarte` ("Gracias" ×3, 87,0 s) Whisper inventó texto. En el audio no está. Siempre hay que borrar esas palabras finales.
+
+### Guiones completos (con segundos)
+
+**metros (30 s)**
+```
+0.00 ¿Por qué el gancho del metro está suelto?          ← GANCHO (pregunta)
+2.28 No, no está roto.                                  ← niega la suposición
+3.92 Se mueve justo lo que mide de grueso, ni un pelo más.   ← dato clave
+7.04 Si lo enganchas en una tabla y tiras, sale.
+9.36 Y el cero queda justo donde toca la tabla.
+11.70 Pero si lo empujas contra una pared, entra.
+13.96 Y el cero queda justo donde toca la pared.
+16.24 Así, midas como midas, su grosor nunca se cuela en la medida.   ← conclusión
+19.92 Si lo aprietas, una de las dos medidas te saldrá siempre mal.   ← consecuencia
+23.32 Así que sí, está suelto, pero a propósito.            ← REMATE (vuelve al gancho)
+25.94 Envíaselo a ese amigo que le ha apretado el gancho al metro pensando que estaba roto.  ← CTA
+```
+
+**ia_aprender (63 s)**
+```
+0.00 ¿Por qué los aviones no vuelan en línea recta?        ← GANCHO
+2.88 Un vuelo de Santiago de Chile a Sídney, en vez de cruzar derecho el océano, baja casi hasta la Antártida.
+9.76 ¿Para qué da esa vuelta tan grande?                     ← re-pregunta
+12.22 Porque esa vuelta es el camino más corto, unos 1.400 kilómetros menos que ir derecho.  ← dato sorpresa con cifra
+18.64 El que te engaña es el mapa.                            ← giro
+20.70 La Tierra es una pelota. … aplastar … la cáscara de una naranja. Se rompe.   ← analogía
+27.78 Para tapar los huecos, el mapa estira todo lo que está cerca de los polos.
+32.58 Por eso Groenlandia parece tan grande como África. Y África es 14 veces más grande.   ← dato sorpresa 2
+38.76 Ahora pon un hilo tenso sobre la Tierra. De Santiago a Sídney. Se va hacia el sur…
+45.90 Y al aplastarla en el mapa, ese hilo recto se ve torcido.
+49.64 Así que el avión sí va en línea recta. El que está torcido es el mapa.   ← REMATE
+53.98 Si quieres aprender a hacer este tipo de video, comenta la palabra IA y obtén millones de reproducciones con este nuevo formato.  ← CTA (comentar palabra)
+```
+
+**teclado (84 s)**
+```
+0.00 Cada tecla del teclado de tu iPhone es más pequeña que tu pulgar.   ← GANCHO (dato + "tú")
+3.82 Y aún así, aciertas la letra casi siempre.
+6.18 Entonces, ¿cómo es posible?                                        ← pregunta
+7.74 Porque las teclas que ves no son las que tocas.                     ← revelación
+10.42 Y las que tocas cambian de tamaño mientras escribes.
+13.20 Debajo de cada letra hay una zona invisible… la que de verdad atrapa tu toque.
+18.28 Imagina que le escribes a una amiga y acabas de poner T, A, R, D.   ← ejemplo concreto
+22.48 Tu iPhone ya apuesta por lo que viene después. Porque «tarde» es una palabra. Y «tard» con uve doble no.
+28.44 Así que, antes de que tu pulgar baje, la zona invisible de la E crece. Y las de alrededor se aplastan.
+34.28 En la pantalla no se mueve nada. Todas las teclas se ven exactamente iguales.
+38.80 Pero si tu pulgar cae un poco desviado… el iPhone se lo da a la E.
+44.14 Luego escribes la siguiente letra. Y todas las zonas vuelven a cambiar…
+50.00 Apple ya lo metió en el primer iPhone. Porque un botón cómodo necesitaba 44 píxeles. Y la pantalla entera solo medía 320 de ancho.  ← dato con cifras
+58.06 Ken Kocienda, el ingeniero… lo cuenta en su libro. Y luego Apple lo patentó.   ← autoridad
+63.34 Y además tiene un segundo truco. Tu pulgar tapa la tecla… la letra salta encima de tu dedo.   ← bonus
+71.94 O sea, que no tienes tanta puntería con los pulgares. Es tu teclado el que, en silencio, mueve la diana…   ← REMATE
+79.54 Sígueme y envíaselo a ese amigo que le echa la culpa de todo al autocorrector.   ← CTA
+```
+
+**electrocutarte (87 s)**
+```
+0.00 La pantalla de tu móvil nota el roce más suave de tu dedo.            ← GANCHO (contraste)
+3.38 Pero si aprietas con un boli con todas tus fuerzas, ni se entera.
+7.30 Entonces, ¿qué es lo que está notando de verdad?                      ← pregunta
+9.66 No es la presión. Lo que mide es la electricidad de tu cuerpo.         ← revelación
+13.24 Imagina que es invierno y te llaman cuando llevas los guantes puestos.   ← situación cotidiana
+16.72 Debajo del cristal hay una rejilla de cables… filas… columnas…
+22.26 Cada vez que una fila se cruza con una columna, el móvil guarda ahí una carga eléctrica diminuta…
+30.72 Tu cuerpo es casi todo agua con sal, así que conduce la electricidad.
+34.74 Cuando acercas la yema… se lleva un poco de esa carga… El móvil ve una pequeña bajada… ¡Esto es un toque!
+45.28 …puede seguir dos dedos a la vez, que es como haces zoom pellizcando.   ← aplicación cotidiana
+51.16 Pero el guante no conduce nada… Para el móvil, nadie lo ha tocado.      ← vuelve a la situación
+58.98 Por eso también la pantalla se vuelve loca cuando llueve…               ← dato extra
+65.48 Y por eso funcionan los guantes para pantallas táctiles…                ← dato extra
+73.60 Así que tu pantalla nunca ha sentido tu dedo… tu dedo solo era lo que se la llevaba.  ← REMATE poético
+81.52 Sígueme y envíaselo a ese amigo al que nunca le funciona el móvil con las manos mojadas.  ← CTA
+```
+
+---
+
+## 4. Estilo visual
+
+### 4.1 Rasgos comunes de los 4 videos
+- **Look "explicador 3D premium oscuro":** objetos 3D renderizados (estilo Blender/Cycles), limpios y sin ruido, con materiales simples (metal gris satinado, plástico, madera clara, vidrio). Elementos 2D de interfaz (teclados iOS, pantallas de Instagram) planos o en perspectiva 2,5D.
+- **Fondo casi negro** con **viñeta** y un **resplandor cálido** detrás del objeto principal. En los estilos de estudio, una **cuadrícula muy tenue** tipo papel milimetrado.
+- **Partículas de polvo:** puntitos blancos de 1–2 px dispersos y quietos o con deriva muy lenta (metros 0–30 s, electrocutarte 0–13 s).
+- **Un solo foco de atención por plano.** El objeto ocupa del 50 al 80 % del ancho y siempre queda **centrado en la mitad inferior** (y = 35 % – 85 %). La franja de arriba (y < 30 %) queda libre para los subtítulos.
+- **Etiquetas técnicas finas** (líneas de 1 px + texto pequeño en mayúsculas espaciadas) estilo diagrama de ingeniería.
+- **Sin personajes con cara.** Los "personajes" son **manos y dedos** estilizados (dedo índice 3D con uña, mano con guante de punto) y **avatares planos** de un círculo en la pantalla del CTA.
+
+### 4.2 Paleta medida (hex, mediana de píxeles)
+
+| Uso | Hex | Dónde se midió |
+|---|---|---|
+| Fondo base estudio | `#0F0F0F` / `#101010` | metros, teclado (esquinas) |
+| Líneas de cuadrícula | `#141414`–`#161616` (blanco al 2–3 %), cada **80 px** (720) = **120 px** (1080) | teclado 57 s |
+| Resplandor cálido central | `#3A2C17` → `#19140F` → fondo | metros 5,5 s (centro) |
+| Fondo "frío" (electrocutarte) | `#0D0D0D` arriba → `#20242A` abajo | electrocutarte 11,6 s |
+| Ámbar acento (zonas activas) | `#EFA32D` | teclado 10–11 s |
+| Ámbar oscuro (teclas iluminadas) | `#A36E21` | teclado 0,3–2,6 s |
+| Dorado (líneas de campo, arcos, tornillos) | `#D8BD7C` / brillo `#F2D07B` | electrocutarte 26–39 s |
+| Turquesa (plano del "cero") | `#8EEDE1` | metros 9,6–17 s |
+| Coral/rojo (error, "roto", cifras malas) | `#CF5D60` (objeto) · `#DB4F3C` (líneas) · `#FF6B5E` (cifra km) | metros 3,6 s, ia 16 s |
+| Azul selección (caja palabra clave) | `#3A77D5` | todos |
+| Piel del dedo | `#C48E6F` (luz) · `#AD897E` (sombra) · uña `#E8C8C0` | teclado 0,3 s, electrocutarte |
+| Gris tecla / metal | `#6B6B6B` / `#605E5F` | teclado, metros |
+| Texto subtítulo activo | `#FFFFFF` | — |
+| Texto subtítulo inactivo | `#808080` aprox. (blanco al 45 %) | teclado 10 s |
+| Espacio (ia_aprender) | `#000116` → `#041E50` | ia 9,2 s |
+| Océano satelital | `#0E3D86` / `#18396E` | ia 37,8 s |
+| Resaltado de país 1 | `#F9AA42` (África) | ia 35–39 s |
+| Resaltado de país 2 | `#BFE3FF` (Groenlandia, celeste) | ia 33–36 s |
+| Etiqueta de ciudad (pastilla) | fondo `#1A1A1A` al 80 %, borde `#C9A35A`, texto `#F3D998` | ia 4–20 s |
+
+### 4.3 Iluminación y texturas
+- **Luz clave** cálida desde arriba a la izquierda, con relleno suave. Las sombras de contacto son suaves y no hay sombras duras proyectadas sobre el fondo (el fondo es "infinito").
+- **Brillo (glow):** todo lo "activo" (cargas, arcos, zonas táctiles, rutas) tiene resplandor: un halo con desenfoque de 8–20 px del mismo color al 40–60 %.
+- **Profundidad de campo:** al entrar en una escena el plano empieza desenfocado y se enfoca en 3–5 cuadros (metros 4,0 s y 7,0 s; electrocutarte 13,0 s y 30,5 s).
+- **Texturas:** madera clara con vetas (`#C59E63`), hormigón gris claro con poros (metros 12–25 s), punto de lana (electrocutarte 68–70 s), malla romboidal metálica (electrocutarte 18–30 s) e imagen satelital "Blue Marble" (ia_aprender).
+
+---
+
+## 5. Subtítulos (medidos cuadro a cuadro)
+
+Ver `videos_referencia/fullres/anim_caja_teclado.png`, `anim_palabra_teclado.png`, `zoom_caja.png`.
+
+| Propiedad | Valor medido (720) | Valor para 1080×1920 |
+|---|---|---|
+| Posición | Centrado horizontal; **línea base de la 1.ª línea en y = 255** (19,9 % del alto) | y = **383 px** |
+| Tipografía | Sans geométrica tipo **Google Sans** (a de dos pisos, t con corte inclinado) | Google Sans Flex (o Figtree) |
+| Altura de la x | 24 px | 36 px → **tamaño de fuente 68 px** |
+| Interlineado | 54 px entre líneas base | **82 px** (1,2) |
+| Ancho máximo | ~560 px (78 %) | **840 px** |
+| Peso palabra activa | Negrita (700), `#FFFFFF` | ídem |
+| Peso palabras anteriores | Regular (400), blanco al 45 % (`#808080`) | ídem |
+| Máx. líneas | 2 | 2 |
+| Palabras por bloque | 1–7 (media ~4); el bloque se corta en `.` `,` `?` `:` o al llenar 2 líneas | ídem |
+| Sombra | ninguna (sobre fondo oscuro) | ninguna |
+
+### Animación palabra por palabra (teclado 9,3–10,1 s, cuadro a cuadro)
+1. La frase se **acumula**: cada palabra aparece al empezar a pronunciarse y las anteriores se quedan en pantalla.
+2. **Entrada de palabra (2 cuadros):** cuadro 1 con desenfoque gaussiano ~6 px (720) y opacidad ~70 %; cuadro 2 nítida. No hay deslizamiento ni escala apreciable.
+3. La palabra que suena va en **blanco y negrita**. Cuando termina, pasa a **gris y regular** de golpe. En los silencios cortos todas quedan grises (cuadros 2 y 13).
+4. Al sumarse una palabra, **la línea se vuelve a centrar de golpe** (sin animación).
+5. **Fin de bloque:** desaparece de golpe y la pantalla queda **2 cuadros sin texto**; después entra el bloque siguiente.
+
+### Palabra clave resaltada: "caja de selección" estilo Figma
+- 1 palabra por bloque como máximo (a veces ninguna). Frecuencia: **1 cada ~1,8 s** (metros: 17 cajas en 30 s).
+- Se elige el sustantivo, verbo o adjetivo con más peso: *suelto, roto, grueso, cero, pared, mal, propósito, recta, Antártida, corto, engaña, naranja, tocas, invisible, «tarde», 44, 320, electricidad, rejilla, cruza, carga…*
+- **Diseño (720 → 1080):** rectángulo con borde de 2 → **3 px** `#3A77D5`, radio 3 → **4 px**, relleno `#3A77D5` al **18 %**, margen interior horizontal 8 → **12 px** y vertical 6 → **9 px**. **Dos manijas** circulares de 8 → **12 px** de diámetro, relleno `#3A77D5` y borde blanco de 1,5 → **2 px**, en la esquina **superior izquierda** y la **inferior derecha**.
+- **Animación (4 cuadros):** c1: aparecen las manijas a escala 0,3; c2: manijas al 100 %; c3: el borde se dibuja desde las dos manijas; c4: caja completa con relleno. Se mantiene hasta que termina el bloque.
+- La palabra dentro de la caja va siempre en blanco y negrita, aunque ya no esté sonando.
+- **Emoji opcional** pegado a la izquierda de la palabra clave cuando es un objeto concreto: 👍 pulgar (teclado 3 s), ⚡ electricidad (electro 11,5 s), 🧤 guantes (16 s), 💧 sal (32,5 s), 🎯 diana (77,5 s), 💦 mojadas (85,5 s). Aparece en ~1 de cada 8 palabras clave.
+
+---
+
+## 6. Cámara
+
+- **Nunca está quieta:** hay un empuje lento continuo (dolly-in o zoom) de ~2–4 % de escala por segundo durante toda la escena (electrocutarte 13,5–16,5 s; ia_aprender 3–12 s).
+- **Movimientos de cambio de plano**, rápidos (6–10 cuadros) y con desenfoque de movimiento:
+  - **Órbita / giro** al costado del objeto: metros 4,0–4,5 s (de vista 3/4 a lateral), 16,5 s (a vista ortográfica lateral).
+  - **Retroceso (zoom out)** que muestra el contexto: metros 1,0 s (gancho → metro completo, ida y vuelta), ia_aprender 3,0–4,0 s (avión → mapa).
+  - **Acercamiento** a un detalle: ia_aprender 15,0 s (a Sídney), teclado 16,0 s (a la tecla K), electrocutarte 22,5 s (a la rejilla 3D).
+  - **Inclinación a 3D:** de vista cenital plana a perspectiva inclinada ~55° (electrocutarte 22,5–23,5 s; teclado 8,0–8,5 s, teclado que se separa en capas).
+  - **Mapa ↔ globo:** el mapa plano se curva hasta volverse esfera (ia_aprender 20,0–21,0 s) y al revés (46,5–47,5 s).
+- **Suavizado:** todos los movimientos usan **ease-in-out marcado** (tipo `cubic-bezier(0.65, 0, 0.35, 1)`): arrancan rápido, frenan suave y quedan 0–2 cuadros quietos al final. Los empujes lentos son lineales o ease-out.
+
+## 7. Transiciones entre escenas
+
+1. **Empuje con desenfoque (la más usada, ~80 %).** Duración de **6–8 cuadros**: la cámara se mueve (zoom o desplazamiento) mientras la imagen se desenfoca hasta ~20 px (720). En el punto de máximo desenfoque (cuadro 3–4) cambia la escena y la nueva entra desenfocada y se enfoca. Ejemplos: metros 3,9 s, 7,0 s, 12,0 s; electrocutarte 12,9 s (cuadros 24–26 de la tira `trans_electro.png`), 30,5 s, 51,0 s, 57,0 s, 61,5 s.
+2. **Morph continuo, sin corte.** El mismo objeto se transforma: el mapa se vuelve globo (ia 20,5 s), los gajos de la naranja se vuelven mapa (ia 28,5 s), la pantalla de la llamada se vuelve rejilla de cables (electro 17–19 s) y el teclado se separa en capas (teclado 8–9 s).
+3. **Cambio de color sincronizado con la palabra:** fundido de 2 cuadros de gris a coral cuando dice "roto" (metros 3,6 s, cuadros 4–6 de `trans_metros.png`) y de coral a gris al volver.
+4. **Corte duro:** solo para golpes de analogía o de textura (ia 24,97 s a la naranja; electro 68,4 s al tejido de lana).
+
+## 8. Elementos animados recurrentes
+
+| Elemento | Cómo se ve | Entrada / salida | Ejemplos |
+|---|---|---|---|
+| **Etiqueta con línea guía** | Texto en mayúsculas espaciadas (tracking 0,2 em), 11 px (720) → **16 px**, blanco, peso 600; línea vertical de 1 px que baja al objeto | La línea crece de 0 a su largo en 6 cuadros y el texto aparece con fundido en 4 | electro "CRISTAL / CABLES / CARGA" 0,5–3 s; teclado "zona táctil, invisible" 1,5 s; "lo que ves / lo que tocas" 9–13 s |
+| **Contador** | Número grande en negrita monoespaciada | Cuenta con ease-out en 15–25 cuadros | ia "124 → 1.023 → 1.434 km" 15,5–16,5 s; electro "111 lecturas por segundo" 30 s; "×3 → ×8 → ×14" ia 37–38 s; lecturas 100 → 81/62/84 electro 38 s |
+| **Pastilla de valor** | Rectángulo redondeado oscuro (`#1A1A1A` al 85 %), borde gris de 1 px, texto en color de acento | Aparece por escala 0,8 → 1 en 6 cuadros | ia "553 km" (coral) 16 s; ciudades "Santiago/Sídney" (dorado) |
+| **Ruta / línea que se dibuja** | Línea de 3–4 px con glow; trazo punteado blanco = "lo que crees", trazo sólido de color = "lo real" | Se dibuja de punta a punta (stroke-dashoffset) en 20–40 cuadros, ease-in-out; un objeto (avión) viaja por la punta | ia 1–12 s, 41–44 s, 48–55 s |
+| **Flecha de dirección** | Flecha blanca de 2 px, corta | Aparece y se desliza 20 px en la dirección del movimiento | metros 8,5 s (→ tirar), 12–16 s (← empujar) |
+| **Plano de referencia** | Plano translúcido turquesa `#8EEDE1` al 25 % con borde de 2 px y un "0" encima | Entra por fundido + escala Y | metros 9,5–25 s |
+| **Corchete de medida** | Corchete ámbar o blanco de 1,5 px que marca un grosor o rango | Se dibuja en 6 cuadros | metros 5,5–7 s, 18 s; electro 40 s |
+| **Anillo de foco** | Círculo de 2 px (dorado o turquesa) alrededor del objeto | Se dibuja girando 360° en 10 cuadros | metros 0,5 s, 25 s |
+| **Resaltado de zona** | Relleno de color (ámbar/celeste/naranja) con glow sobre un área | Fundido de 4–6 cuadros sincronizado con la palabra | teclado 9,5 s; ia 33 s, 35 s; electro 25,5 s |
+| **Arcos de campo / chispas** | Arcos dorados finos con glow que "laten" | Animación continua en bucle | electro todo el video |
+| **Dedo / mano** | Dedo índice 3D (piel `#C48E6F`, uña clara), entra desde abajo a la derecha | Se acerca, presiona (escala 0,97 + sombra) y se va | teclado 0–3 s, 17 s, 29–44 s; electro 0–12 s; CTA |
+| **Interfaz de teléfono** | Mockup de iPhone negro y UI tipo Instagram / iMessage | Entra desde abajo con ease-out o por morph | teclado 18–28 s; CTA de todos |
+
+**Cada cuánto pasa algo nuevo:** entre la palabra clave, una etiqueta, un cambio de color o un movimiento de cámara, **cambia algo visible cada 0,8–1,2 s**. Esto sin contar los subtítulos, que cambian con cada palabra (~0,27 s).
+
+## 9. Escenas (lista manual, segundos exactos)
+
+**metros** (11 escenas · **2,8 s/escena**)
+| Inicio | Escena | Recursos |
+|---|---|---|
+| 0,0 | Primer plano 3/4 del gancho metálico sobre la cinta amarilla, fondo oscuro con glow cálido | anillo dorado 0,5 s |
+| 1,0 | Retroceso al metro completo (carcasa negra/amarilla "5 m") y vuelta | zoom out/in |
+| 2,3 | Gancho quieto, empuje lento | — |
+| 3,6 | El gancho se vuelve **coral** con "roto" | cambio de color |
+| 4,0 | Giro a vista lateral con desenfoque; gancho translúcido | órbita |
+| 5,5 | Rayos X: corchete ámbar "lo que mide de grueso" | corchete |
+| 7,0 | Desenfoque → gancho sobre tabla de madera | transición |
+| 8,5 | Flecha → "tiras", el gancho sale | flecha |
+| 9,5 | Plano turquesa "0" sobre la cara del gancho | plano de referencia |
+| 12,0 | Desenfoque y empuje ← contra una pared de hormigón | flecha, transición |
+| 14,5 | Plano "0" en la pared | — |
+| 16,5 | Vista lateral ortográfica: pared vs madera, el grosor no cuenta | comparación |
+| 20,0 | Pinza roja aprieta el gancho, que se pone coral | objeto nuevo |
+| 22,0 | Medida mal: el "0" en coral, desplazado | color de error |
+| 24,0 | Vuelve el plano héroe; coral → gris | — |
+| 25,0 | Anillo turquesa "a propósito" | anillo |
+| 26,0 | **CTA:** el plano se encoge dentro de un iPhone con UI de Instagram, un dedo toca "compartir", lista de amigos, "Enviado" | interfaz |
+
+**ia_aprender** (~14 escenas · **4,5 s/escena**)
+| Inicio | Escena |
+|---|---|
+| 0,0 | Vista cenital del avión blanco sobre el globo; línea punteada recta vs estela dorada que se curva |
+| 3,0 | Retroceso: mapa del Pacífico Sur; etiquetas "Santiago" y "Sídney"; línea punteada recta |
+| 6,0 | El avión dibuja la ruta curva dorada hacia la Antártida |
+| 13,0 | Un segundo avión va por la recta; comparación |
+| 15,0 | Zoom a Sídney: tramo rojo + contador "124 → 1.434 km" en pastilla |
+| 18,0 | Vuelve al mapa; aparece una cuadrícula de meridianos |
+| 20,5 | El mapa se curva hasta volverse globo con estrellas |
+| 23,0 | El globo se abre en gajos desde el polo sur |
+| 25,0 | **Corte duro:** naranja sobre madera; la cáscara se abre en gajos |
+| 28,4 | Los gajos se vuelven mapa Mercator y se estiran para tapar los huecos |
+| 33,0 | Groenlandia resaltada en celeste; África en naranja |
+| 36,5 | Groenlandia copiada sobre África: contador ×3 → ×8 → ×14 |
+| 39,5 | Globo; hilo rojo de Santiago a Sídney |
+| 44,0 | Anillos de latitud: "donde la Tierra es más angosta" |
+| 46,5 | El globo se aplana a mapa; el hilo rojo pasa a curva y luego a dorado |
+| 50,0 | El avión recorre la curva |
+| 53,0 | Giro de cámara a vista polar: la curva se ve recta |
+| 55,0 | **CTA:** iPhone con un video del canal, scroll por otros videos, teclado escribe "IA" en comentarios, lluvia de billetes, burbujas de comentarios "IA" |
+
+**teclado** (~18 escenas · **4,6 s/escena**)
+| Inicio | Escena |
+|---|---|
+| 0,0 | Macro 3D: dedo enorme sobre teclas grises; la tecla "e" salta (popup) |
+| 1,5 | Etiqueta "zona táctil, invisible" |
+| 3,5 | Desenfoque → teclado iOS plano en primer plano, sugerencias "tard/tarde"; un dedo toca |
+| 5,5 | Retroceso: teclado iOS completo con el dedo |
+| 8,0 | El teclado se separa en 2 capas: "lo que ves" (gris) / "lo que tocas" (ámbar) |
+| 13,5 | Líneas verticales unen las capas; las zonas se deforman |
+| 16,0 | Zoom a la tecla K: "zona de toque", dedo |
+| 18,5 | iPhone completo: chat de iMessage con "¿quedamos hoy?" |
+| 21,0 | Escribe T, A, R, D letra por letra (sincronizado con la voz) |
+| 24,0 | Panel de estadísticas de palabras ("tarde 191.883 usos") |
+| 29,0 | Primer plano: porcentajes en las teclas (w 0 %, e 86 %) |
+| 31,0 | La zona de la "E" crece en ámbar y las vecinas se aplastan |
+| 36,0 | Vuelve a gris: "se ven exactamente iguales" + cotas |
+| 42,5 | La "E" gana el toque desviado |
+| 44,0 | Mosaico de 16 mini teclados que cambian con cada letra + contador "12 caracteres, 12 mapas" |
+| 50,0 | iPhone original de 2007: "44 px", "320 px", "10 × 44 = 440 px" en rojo |
+| 58,5 | Foto de Ken Kocienda + libro "Creative Selection 2018" + patente (FIG. 8B) |
+| 63,5 | Corte a teclas ámbar → gris: la tecla que pulsas queda tapada; popup "h" encima del dedo |
+| 70,0 | Interruptor "Vista previa de caracteres" |
+| 72,0 | La diana se mueve |
+| 79,5 | **CTA:** perfil de Instagram "Seguir", compartir con amigo, chat con Sofía: "otra vez el autocorrector" |
+
+**electrocutarte** (~20 escenas · **4,3 s/escena**)
+| Inicio | Escena |
+|---|---|
+| 0,0 | Corte transversal de la pantalla: capas (cristal, cables) con arcos dorados y fila RGB de píxeles; dedo y bolígrafo |
+| 0,5 | Etiquetas CRISTAL / CABLES / CARGA |
+| 4,0 | El bolígrafo presiona: chispas blancas, nada cambia |
+| 10,5 | Primer plano del dedo; los arcos se doblan hacia la yema |
+| 12,5 | Retroceso; desenfoque |
+| 13,5 | Mano con guante de punto sujetando un iPhone (pantalla bloqueada 7:42, copos) |
+| 15,0 | Llamada entrante de "Sofía"; el dedo enguantado no responde |
+| 17,0 | Zoom a la pantalla; aparece la rejilla de cables |
+| 19,5 | Rejilla de rombos plateada; FILA y COLUMNA se iluminan |
+| 22,5 | Inclinación 3D a la rejilla: CRUCE; la celda se vuelve ámbar; CARGA con arcos |
+| 27,5 | Contador "98 → 100" |
+| 28,5 | Rejilla enorme con "100" en cada cruce; "111 lecturas por segundo" |
+| 30,5 | Desenfoque → dedo en corte; iones Na⁺ / Cl⁻ dentro del dedo, se iluminan |
+| 35,0 | El dedo baja al cristal: los arcos van hacia la yema y las lecturas caen 100 → 81, 62, 84 |
+| 40,5 | Rejilla 3D completa: círculo alrededor de la bajada (62); se marca el toque |
+| 45,0 | Dos dedos (dos círculos) |
+| 49,5 | Zoom con pellizco en una foto |
+| 51,0 | Corte transversal del guante: bucles de lana blancos; la carga no se mueve |
+| 57,0 | Mano enguantada; la pantalla no responde |
+| 59,0 | Lluvia: la pantalla se vuelve loca (el mapa se mueve solo) |
+| 62,0 | Gotas sobre el cristal = dedos |
+| 65,5 | Guante táctil; ahora sí responde |
+| 68,4 | **Corte duro:** tejido de lana; HILO CONDUCTOR |
+| 70,0 | Los bucles conductores se iluminan en dorado |
+| 73,5 | Llamada contestada |
+| 75,0 | Primer plano: "menos de 1 pF", el arco se va |
+| 81,5 | **CTA:** UI de Instagram "Seguir" → compartir → Sofía → "Enviado" |
+
+## 10. Ritmo (resumen)
+
+| Métrica | metros | ia_aprender | teclado | electrocutarte | **Media** |
+|---|---|---|---|---|---|
+| Segundos por escena | 2,8 | 4,5 | 4,6 | 4,3 | **~4,0 s** |
+| Algo nuevo en pantalla cada | ~0,8 s | ~1,2 s | ~1,0 s | ~1,0 s | **~1,0 s** |
+| Palabras clave (caja azul) | 1 cada 1,8 s | 1 cada 2,4 s | 1 cada 2,0 s | 1 cada 2,0 s | **~2,0 s** |
+| Velocidad de la voz | 220 ppm | 178 ppm | 208 ppm | 209 ppm | **~205 ppm** |
+
+## 11. Estructura del guion
+
+1. **Gancho (0–3 s)**, siempre en la primera frase, sin presentación ni saludo. Hay tres fórmulas:
+   - **Pregunta "¿Por qué…?"** sobre algo cotidiano que parece un error: "¿Por qué el gancho del metro está suelto?", "¿Por qué los aviones no vuelan en línea recta?".
+   - **Dato que contradice la intuición, dicho en "tú":** "Cada tecla… es más pequeña que tu pulgar".
+   - **Contraste:** "nota el roce más suave… pero si aprietas con un boli… ni se entera".
+2. **Afirmar el misterio (3–8 s):** se niega la explicación obvia ("No, no está roto"; "No es la presión") o se re-pregunta ("Entonces, ¿cómo es posible?", "¿Para qué da esa vuelta tan grande?").
+3. **Revelación en una frase corta (~8–12 s):** "Porque las teclas que ves no son las que tocas." / "El que te engaña es el mapa."
+4. **Explicación por pasos con un ejemplo concreto (12 s – 75 % del video):** situación cotidiana ("Imagina que…"), analogía física (naranja, hilo tenso) y números concretos (1.400 km, ×14, 44 px, 320, 111 lecturas/s). **Hay un dato sorpresa con cifra cada ~10–15 s.**
+5. **Bonus / dato extra (opcional):** "Y además tiene un segundo truco", "Por eso también… cuando llueve".
+6. **Remate (últimos 5–8 s antes del CTA):** frase redonda que **vuelve al gancho** dándole la vuelta: "Así que sí, está suelto, pero a propósito." / "El avión sí va en línea recta. El que está torcido es el mapa."
+7. **CTA (últimos 3–8 s):** "**(Sígueme y) envíaselo a ese amigo que** [comportamiento gracioso ligado al tema]". La variante "comenta la palabra IA…" se usa en videos de captación. En pantalla se ve la UI de compartir de Instagram con un dedo tocando.
+
+**Reglas de lenguaje:** frases de 5–14 palabras; segunda persona ("tu móvil", "tu pulgar"); verbos concretos; nada de jerga sin explicar; conectores de lógica oral ("Así que", "Porque", "Pero", "Y por eso", "O sea").
+
+## 12. Tres estilos visuales identificados
+
+| Nombre | Videos | Fondo | Acentos | Temas que encajan |
+|---|---|---|---|---|
+| **estudio-oscuro** | metros, electrocutarte | `#0F0F0F` con glow cálido `#3A2C17` o frío `#20242A`, polvo, viñeta | dorado `#D8BD7C`, turquesa `#8EEDE1`, coral `#CF5D60` | objetos físicos, herramientas, física, cuerpo humano, mecanismos ocultos |
+| **interfaz-grid** | teclado | `#101010` + cuadrícula `#161616` cada 120 px | ámbar `#EFA32D`, rojo `#E5484D` para cifras | tecnología, apps, software, UI, datos, "cómo funciona tu móvil" |
+| **mapa-satelite** | ia_aprender | espacio `#000116` con estrellas + Tierra satelital | ruta dorada `#F2D07B`, rojo `#D45951`, pastillas doradas | geografía, viajes, aviones, clima, mapas, escalas, astronomía |

@@ -1,0 +1,325 @@
+// Piezas de dibujo para "Costco's $1.50 hot dog" (canvas 2D, estilo de la casa: 2D con brillo y contorno suave).
+import {G, FF, rnd, cl, glow} from '../cripto/dibujo';
+
+export const MOSTAZA = '255,205,40';
+export const KETCHUP = '230,50,40';
+export const DOLAR = '46,204,113';
+
+/** hot dog visto de lado: pan, salchicha y mostaza en zigzag */
+export function hotdog(g: G, x: number, y: number, sc: number, o: {rot?: number; a?: number; brillo?: number; mostaza?: number; mordida?: number} = {}) {
+  const {rot = 0, a = 1, brillo = 0, mostaza = 1} = o;
+  if (a <= 0 || sc <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.rotate(rot); g.scale(sc, sc);
+  if (brillo > 0) glow(g, 0, 0, 420, '255,200,110', brillo);
+  g.fillStyle = 'rgba(0,0,0,0.3)'; g.beginPath(); g.ellipse(0, 95, 280, 26, 0, 0, 7); g.fill();
+  // pan de atrás
+  const pan = g.createLinearGradient(0, -70, 0, 80); pan.addColorStop(0, '#f6c77a'); pan.addColorStop(0.5, '#e09a45'); pan.addColorStop(1, '#a8621e');
+  g.fillStyle = pan; g.beginPath(); g.ellipse(0, -20, 270, 62, 0, Math.PI, 0); g.fill();
+  // salchicha
+  const sal = g.createLinearGradient(0, -50, 0, 40); sal.addColorStop(0, '#e2735a'); sal.addColorStop(0.45, '#b8402c'); sal.addColorStop(1, '#6e1f14');
+  g.fillStyle = sal; g.beginPath(); g.roundRect(-320, -48, 640, 80, 40); g.fill();
+  g.fillStyle = 'rgba(255,255,255,0.35)'; g.beginPath(); g.roundRect(-290, -38, 560, 14, 7); g.fill();
+  // mostaza
+  if (mostaza > 0) {
+    g.save(); g.beginPath(); g.rect(-300, -80, 600 * cl(mostaza), 120); g.clip();
+    g.strokeStyle = `rgb(${MOSTAZA})`; g.lineWidth = 16; g.lineCap = 'round'; g.lineJoin = 'round'; g.shadowColor = 'rgba(255,200,40,0.6)'; g.shadowBlur = 10;
+    g.beginPath(); for (let k = 0; k <= 14; k++) { const px = -270 + k * 39, py = -18 + (k % 2 ? -18 : 14); k ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke();
+    g.restore();
+  }
+  // pan de delante
+  const pan2 = g.createLinearGradient(0, 0, 0, 90); pan2.addColorStop(0, '#ffd890'); pan2.addColorStop(0.4, '#eba552'); pan2.addColorStop(1, '#9a561a');
+  g.fillStyle = pan2; g.beginPath(); g.moveTo(-275, 5); g.quadraticCurveTo(-280, 85, -200, 88); g.lineTo(200, 88); g.quadraticCurveTo(280, 85, 275, 5); g.quadraticCurveTo(0, 40, -275, 5); g.fill();
+  g.fillStyle = 'rgba(255,255,255,0.3)'; g.beginPath(); g.ellipse(-120, 40, 90, 10, -0.05, 0, 7); g.fill();
+  g.restore();
+}
+
+/** vaso de refresco de máquina con pajita, o lata */
+export function vaso(g: G, x: number, y: number, sc: number, o: {rot?: number; a?: number; lata?: boolean; brillo?: number; col?: string} = {}) {
+  const {rot = 0, a = 1, lata = false, brillo = 0, col = '#e23b3b'} = o;
+  if (a <= 0 || sc <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.rotate(rot); g.scale(sc, sc);
+  if (brillo > 0) glow(g, 0, 0, 360, '255,120,120', brillo);
+  g.fillStyle = 'rgba(0,0,0,0.3)'; g.beginPath(); g.ellipse(0, 200, 130, 18, 0, 0, 7); g.fill();
+  if (lata) {
+    const m = g.createLinearGradient(-90, 0, 90, 0); m.addColorStop(0, '#7a1010'); m.addColorStop(0.35, col); m.addColorStop(0.55, '#ff8a8a'); m.addColorStop(1, '#5a0808');
+    g.fillStyle = m; g.beginPath(); g.roundRect(-90, -150, 180, 340, 24); g.fill();
+    const t = g.createLinearGradient(-90, 0, 90, 0); t.addColorStop(0, '#8a8f98'); t.addColorStop(0.5, '#eef1f5'); t.addColorStop(1, '#6a6f78');
+    g.fillStyle = t; g.beginPath(); g.ellipse(0, -150, 86, 18, 0, 0, 7); g.fill(); g.fillRect(-80, -150, 160, 14); g.beginPath(); g.ellipse(0, 186, 84, 14, 0, 0, 7); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.9)'; g.beginPath(); g.ellipse(0, 20, 60, 34, -0.3, 0, 7); g.fill();
+    g.fillStyle = col; g.font = `900 34px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('SODA', 0, 22);
+  } else {
+    // pajita
+    g.fillStyle = '#ffffff'; g.save(); g.translate(30, -190); g.rotate(0.22); g.fillRect(-11, -150, 22, 170);
+    g.fillStyle = col; for (let k = 0; k < 5; k++) g.fillRect(-11, -150 + k * 34, 22, 14); g.restore();
+    // tapa
+    g.fillStyle = '#f2f2f2'; g.beginPath(); g.ellipse(0, -185, 128, 24, 0, 0, 7); g.fill(); g.fillRect(-128, -190, 256, 18);
+    g.fillStyle = '#d6d6d6'; g.beginPath(); g.ellipse(0, -172, 124, 14, 0, 0, 7); g.fill();
+    // cuerpo
+    const c = g.createLinearGradient(-120, 0, 120, 0); c.addColorStop(0, '#d8d8d8'); c.addColorStop(0.4, '#ffffff'); c.addColorStop(1, '#bcbcbc');
+    g.fillStyle = c; g.beginPath(); g.moveTo(-122, -170); g.lineTo(122, -170); g.lineTo(88, 190); g.lineTo(-88, 190); g.closePath(); g.fill();
+    g.save(); g.clip(); g.fillStyle = col; g.beginPath(); g.moveTo(-140, -40); g.quadraticCurveTo(0, 30, 140, -40); g.lineTo(140, 40); g.quadraticCurveTo(0, 110, -140, 40); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.45)'; g.fillRect(-70, -160, 26, 340); g.restore();
+  }
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** etiqueta de precio colgante */
+export function etiqueta(g: G, x: number, y: number, sc: number, txt: string, o: {rot?: number; a?: number; col?: string; tinta?: string; tachar?: number} = {}) {
+  const {rot = 0, a = 1, col = '#ffd23f', tinta = '#1a1206', tachar = 0} = o;
+  if (a <= 0 || sc <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.rotate(rot); g.scale(sc, sc);
+  g.font = `900 120px ${FF}`; const tw = Math.max(260, g.measureText(txt).width + 120);
+  g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 30; g.shadowOffsetY = 12;
+  g.fillStyle = col; g.beginPath(); g.moveTo(-tw / 2, -90); g.lineTo(tw / 2 - 20, -90); g.quadraticCurveTo(tw / 2, -90, tw / 2, -70); g.lineTo(tw / 2, 70); g.quadraticCurveTo(tw / 2, 90, tw / 2 - 20, 90);
+  g.lineTo(-tw / 2, 90); g.lineTo(-tw / 2 - 80, 0); g.closePath(); g.fill(); g.shadowColor = 'transparent';
+  g.fillStyle = 'rgba(0,0,0,0.55)'; g.beginPath(); g.arc(-tw / 2 - 20, 0, 16, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,0.5)'; g.lineWidth = 4; g.beginPath(); g.moveTo(-tw / 2 + 10, -76); g.lineTo(tw / 2 - 20, -76); g.stroke();
+  g.fillStyle = tinta; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, 40, 6);
+  if (tachar > 0) { g.strokeStyle = '#ef3b45'; g.lineWidth = 18; g.lineCap = 'round'; g.beginPath(); g.moveTo(-tw / 2 + 20, 30); g.lineTo(-tw / 2 + 20 + (tw - 20) * cl(tachar), -30); g.stroke(); }
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** almacén grande (nave) con puerta y letrero genérico */
+export function almacen(g: G, s: number, x: number, y: number, sc: number, o: {a?: number; luz?: number; letrero?: string; puerta?: number} = {}) {
+  const {a = 1, luz = 1, letrero = 'WAREHOUSE', puerta = 0} = o;
+  if (a <= 0 || sc <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.scale(sc, sc);
+  g.fillStyle = 'rgba(0,0,0,0.4)'; g.beginPath(); g.ellipse(0, 10, 520, 40, 0, 0, 7); g.fill();
+  const m = g.createLinearGradient(0, -420, 0, 0); m.addColorStop(0, '#d9dde3'); m.addColorStop(1, '#8e959f');
+  g.fillStyle = m; g.beginPath(); g.moveTo(-480, 0); g.lineTo(-480, -330); g.lineTo(0, -420); g.lineTo(480, -330); g.lineTo(480, 0); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(60,66,76,0.35)'; g.lineWidth = 4; for (let k = -440; k <= 440; k += 40) { g.beginPath(); g.moveTo(k, -6); g.lineTo(k, -330 - (480 - Math.abs(k)) * 0.18); g.stroke(); }
+  g.fillStyle = '#3A77D5'; g.fillRect(-480, -300, 960, 36); g.fillStyle = '#e23b3b'; g.fillRect(-480, -264, 960, 22);
+  // letrero
+  g.fillStyle = '#ffffff'; g.shadowColor = `rgba(255,255,255,${0.6 * luz})`; g.shadowBlur = 30; g.beginPath(); g.roundRect(-250, -230, 500, 90, 16); g.fill(); g.shadowBlur = 0;
+  g.font = `900 58px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#1d3f8a'; g.fillText(letrero, 0, -183);
+  // puerta
+  g.fillStyle = '#20252d'; g.fillRect(-150, -120, 300, 120);
+  const lu = g.createLinearGradient(0, -120, 0, 0); lu.addColorStop(0, `rgba(255,236,170,${0.9 * luz})`); lu.addColorStop(1, `rgba(255,200,110,${0.6 * luz})`);
+  g.fillStyle = lu; g.fillRect(-150, -120, 300, 120);
+  g.fillStyle = '#5a616c'; g.fillRect(-150, -120, 300, 120 * (1 - cl(puerta)));
+  for (let k = 0; k < 6; k++) { g.fillStyle = 'rgba(0,0,0,0.25)'; g.fillRect(-150, -120 + k * 20 * (1 - cl(puerta)), 300, 3); }
+  // farolas que parpadean suave
+  for (const sx of [-1, 1]) glow(g, sx * 400, -360, 80, '255,240,200', 0.4 + 0.2 * Math.sin(s * 3 + sx));
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** fábrica con chimeneas, humo y una cinta de salchichas que avanza */
+export function fabrica(g: G, s: number, x: number, y: number, sc: number, o: {a?: number; humo?: number; cinta?: number; letrero?: string} = {}) {
+  const {a = 1, humo = 1, cinta = 1, letrero = ''} = o;
+  if (a <= 0 || sc <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.scale(sc, sc);
+  // humo
+  for (const cx of [-250, -110]) for (let i = 0; i < 6; i++) {
+    const ph = (s * 0.5 + i / 6 + cx * 0.001) % 1, r = 40 + ph * 110, px = cx + Math.sin(ph * 5 + i) * 30 + ph * 80, py = -560 - ph * 500;
+    const gr = g.createRadialGradient(px, py, 0, px, py, r); gr.addColorStop(0, `rgba(235,235,240,${0.55 * (1 - ph) * humo})`); gr.addColorStop(1, 'rgba(235,235,240,0)');
+    g.fillStyle = gr; g.fillRect(px - r, py - r, r * 2, r * 2);
+  }
+  g.fillStyle = '#6a3a2c'; g.fillRect(-290, -560, 80, 300); g.fillRect(-150, -520, 80, 260);
+  g.fillStyle = '#ffffff'; g.fillRect(-290, -540, 80, 18); g.fillRect(-150, -500, 80, 18);
+  // cuerpo de dientes de sierra
+  const m = g.createLinearGradient(0, -360, 0, 0); m.addColorStop(0, '#d0563f'); m.addColorStop(1, '#7c2a1e');
+  g.fillStyle = m; g.beginPath(); g.moveTo(-420, 0); g.lineTo(-420, -260);
+  for (let k = 0; k < 4; k++) { const x0 = -420 + k * 210; g.lineTo(x0 + 150, -360); g.lineTo(x0 + 210, -360); g.lineTo(x0 + 210, -260); }
+  g.lineTo(420, 0); g.closePath(); g.fill();
+  for (let k = 0; k < 4; k++) { g.fillStyle = `rgba(255,236,170,${0.6 + 0.3 * Math.sin(s * 3 + k)})`; g.beginPath(); g.moveTo(-420 + k * 210 + 30, -265); g.lineTo(-420 + k * 210 + 150, -345); g.lineTo(-420 + k * 210 + 150, -265); g.fill(); }
+  for (let f = 0; f < 2; f++) for (let c = 0; c < 6; c++) { g.fillStyle = `rgba(255,230,160,${0.55 + 0.35 * rnd(f * 7 + c + Math.floor(s * 2))})`; g.fillRect(-370 + c * 130, -220 + f * 90, 80, 50); }
+  if (letrero) { g.fillStyle = '#ffd23f'; g.beginPath(); g.roundRect(-200, -330, 400, 60, 12); g.fill(); g.font = `900 36px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#3a1206'; g.fillText(letrero, 0, -299); }
+  // cinta
+  if (cinta > 0) {
+    g.fillStyle = '#2a2f38'; g.beginPath(); g.roundRect(-520, -20, 1040, 46, 23); g.fill();
+    g.fillStyle = '#4a515c'; for (let k = 0; k < 14; k++) { g.beginPath(); g.arc(-490 + k * 75, 3, 14, 0, 7); g.fill(); }
+    for (let k = 0; k < 9; k++) {
+      const px = ((k * 130 + s * 220) % 1170) - 585;
+      const sal = g.createLinearGradient(0, -48, 0, -20); sal.addColorStop(0, '#e2735a'); sal.addColorStop(1, '#7a2416');
+      g.fillStyle = sal; g.beginPath(); g.roundRect(px - 52, -50, 104, 30, 15); g.fill();
+    }
+  }
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** carrito de compras; items = dibujos encima de la cesta */
+export function carrito(g: G, s: number, x: number, y: number, sc: number, rueda = 0, items?: () => void) {
+  if (sc <= 0) return;
+  g.save(); g.translate(x, y); g.scale(sc, sc);
+  g.fillStyle = 'rgba(0,0,0,0.35)'; g.beginPath(); g.ellipse(0, 150, 300, 26, 0, 0, 7); g.fill();
+  if (items) { g.save(); items(); g.restore(); }
+  g.strokeStyle = '#d9dee5'; g.lineWidth = 12; g.lineJoin = 'round'; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(-330, -170); g.lineTo(-270, -170); g.lineTo(-210, 60); g.lineTo(230, 60); g.lineTo(280, -120); g.lineTo(-250, -120); g.stroke();
+  g.lineWidth = 5; g.strokeStyle = 'rgba(220,225,232,0.75)';
+  for (let k = 0; k < 9; k++) { const px = -225 + k * 58; g.beginPath(); g.moveTo(px, -120); g.lineTo(px + 10 - k * 1.5, 60); g.stroke(); }
+  for (let k = 1; k < 4; k++) { g.beginPath(); g.moveTo(-250 + k * 12, -120 + k * 45); g.lineTo(280 - k * 13, -120 + k * 45); g.stroke(); }
+  g.lineWidth = 12; g.strokeStyle = '#d9dee5'; g.beginPath(); g.moveTo(-190, 60); g.lineTo(-170, 120); g.lineTo(210, 120); g.stroke();
+  g.fillStyle = '#e23b3b'; g.beginPath(); g.roundRect(-345, -185, 70, 30, 12); g.fill();
+  for (const rx of [-150, 180]) { g.save(); g.translate(rx, 135); g.rotate(rueda); g.fillStyle = '#1a1c20'; g.beginPath(); g.arc(0, 0, 24, 0, 7); g.fill(); g.fillStyle = '#9aa0aa'; g.fillRect(-3, -20, 6, 40); g.restore(); }
+  g.restore();
+}
+
+export function tele(g: G, x: number, y: number, sc: number, s: number, rot = 0) {
+  if (sc <= 0) return;
+  g.save(); g.translate(x, y); g.rotate(rot); g.scale(sc, sc);
+  g.fillStyle = '#15171c'; g.beginPath(); g.roundRect(-200, -125, 400, 240, 14); g.fill();
+  const p = g.createLinearGradient(-180, -110, 180, 100); p.addColorStop(0, `hsl(${(s * 60) % 360},80%,60%)`); p.addColorStop(1, `hsl(${(s * 60 + 140) % 360},80%,45%)`);
+  g.fillStyle = p; g.fillRect(-184, -110, 368, 206);
+  g.fillStyle = 'rgba(255,255,255,0.25)'; g.beginPath(); g.moveTo(-184, -110); g.lineTo(-40, -110); g.lineTo(-184, 40); g.fill();
+  g.fillStyle = '#2a2d34'; g.fillRect(-14, 115, 28, 30); g.fillRect(-80, 140, 160, 12);
+  g.restore();
+}
+
+export function llanta(g: G, x: number, y: number, r: number, rot: number) {
+  if (r <= 0) return;
+  g.save(); g.translate(x, y); g.rotate(rot);
+  g.fillStyle = '#1b1c20'; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill();
+  g.strokeStyle = '#33353c'; g.lineWidth = r * 0.12; for (let k = 0; k < 16; k++) { const an = (k / 16) * Math.PI * 2; g.beginPath(); g.moveTo(Math.cos(an) * r * 0.82, Math.sin(an) * r * 0.82); g.lineTo(Math.cos(an) * r * 0.98, Math.sin(an) * r * 0.98); g.stroke(); }
+  const rin = g.createRadialGradient(-r * 0.15, -r * 0.15, 2, 0, 0, r * 0.55); rin.addColorStop(0, '#ffffff'); rin.addColorStop(1, '#7a808a');
+  g.fillStyle = rin; g.beginPath(); g.arc(0, 0, r * 0.52, 0, 7); g.fill();
+  g.fillStyle = '#4a4f58'; for (let k = 0; k < 5; k++) { const an = (k / 5) * Math.PI * 2; g.beginPath(); g.ellipse(Math.cos(an) * r * 0.3, Math.sin(an) * r * 0.3, r * 0.1, r * 0.06, an, 0, 7); g.fill(); }
+  g.fillStyle = '#2a2d34'; g.beginPath(); g.arc(0, 0, r * 0.1, 0, 7); g.fill();
+  g.restore();
+}
+
+/** paquete de papel higiénico (rollos en filas) */
+export function papel(g: G, x: number, y: number, sc: number, rot = 0, n = 6) {
+  if (sc <= 0) return;
+  g.save(); g.translate(x, y); g.rotate(rot); g.scale(sc, sc);
+  g.fillStyle = 'rgba(160,200,255,0.25)'; g.beginPath(); g.roundRect(-n * 32 - 14, -150, n * 64 + 28, 300, 30); g.fill();
+  for (let f = 0; f < 2; f++) for (let c = 0; c < n; c++) {
+    const px = -n * 32 + 32 + c * 64, py = -70 + f * 140;
+    const gr = g.createLinearGradient(px - 30, 0, px + 30, 0); gr.addColorStop(0, '#d8dde4'); gr.addColorStop(0.5, '#ffffff'); gr.addColorStop(1, '#c4cad2');
+    g.fillStyle = gr; g.beginPath(); g.roundRect(px - 30, py - 62, 60, 124, 14); g.fill();
+    g.fillStyle = '#b8a07a'; g.beginPath(); g.ellipse(px, py - 56, 11, 5, 0, 0, 7); g.fill();
+  }
+  g.fillStyle = '#3A77D5'; g.beginPath(); g.roundRect(-110, -26, 220, 52, 10); g.fill();
+  g.font = `900 34px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText('30 ROLLS', 0, 2);
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** tarjeta de socio que gira (giro en rad sobre eje vertical) */
+export function tarjeta(g: G, x: number, y: number, sc: number, giro: number, s: number, o: {a?: number; brillo?: number} = {}) {
+  const {a = 1, brillo = 0.6} = o;
+  if (a <= 0 || sc <= 0) return;
+  const k = Math.max(0.05, Math.abs(Math.cos(giro)));
+  g.save(); g.globalAlpha = a; g.translate(x, y); if (brillo > 0) glow(g, 0, 0, 520 * sc, '242,208,123', brillo); g.scale(sc * k, sc);
+  g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 40; g.shadowOffsetY = 20;
+  const gr = g.createLinearGradient(-300, -190, 300, 190); gr.addColorStop(0, '#fff2c4'); gr.addColorStop(0.35, '#e8c260'); gr.addColorStop(0.7, '#b8862a'); gr.addColorStop(1, '#f2d07b');
+  g.fillStyle = gr; g.beginPath(); g.roundRect(-300, -190, 600, 380, 34); g.fill(); g.shadowColor = 'transparent';
+  if (Math.cos(giro) > 0) {
+    g.fillStyle = '#e23b3b'; g.fillRect(-300, -120, 600, 26); g.fillStyle = '#3A77D5'; g.fillRect(-300, -94, 600, 16);
+    g.fillStyle = 'rgba(60,40,10,0.85)'; g.font = `900 64px ${FF}`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillText('MEMBER', -250, 0);
+    g.font = `700 34px ${FF}`; g.fillText('•••• •••• 2026', -250, 80);
+    const ch = g.createLinearGradient(160, 10, 250, 90); ch.addColorStop(0, '#fff6d8'); ch.addColorStop(1, '#a8862a');
+    g.fillStyle = ch; g.beginPath(); g.roundRect(160, 10, 90, 72, 12); g.fill();
+    g.strokeStyle = 'rgba(90,60,10,0.5)'; g.lineWidth = 3; g.strokeRect(180, 25, 50, 42);
+  } else { g.fillStyle = '#1a1a1a'; g.fillRect(-300, -130, 600, 70); }
+  // reflejo que pasa
+  const ph = ((s * 0.6) % 1.6) - 0.3;
+  g.save(); g.beginPath(); g.roundRect(-300, -190, 600, 380, 34); g.clip();
+  const rf = g.createLinearGradient(-300 + ph * 600 - 120, 0, -300 + ph * 600 + 120, 0); rf.addColorStop(0, 'rgba(255,255,255,0)'); rf.addColorStop(0.5, 'rgba(255,255,255,0.55)'); rf.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = rf; g.fillRect(-300, -190, 600, 380); g.restore();
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+export function queso(g: G, x: number, y: number, sc: number, rot = 0, a = 1) {
+  if (sc <= 0 || a <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.rotate(rot); g.scale(sc, sc);
+  g.fillStyle = '#e6a91c'; g.beginPath(); g.moveTo(-90, 40); g.lineTo(90, 40); g.lineTo(90, -10); g.lineTo(-90, -50); g.closePath(); g.fill();
+  g.fillStyle = '#ffd84a'; g.beginPath(); g.moveTo(-90, -50); g.lineTo(90, -10); g.lineTo(60, -40); g.closePath(); g.fill();
+  g.fillStyle = '#c8880e'; for (const [hx, hy, hr] of [[-40, 10, 12], [20, 18, 9], [55, 0, 7], [-60, -18, 6]]) { g.beginPath(); g.arc(hx, hy, hr, 0, 7); g.fill(); }
+  g.restore();
+}
+
+/** bocadillo de diálogo con texto (varias líneas separadas por |) */
+export function bocadillo(g: G, x: number, y: number, txt: string, p: number, o: {tam?: number; col?: string; fondo?: string; colaX?: number; ancho?: number} = {}) {
+  if (p <= 0) return;
+  const {tam = 56, col = '#1a1206', fondo = '#ffffff', colaX = -120, ancho = 840} = o;
+  const lin = txt.split('|');
+  g.save(); g.translate(x, y); g.scale(p, p);
+  g.font = `900 ${tam}px ${FF}`;
+  let w = 0; for (const l of lin) w = Math.max(w, g.measureText(l).width);
+  const k = Math.min(1, (ancho - 80) / w), ww = w * k + 80, hh = lin.length * tam * 1.2 * k + 60;
+  g.shadowColor = 'rgba(0,0,0,0.45)'; g.shadowBlur = 30; g.shadowOffsetY = 10; g.fillStyle = fondo;
+  g.beginPath(); g.roundRect(-ww / 2, -hh / 2, ww, hh, 40); g.fill();
+  g.beginPath(); g.moveTo(colaX - 30, hh / 2 - 4); g.lineTo(colaX + 30, hh / 2 - 4); g.lineTo(colaX - 50, hh / 2 + 70); g.closePath(); g.fill(); g.shadowColor = 'transparent';
+  g.fillStyle = col; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `900 ${tam * k}px ${FF}`;
+  lin.forEach((l, i) => g.fillText(l, 0, (i - (lin.length - 1) / 2) * tam * 1.2 * k + 4));
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** silueta simplificada de EE. UU. contiguo (ancho ≈ 900·sc) */
+const USA: [number, number][] = [[-450, -150], [-420, -230], [-380, -250], [-200, -240], [-60, -235], [40, -230], [90, -210], [130, -180], [190, -195], [230, -160], [300, -170],
+  [360, -220], [420, -250], [450, -220], [410, -160], [380, -120], [350, -60], [330, -20], [300, 30], [320, 110], [300, 140], [270, 100], [230, 70], [150, 80], [80, 90], [40, 140],
+  [0, 170], [-40, 110], [-90, 80], [-150, 70], [-220, 60], [-300, 40], [-360, 10], [-420, -40], [-440, -90]];
+export function mapaUSA(g: G, x: number, y: number, sc: number, a = 1) {
+  if (a <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.scale(sc, sc);
+  g.shadowColor = 'rgba(120,180,255,0.5)'; g.shadowBlur = 40;
+  const gr = g.createLinearGradient(0, -260, 0, 180); gr.addColorStop(0, '#3d6fc4'); gr.addColorStop(1, '#1f3f86');
+  g.fillStyle = gr; g.beginPath(); USA.forEach(([px, py], i) => (i ? g.lineTo(px, py) : g.moveTo(px, py))); g.closePath(); g.fill();
+  g.shadowColor = 'transparent'; g.strokeStyle = 'rgba(255,255,255,0.8)'; g.lineWidth = 4; g.lineJoin = 'round'; g.stroke();
+  g.restore();
+}
+/** pin de mapa que cae */
+export function pin(g: G, x: number, y: number, p: number, col = '#e23b3b') {
+  if (p <= 0) return;
+  g.save(); g.translate(x, y); g.scale(p, p);
+  g.fillStyle = 'rgba(0,0,0,0.35)'; g.beginPath(); g.ellipse(0, 4, 24, 8, 0, 0, 7); g.fill();
+  g.fillStyle = col; g.shadowColor = col; g.shadowBlur = 20; g.beginPath(); g.moveTo(0, 0); g.bezierCurveTo(-50, -60, -40, -110, 0, -110); g.bezierCurveTo(40, -110, 50, -60, 0, 0); g.fill();
+  g.shadowBlur = 0; g.fillStyle = '#fff'; g.beginPath(); g.arc(0, -72, 16, 0, 7); g.fill();
+  g.restore();
+}
+
+/** cartel publicitario (valla) con contenido dentro */
+export function valla(g: G, s: number, x: number, y: number, sc: number, dentro: () => void, luz = 1) {
+  if (sc <= 0) return;
+  g.save(); g.translate(x, y); g.scale(sc, sc);
+  g.fillStyle = '#3a3f48'; g.fillRect(-30, 0, 60, 520); g.fillRect(-300, 470, 600, 20);
+  g.fillStyle = '#20242b'; g.beginPath(); g.roundRect(-440, -300, 880, 600, 18); g.fill();
+  g.save(); g.beginPath(); g.rect(-420, -280, 840, 560); g.clip();
+  const f = g.createLinearGradient(0, -280, 0, 280); f.addColorStop(0, '#ffd23f'); f.addColorStop(1, '#ff8a1a'); g.fillStyle = f; g.fillRect(-420, -280, 840, 560);
+  dentro();
+  g.restore();
+  for (let k = 0; k < 4; k++) { const lx = -330 + k * 220; g.fillStyle = '#4a4f58'; g.fillRect(lx - 30, -340, 60, 24); glow(g, lx, -300, 160, '255,250,220', 0.35 * luz * (0.8 + 0.2 * Math.sin(s * 5 + k))); }
+  g.restore();
+}
+
+/** tablero de menú de comida con filas y precios */
+export function menu(g: G, x: number, y: number, sc: number, filas: [string, string, string?][], a = 1) {
+  if (a <= 0 || sc <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.scale(sc, sc);
+  g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 30; g.fillStyle = '#111317'; g.beginPath(); g.roundRect(-420, -60, 840, filas.length * 120 + 80, 26); g.fill(); g.shadowColor = 'transparent';
+  g.strokeStyle = 'rgba(255,255,255,0.15)'; g.lineWidth = 3; g.stroke();
+  filas.forEach(([nom, pre, col], i) => {
+    const py = 30 + i * 120;
+    g.font = `800 52px ${FF}`; g.textAlign = 'left'; g.textBaseline = 'middle'; g.fillStyle = '#ffffff'; g.fillText(nom, -370, py);
+    g.textAlign = 'right'; g.fillStyle = col ?? '#ffd23f'; g.font = `900 62px ${FF}`; g.fillText(pre, 370, py);
+    if (i < filas.length - 1) { g.strokeStyle = 'rgba(255,255,255,0.1)'; g.beginPath(); g.moveTo(-370, py + 60); g.lineTo(370, py + 60); g.stroke(); }
+  });
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** bombilla de idea */
+export function bombilla(g: G, x: number, y: number, sc: number, luz: number) {
+  if (sc <= 0) return;
+  g.save(); g.translate(x, y); g.scale(sc, sc);
+  if (luz > 0) glow(g, 0, -40, 520, '255,230,120', luz);
+  const gr = g.createRadialGradient(-30, -90, 10, 0, -40, 170); gr.addColorStop(0, lerpCol(luz, '#fff9e0', '#d8dde4')); gr.addColorStop(1, lerpCol(luz, '#ffc93a', '#8a929e'));
+  g.fillStyle = gr; g.beginPath(); g.arc(0, -60, 150, Math.PI * 0.8, Math.PI * 0.2); g.lineTo(60, 120); g.lineTo(-60, 120); g.closePath(); g.fill();
+  g.fillStyle = '#8a929e'; for (let k = 0; k < 3; k++) { g.beginPath(); g.roundRect(-66, 124 + k * 30, 132, 24, 10); g.fill(); }
+  g.strokeStyle = luz > 0.3 ? '#ff8a1a' : '#5a606a'; g.lineWidth = 8; g.beginPath(); g.moveTo(-30, 110); g.lineTo(-30, -20); g.lineTo(-10, -50); g.lineTo(10, -20); g.lineTo(30, -50); g.lineTo(30, 110); g.stroke();
+  g.restore();
+}
+const lerpCol = (p: number, a: string, b: string) => (p > 0.5 ? a : b);
+
+/** camión de proveedor */
+export function camion(g: G, s: number, x: number, y: number, sc: number, rueda = 0) {
+  if (sc <= 0) return;
+  g.save(); g.translate(x, y); g.scale(sc, sc);
+  g.fillStyle = 'rgba(0,0,0,0.35)'; g.beginPath(); g.ellipse(0, 40, 360, 24, 0, 0, 7); g.fill();
+  const c = g.createLinearGradient(0, -300, 0, 0); c.addColorStop(0, '#f4f4f6'); c.addColorStop(1, '#b8bcc4');
+  g.fillStyle = c; g.beginPath(); g.roundRect(-340, -300, 470, 290, 12); g.fill();
+  g.font = `900 46px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#7a2416'; g.fillText('SUPPLIER', -105, -160);
+  g.fillStyle = '#e23b3b'; g.beginPath(); g.moveTo(140, -10); g.lineTo(140, -220); g.lineTo(260, -220); g.lineTo(340, -120); g.lineTo(340, -10); g.closePath(); g.fill();
+  g.fillStyle = '#9fd3ff'; g.beginPath(); g.moveTo(165, -130); g.lineTo(165, -200); g.lineTo(250, -200); g.lineTo(300, -130); g.closePath(); g.fill();
+  for (const rx of [-230, 30, 250]) { g.save(); g.translate(rx, 0); g.rotate(rueda); g.fillStyle = '#1a1c20'; g.beginPath(); g.arc(0, 0, 50, 0, 7); g.fill(); g.fillStyle = '#9aa0aa'; g.beginPath(); g.arc(0, 0, 20, 0, 7); g.fill(); g.fillRect(-4, -45, 8, 90); g.restore(); }
+  void s;
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}

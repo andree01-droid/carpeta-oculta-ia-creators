@@ -1,0 +1,37 @@
+"""Corre `hyperframes check --json` en un proyecto y muestra cada hallazgo una sola vez.
+
+Uso: hf_check.py <proyecto> [--ignorar regla1,regla2]
+"""
+import json, os, subprocess, sys
+
+p = sys.argv[1]
+ign = set(sys.argv[sys.argv.index("--ignorar") + 1].split(",")) if "--ignorar" in sys.argv else set()
+hf = os.path.join(os.path.dirname(os.path.abspath(p)), "node_modules", ".bin", "hyperframes.cmd")
+r = subprocess.run([hf, "check", "--json"], cwd=p, capture_output=True, text=True, encoding="utf-8", errors="replace")
+s = r.stdout
+d = json.loads(s[s.find("{"):])
+print("ok =", d.get("ok"))
+vistos = set()
+
+
+def walk(o):
+    if isinstance(o, dict):
+        regla = o.get("rule") or o.get("code")
+        if "severity" in o and regla and regla not in ign:
+            clave = (regla, (o.get("message") or "")[:90])
+            if clave not in vistos:
+                vistos.add(clave)
+                donde = o.get("selector") or o.get("file") or o.get("elementId") or ""
+                cuando = o.get("time") if o.get("time") is not None else o.get("at", "")
+                print(f"[{o.get('severity')}] {regla} | {(o.get('message') or '')[:240]} | {donde} | t={cuando}")
+                if o.get("fix"):
+                    print("    Fix:", str(o.get("fix"))[:200])
+        for v in o.values():
+            walk(v)
+    elif isinstance(o, list):
+        for v in o:
+            walk(v)
+
+
+walk(d)
+print(f"{len(vistos)} hallazgos distintos")

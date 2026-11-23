@@ -1,0 +1,172 @@
+// Elemento genérico: posición, 3D, opacidad, desenfoque, entrada/salida y animación por claves.
+// Cada tipo visual (Texto, Dedo, TecladoIOS…) se registra en ../elementos/registro.ts
+import React, {useContext, useMemo} from 'react';
+import {Easing, interpolate, useCurrentFrame} from 'remotion';
+import {resolver, tramosPorPropiedad} from './animar';
+import {EscenaCtx, useVideo} from './contexto';
+import type {Entrada, ElementoSpec} from './tipos';
+import {REGISTRO} from '../elementos/registro';
+
+const BASE_KEYS = ['x', 'y', 'z', 'escala', 'rotX', 'rotY', 'rotZ', 'opacidad', 'blur', 'ancho', 'alto', 'flotar', 'oscilar'];
+
+/** fase estable por id para que los elementos no floten sincronizados */
+const fase = (s: string) => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 997;
+  return (h / 997) * Math.PI * 2;
+};
+
+const normEntrada = (e: ElementoSpec['entrada'], defecto: Entrada['tipo']): Required<Entrada> => {
+  if (!e) return {tipo: defecto, dur: 8};
+  if (typeof e === 'string') return {tipo: e, dur: 8};
+  return {tipo: e.tipo, dur: e.dur ?? 8};
+};
+
+export const Elemento: React.FC<{e: ElementoSpec}> = ({e}) => {
+  const frame = useCurrentFrame();
+  const {reloj} = useVideo();
+  const escena = useContext(EscenaCtx);
+  const tramos = useMemo(() => tramosPorPropiedad(e.anim, reloj), [e.anim, reloj]);
+  const reg = REGISTRO[e.tipo];
+  if (!reg) throw new Error(`Tipo de elemento desconocido: "${e.tipo}"`);
+
+  const f0 = e.desde !== undefined ? reloj.cuadro(e.desde) : escena.f0;
+  const f1 = e.hasta !== undefined ? reloj.cuadro(e.hasta) : escena.f1;
+  if (frame < f0 || frame >= f1) return null;
+
+  const base: Record<string, unknown> = {
+    ...reg.defecto,
+    ...(e.props ?? {}),
+    x: e.x ?? 540,
+    y: e.y ?? 960,
+    z: e.z ?? 0,
+    escala: e.escala ?? 1,
+    rotX: e.rotX ?? 0,
+    rotY: e.rotY ?? 0,
+    rotZ: e.rotZ ?? 0,
+    opacidad: e.opacidad ?? 1,
+    blur: e.blur ?? 0,
+    ancho: e.ancho ?? reg.ancho,
+    alto: e.alto ?? reg.alto,
+    flotar: e.flotar ?? 0,
+    oscilar: e.oscilar ?? 0,
+  };
+  const v = resolver(base, tramos, frame);
+  const n = (k: string) => v[k] as number;
+
+  // entrada y salida
+  let op = n('opacidad');
+  let esc = n('escala');
+  const ph = fase(e.id ?? e.tipo);
+  let dy = n('flotar') * Math.sin((frame / 90) * Math.PI * 2 + ph);
+  let dx = 0;
+  let rotExtra = n('oscilar') * Math.sin((frame / 120) * Math.PI * 2 + ph);
+  let blur = n('blur');
+  const aplicar = (tipo: Entrada['tipo'], p: number) => {
+    // p: 0 = invisible, 1 = normal
+    switch (tipo) {
+      case 'rebote':
+        esc *= Math.max(0, p);
+        rotExtra += (1 - Math.min(1, p)) * -14;
+        break;
+      case 'volarIzq':
+        dx -= (1 - p) * 900;
+        blur += (1 - p) * 18;
+        break;
+      case 'volarDer':
+        dx += (1 - p) * 900;
+        blur += (1 - p) * 18;
+        break;
+      case 'caer':
+        dy -= (1 - p) * 800;
+        break;
+      case 'girar':
+        rotExtra += (1 - p) * -200;
+        esc *= Math.min(1, p);
+        op *= Math.min(1, p * 2);
+        break;
+      case 'fundido':
+        op *= p;
+        break;
+      case 'escala':
+        esc *= 0.8 + 0.2 * p;
+        op *= p;
+        break;
+      case 'pop':
+        esc *= p;
+        break;
+      case 'subir':
+        dy += (1 - p) * 60;
+        op *= p;
+        break;
+      case 'bajar':
+        dy -= (1 - p) * 60;
+        op *= p;
+        break;
+      case 'desenfoque':
+        blur += (1 - p) * 20;
+        op *= p;
+        break;
+      default:
+        break;
+    }
+  };
+  const en = normEntrada(e.entrada, reg.entrada ?? 'ninguna');
+  const sal = normEntrada(e.salida, 'ninguna');
+  if (en.tipo !== 'ninguna') {
+    const curvaEntrada =
+      en.tipo === 'pop' || en.tipo === 'rebote'
+        ? Easing.out(Easing.back(en.tipo === 'rebote' ? 2.4 : 1.6))
+        : en.tipo === 'caer'
+          ? Easing.bounce
+          : Easing.out(Easing.cubic);
+    aplicar(
+      en.tipo,
+      interpolate(frame, [f0, f0 + en.dur], [0, 1], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+        easing: curvaEntrada,
+      }),
+    );
+  }
+  if (sal.tipo !== 'ninguna') {
+    aplicar(
+      sal.tipo,
+      interpolate(frame, [f1 - sal.dur, f1], [1, 0], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+        easing: Easing.in(Easing.cubic),
+      }),
+    );
+  }
+
+  const ancho = v.ancho as number | undefined;
+  const alto = v.alto as number | undefined;
+  const props: Record<string, unknown> = {};
+  Object.keys(v).forEach((k) => {
+    if (!BASE_KEYS.includes(k)) props[k] = v[k];
+  });
+
+  const Comp = reg.comp;
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: n('x'),
+        top: n('y'),
+        width: ancho,
+        height: alto,
+        transformStyle: 'preserve-3d',
+        transform: `translate(-50%, -50%) translate3d(${dx}px, ${dy}px, ${n('z')}px) rotateX(${n('rotX')}deg) rotateY(${n(
+          'rotY',
+        )}deg) rotateZ(${n('rotZ') + rotExtra}deg) scale(${esc})`,
+        opacity: op,
+        filter: blur > 0.05 ? `blur(${blur}px)` : undefined,
+      }}
+    >
+      <Comp p={props} ancho={ancho ?? 0} alto={alto ?? 0} frame={frame} f0={f0} f1={f1}>
+        {e.hijos?.map((h, i) => <Elemento key={h.id ?? i} e={h} />)}
+      </Comp>
+    </div>
+  );
+};

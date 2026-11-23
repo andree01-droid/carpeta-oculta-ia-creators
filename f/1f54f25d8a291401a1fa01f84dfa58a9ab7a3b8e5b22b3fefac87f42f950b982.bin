@@ -1,0 +1,16 @@
+LICENCIAS Y PROGRAMAS DE TERCEROS
+=================================
+
+Esta carpeta descarga e instala programas de otros autores, cada uno con su licencia:
+
+  · Remotion (motor de vídeo) — https://remotion.dev/license
+    Gratis para personas y empresas de hasta 3 personas. Las empresas más grandes necesitan una licencia de empresa.
+  · Node.js — licencia MIT.
+  · ffmpeg — LGPL/GPL (compilaciones de BtbN en Windows y de Martin Riedl en Mac).
+  · faster-whisper (modelo que escucha la voz) — licencia MIT; modelo Whisper de OpenAI, licencia MIT.
+  · uv y Python — licencias Apache-2.0/MIT y PSF.
+  · Skills de Remotion en .claude/skills — de remotion-dev/skills (GitHub).
+  · HyperFrames — de sus autores (ver hyperframes/node_modules/hyperframes).
+
+Los vídeos virales que se usaron como referencia NO se incluyen: solo el análisis escrito de su estilo (ANALISIS.md).
+La voz de Gemini y la de Microsoft (edge-tts) se usan según las condiciones de Google y Microsoft.

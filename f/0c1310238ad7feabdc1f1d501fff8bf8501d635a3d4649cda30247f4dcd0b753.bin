@@ -1,0 +1,194 @@
+// Recursos de motion graphics para dar energía: tipografía cinética, partículas, íconos, rayos y ondas.
+import React from 'react';
+import {Easing, interpolate, random} from 'remotion';
+import {COLORES} from '../motor/estilos';
+import {FUENTE} from '../motor/fuentes';
+import {num, str, type PropsElemento} from './tipos';
+
+const CL = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+
+/**
+ * Tipografía cinética: cada letra entra escalonada.
+ * props: texto ("35| AÑOS" → la parte tras "|" usa color2), tamano, color, color2, peso,
+ *        estilo ("golpe" | "subir" | "maquina"), escalon (cuadros entre letras), contorno (px)
+ */
+export const TextoCinetico: React.FC<PropsElemento> = ({p, frame, f0}) => {
+  const partes = str(p.texto, 'TEXTO').split('|');
+  const colores = [str(p.color, '#FFFFFF'), str(p.color2, COLORES.ambar)];
+  const estilo = str(p.estilo, 'golpe');
+  const escalon = num(p.escalon, 2);
+  const tamano = num(p.tamano, 160);
+  let k = 0;
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        translate: '-50% -50%',
+        whiteSpace: 'pre',
+        fontFamily: FUENTE,
+        fontWeight: num(p.peso, 800),
+        fontSize: tamano,
+        lineHeight: 1,
+        letterSpacing: `${num(p.tracking, -0.02)}em`,
+        display: 'flex',
+        textShadow: '0 10px 40px rgba(0,0,0,0.6)',
+      }}
+    >
+      {partes.map((parte, pi) =>
+        parte.split('').map((ch) => {
+          const fi = f0 + k++ * escalon;
+          const pr = interpolate(frame, [fi, fi + 7], [0, 1], {...CL, easing: Easing.out(Easing.back(estilo === 'golpe' ? 2 : 1.2))});
+          const visible = estilo === 'maquina' ? frame >= fi : true;
+          return (
+            <span
+              key={`${pi}-${k}`}
+              style={{
+                display: 'inline-block',
+                color: colores[pi % 2],
+                WebkitTextStroke: p.contorno ? `${num(p.contorno, 0)}px rgba(0,0,0,0.6)` : undefined,
+                opacity: estilo === 'maquina' ? (visible ? 1 : 0) : Math.min(1, pr * 1.5),
+                scale: estilo === 'golpe' ? String(1.9 - 0.9 * pr) : '1',
+                translate: estilo === 'subir' ? `0 ${(1 - pr) * 70}px` : undefined,
+              }}
+            >
+              {ch === ' ' ? ' ' : ch}
+            </span>
+          );
+        }),
+      )}
+    </div>
+  );
+};
+
+type Particula = {x: number; y: number; r: number; o: number; rot: number; s: number};
+
+const Moneda: React.FC<{s: number}> = ({s}) => (
+  <svg width={s} height={s} viewBox="0 0 40 40">
+    <circle cx="20" cy="20" r="19" fill="#C9922B" />
+    <circle cx="20" cy="20" r="15.5" fill="#F2C14E" stroke="#B07D1F" strokeWidth="1.5" />
+    <text x="20" y="27" textAnchor="middle" fontFamily={FUENTE} fontWeight={800} fontSize="20" fill="#9A6A12">$</text>
+  </svg>
+);
+const BilleteMini: React.FC<{s: number}> = ({s}) => (
+  <svg width={s * 1.9} height={s} viewBox="0 0 76 40">
+    <rect x="1" y="1" width="74" height="38" rx="4" fill="#86AE7E" stroke="#3F6B45" strokeWidth="2" />
+    <ellipse cx="38" cy="20" rx="10" ry="13" fill="#6A9067" />
+    <text x="38" y="27" textAnchor="middle" fontFamily={FUENTE} fontWeight={800} fontSize="18" fill="#2F5535">$</text>
+  </svg>
+);
+
+/**
+ * Partículas. props: tipo ("monedas" | "billetes" | "chispas" | "confeti" | "emoji"), emoji, cantidad,
+ *        modo ("explosion" desde el centro | "lluvia" desde arriba), dur (cuadros de vida), tamano, color
+ * Caja del elemento = zona donde ocurren (por defecto 1080×1920).
+ */
+export const Particulas: React.FC<PropsElemento> = ({p, ancho, alto, frame, f0}) => {
+  const tipo = str(p.tipo, 'monedas');
+  const n = num(p.cantidad, 24);
+  const modo = str(p.modo, 'explosion');
+  const vida = num(p.dur, 45);
+  const tam = num(p.tamano, 56);
+  const d = frame - f0;
+  const sem = str(p.semilla, 'p');
+  const items: Particula[] = [];
+  for (let i = 0; i < n; i++) {
+    const r = (k: string) => random(`${sem}-${k}-${i}`);
+    if (modo === 'lluvia') {
+      const vel = 9 + r('v') * 9;
+      const periodo = alto / vel + 20;
+      const t0 = r('t') * periodo;
+      const tt = (d + t0) % periodo;
+      items.push({x: r('x') * ancho, y: -80 + tt * vel, r: (r('rr') - 0.5) * 8 * tt, o: d < 10 ? d / 10 : 1, rot: 0, s: 0.6 + r('s') * 0.7});
+    } else {
+      if (d > vida) continue;
+      const ang = r('a') * Math.PI * 2;
+      const v = 10 + r('v') * 26;
+      const x = ancho / 2 + Math.cos(ang) * v * d;
+      const y = alto / 2 + Math.sin(ang) * v * d + 0.9 * d * d;
+      items.push({x, y, r: (r('rr') - 0.5) * 24 * d, o: interpolate(d, [0, 2, vida * 0.7, vida], [0, 1, 1, 0], CL), rot: 0, s: 0.5 + r('s') * 0.8});
+    }
+  }
+  const colConfeti = [COLORES.ambar, COLORES.coral, COLORES.turquesa, COLORES.azulSeleccion, '#FFFFFF'];
+  return (
+    <div style={{position: 'absolute', inset: 0, width: ancho, height: alto, overflow: 'visible', pointerEvents: 'none'}}>
+      {items.map((it, i) => (
+        <div key={i} style={{position: 'absolute', left: it.x, top: it.y, translate: '-50% -50%', rotate: `${it.r}deg`, scale: String(it.s), opacity: it.o}}>
+          {tipo === 'monedas' ? <Moneda s={tam} /> : null}
+          {tipo === 'billetes' ? <BilleteMini s={tam} /> : null}
+          {tipo === 'emoji' ? <span style={{fontSize: tam}}>{str(p.emoji, '💵')}</span> : null}
+          {tipo === 'chispas' ? <div style={{width: tam * 0.18, height: tam * 0.18, borderRadius: '50%', background: str(p.color, COLORES.doradoBrillo), boxShadow: `0 0 ${tam * 0.4}px ${str(p.color, COLORES.doradoBrillo)}`}} /> : null}
+          {tipo === 'confeti' ? <div style={{width: tam * 0.35, height: tam * 0.18, borderRadius: 3, background: colConfeti[i % colConfeti.length]}} /> : null}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+/** Ícono (emoji) grande, opcionalmente dentro de una burbuja de color con brillo. props: emoji, tamano, fondo */
+export const Icono: React.FC<PropsElemento> = ({p}) => {
+  const t = num(p.tamano, 140);
+  const fondo = p.fondo ? str(p.fondo, '') : '';
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        translate: '-50% -50%',
+        width: fondo ? t * 1.55 : undefined,
+        height: fondo ? t * 1.55 : undefined,
+        borderRadius: '50%',
+        background: fondo || undefined,
+        boxShadow: fondo ? `0 0 50px ${fondo}88, inset 0 -8px 0 rgba(0,0,0,0.18)` : undefined,
+        display: 'grid',
+        placeItems: 'center',
+        fontSize: t,
+        lineHeight: 1,
+        filter: 'drop-shadow(0 12px 22px rgba(0,0,0,0.5))',
+      }}
+    >
+      {str(p.emoji, '⭐')}
+    </div>
+  );
+};
+
+/** Rayos de luz girando detrás de un objeto. props: color, rayos, velocidad (°/cuadro), intensidad */
+export const Rayos: React.FC<PropsElemento> = ({p, ancho, frame}) => {
+  const n = num(p.rayos, 14);
+  const c = str(p.color, 'rgba(239,163,45,0.35)');
+  const rot = frame * num(p.velocidad, 0.4);
+  const paso = 360 / n;
+  const stops = Array.from({length: n}, (_, i) => `${c} ${i * paso}deg ${i * paso + paso * 0.45}deg, transparent ${i * paso + paso * 0.45}deg ${(i + 1) * paso}deg`).join(', ');
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: ancho,
+        height: ancho,
+        borderRadius: '50%',
+        background: `conic-gradient(from ${rot}deg, ${stops})`,
+        maskImage: 'radial-gradient(circle, black 10%, transparent 68%)',
+        WebkitMaskImage: 'radial-gradient(circle, black 10%, transparent 68%)',
+        opacity: num(p.intensidad, 1),
+      }}
+    />
+  );
+};
+
+/** Ondas que se expanden desde el centro (pulso de énfasis). props: color, cada (cuadros), grosor */
+export const Ondas: React.FC<PropsElemento> = ({p, ancho, frame, f0}) => {
+  const cada = num(p.cada, 24);
+  const c = str(p.color, COLORES.ambar);
+  const d = frame - f0;
+  return (
+    <svg width={ancho} height={ancho} style={{position: 'absolute', inset: 0, overflow: 'visible'}}>
+      {[0, 1, 2].map((k) => {
+        const fase = ((d + (k * cada) / 3) % cada) / cada;
+        return <circle key={k} cx={ancho / 2} cy={ancho / 2} r={(ancho / 2) * (0.25 + 0.75 * fase)} fill="none" stroke={c} strokeWidth={num(p.grosor, 4)} opacity={(1 - fase) * 0.8} />;
+      })}
+    </svg>
+  );
+};

@@ -1,0 +1,135 @@
+"""Convierte una transcripción (transcribir.py o voz.py) en el array "palabras" del JSON de video.
+
+Uso: palabras_json.py <transcripcion.json> [desde] [hasta] [--sin-cifras]
+- Recorta al rango [desde, hasta] (segundos) y reinicia los tiempos en 0.
+- Borra alucinaciones finales de Whisper ("Gracias por ver el video", "Gracias").
+- Une cifras dichas en palabras en una sola palabra de subtítulo (como en los originales):
+    "dos dólares con trece centavos" -> "$2.13"   ·   "ochenta y seis por ciento" -> "86%"
+Imprime el array JSON (una palabra por línea).
+"""
+import json, sys, re
+
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+cifras = "--sin-cifras" not in sys.argv
+src = args[0]
+a0 = float(args[1]) if len(args) > 1 else 0.0
+a1 = float(args[2]) if len(args) > 2 else 1e9
+w = json.load(open(src, encoding="utf-8"))["words"]
+
+# alucinaciones típicas al final
+texto_final = " ".join(x["word"] for x in w[-6:]).lower()
+while w and re.sub(r"[^a-záéíóúñ ]", "", w[-1]["word"].lower()) in {"gracias", "video", "el", "ver", "por"} and "gracias" in texto_final:
+    w = w[:-1]
+    texto_final = " ".join(x["word"] for x in w[-6:]).lower()
+
+# ---------- números en palabras ----------
+UNIDADES = {"cero": 0, "un": 1, "uno": 1, "una": 1, "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7,
+            "ocho": 8, "nueve": 9, "diez": 10, "once": 11, "doce": 12, "trece": 13, "catorce": 14, "quince": 15,
+            "dieciséis": 16, "dieciseis": 16, "diecisiete": 17, "dieciocho": 18, "diecinueve": 19, "veinte": 20,
+            "veintiún": 21, "veintiun": 21, "veintiuno": 21, "veintidós": 22, "veintidos": 22, "veintitrés": 23,
+            "veintitres": 23, "veinticuatro": 24, "veinticinco": 25, "veintiséis": 26, "veintiseis": 26,
+            "veintisiete": 27, "veintiocho": 28, "veintinueve": 29}
+DECENAS = {"treinta": 30, "cuarenta": 40, "cincuenta": 50, "sesenta": 60, "setenta": 70, "ochenta": 80, "noventa": 90}
+CENTENAS = {"cien": 100, "ciento": 100, "doscientos": 200, "trescientos": 300, "cuatrocientos": 400,
+            "quinientos": 500, "seiscientos": 600, "setecientos": 700, "ochocientos": 800, "novecientos": 900}
+
+
+def limpio(s):
+    return re.sub(r"[^\wáéíóúñü%$.]", "", s.lower()).strip(".")
+
+
+def leer_numero(ws, i):
+    """Lee un número (dígitos o palabras) desde ws[i]. Devuelve (valor, siguiente_indice) o (None, i)."""
+    t = limpio(ws[i]["word"]) if i < len(ws) else ""
+    if re.fullmatch(r"\d+(\.\d+)?", t):
+        return float(t) if "." in t else int(t), i + 1
+    total, j, leido = 0, i, False
+    while j < len(ws):
+        t = limpio(ws[j]["word"])
+        if t in CENTENAS and not (t == "ciento" and leido is False and j + 1 < len(ws) and limpio(ws[j + 1]["word"]) == ""):
+            # "por ciento" no es número: lo filtra el que llama
+            total += CENTENAS[t]; leido = True; j += 1
+        elif t in DECENAS:
+            total += DECENAS[t]; leido = True; j += 1
+            if j + 1 < len(ws) and limpio(ws[j]["word"]) == "y" and limpio(ws[j + 1]["word"]) in UNIDADES:
+                total += UNIDADES[limpio(ws[j + 1]["word"])]; j += 2
+        elif t in UNIDADES:
+            total += UNIDADES[t]; leido = True; j += 1
+        elif t == "mil":
+            total = (total or 1) * 1000; leido = True; j += 1
+        else:
+            break
+    return (total, j) if leido else (None, i)
+
+
+def puntuacion(s):
+    m = re.search(r"[.,;:?!]+$", s)
+    return m.group(0) if m else ""
+
+
+def unir(ws):
+    out, i = [], 0
+    while i < len(ws):
+        t = limpio(ws[i]["word"])
+        # "1" + "%" (Whisper a veces los separa) -> "1%"
+        if t == "%" and out:
+            out[-1] = {**out[-1], "word": out[-1]["word"].rstrip() + ws[i]["word"].strip(), "end": ws[i]["end"]}
+            i += 1
+            continue
+        # "65" "mil" "millones" -> "65 mil millones"
+        if re.fullmatch(r"\d+", t) and i + 2 < len(ws) and limpio(ws[i + 1]["word"]) == "mil" and limpio(ws[i + 2]["word"]).startswith("millon"):
+            out.append({"word": f"{t} mil millones" + puntuacion(ws[i + 2]["word"]), "start": ws[i]["start"], "end": ws[i + 2]["end"]})
+            i += 3
+            continue
+        if limpio(ws[i]["word"]) in ("por", "ciento"):
+            out.append(ws[i]); i += 1; continue
+        val, j = leer_numero(ws, i)
+        if val is not None and j < len(ws):
+            sig = limpio(ws[j]["word"])
+            # N dólares [con M centavos]
+            if sig in ("dólares", "dolares", "dólar", "dolar"):
+                fin = j
+                cent = None
+                if j + 2 < len(ws) and limpio(ws[j + 1]["word"]) == "con":
+                    c, k = leer_numero(ws, j + 2)
+                    if c is not None and k < len(ws) and limpio(ws[k]["word"]).startswith("centavo"):
+                        cent, fin = c, k
+                texto = f"${int(val)}" + (f".{int(cent):02d}" if cent is not None else "")
+                out.append({"word": texto + puntuacion(ws[fin]["word"]), "start": ws[i]["start"], "end": ws[fin]["end"]})
+                i = fin + 1
+                continue
+            # N por ciento
+            if sig == "por" and j + 1 < len(ws) and limpio(ws[j + 1]["word"]) == "ciento":
+                v = int(val) if float(val).is_integer() else val
+                out.append({"word": f"{v}%" + puntuacion(ws[j + 1]["word"]), "start": ws[i]["start"], "end": ws[j + 1]["end"]})
+                i = j + 2
+                continue
+        # años y números grandes dichos en palabras: "mil novecientos noventa y uno" -> "1991"
+        if val is not None and val >= 1000 and j - i > 1:
+            out.append({"word": f"{int(val)}" + puntuacion(ws[j - 1]["word"]), "start": ws[i]["start"], "end": ws[j - 1]["end"]})
+            i = j
+            continue
+        out.append(ws[i]); i += 1
+    return out
+
+
+if cifras:
+    w = unir(w)
+
+# correcciones de Whisper: --cambiar=noxtra:extra,ponee:pone
+for a in sys.argv:
+    if a.startswith("--cambiar="):
+        for par in a.split("=", 1)[1].split(","):
+            mal, bien = par.split(":")
+            for x in w:
+                if limpio(x["word"]) == mal.lower():
+                    x["word"] = x["word"].replace(re.sub(r"[.,;:?!¿¡]", "", x["word"]), bien)
+
+out = [
+    {"word": x["word"], "start": round(x["start"] - a0, 3), "end": round(min(x["end"], a1) - a0, 3)}
+    for x in w
+    if a0 <= x["start"] < a1
+]
+print("[")
+print(",\n".join("  " + json.dumps(x, ensure_ascii=False) for x in out))
+print("]")

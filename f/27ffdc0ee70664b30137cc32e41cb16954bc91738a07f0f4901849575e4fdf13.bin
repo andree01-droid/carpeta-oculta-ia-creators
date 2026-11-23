@@ -1,0 +1,31 @@
+"""Colores dominantes por categoría de píxel en fotogramas de referencia.
+Agrupa píxeles por tono (naranja, dorado, turquesa, rojo, azul, piel) y da la mediana en hex."""
+import glob, os
+import numpy as np
+from PIL import Image
+import colorsys
+
+def hexc(c):
+    return "#%02x%02x%02x" % tuple(int(v) for v in c)
+
+CATS = {
+    "naranja/ambar": lambda h, s, v: 25 <= h < 45 and s > .6 and v > .6,
+    "dorado-claro": lambda h, s, v: 40 <= h < 60 and .3 < s and v > .75,
+    "turquesa": lambda h, s, v: 150 <= h < 185 and s > .35 and v > .6,
+    "rojo/coral": lambda h, s, v: (h < 12 or h > 345) and s > .45 and v > .6,
+    "azul-ui": lambda h, s, v: 205 <= h < 225 and s > .6 and v > .7,
+    "piel": lambda h, s, v: 10 <= h < 30 and .2 < s < .5 and .55 < v < .95,
+    "gris-tecla": lambda h, s, v: s < .06 and .3 < v < .5,
+}
+for f in sorted(glob.glob("videos_referencia/fullres/*_*.png")):
+    if "zoom" in f or "anim" in f or "trans" in f:
+        continue
+    im = np.asarray(Image.open(f).convert("RGB").resize((180, 320))).reshape(-1, 3)
+    hsv = np.array([colorsys.rgb_to_hsv(*(p / 255)) for p in im])
+    hsv[:, 0] *= 360
+    out = []
+    for name, fn in CATS.items():
+        mask = np.array([fn(*x) for x in hsv])
+        if mask.sum() > 60:
+            out.append(f"{name}={hexc(np.median(im[mask], axis=0))}({mask.sum()*100//len(im)}%)")
+    print(os.path.basename(f), ":", "  ".join(out))

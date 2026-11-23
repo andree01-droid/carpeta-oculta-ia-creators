@@ -1,0 +1,27 @@
+"""Hoja de revisión de un render: cuadros en los segundos pedidos, con el tiempo escrito.
+
+Uso: revisar.py <video.mp4> <salida.png> t1 t2 ...   (12 cuadros por hoja recomendados)
+"""
+import os, subprocess, sys, tempfile
+from PIL import Image, ImageDraw, ImageFont
+
+video, salida = sys.argv[1:3]
+ts = [float(t) for t in sys.argv[3:]]
+W, H = 300, 534
+cols = 6
+filas = (len(ts) + cols - 1) // cols
+hoja = Image.new("RGB", (cols * W, filas * (H + 28)), (40, 40, 40))
+d = ImageDraw.Draw(hoja)
+try:
+    f = ImageFont.truetype("arialbd.ttf", 20)
+except OSError:
+    f = ImageFont.load_default()
+tmp = tempfile.mkdtemp()
+for i, t in enumerate(ts):
+    p = os.path.join(tmp, f"{i}.png")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", str(t), "-i", video, "-frames:v", "1", "-vf", f"scale={W}:{H}", p], check=True)
+    x, y = (i % cols) * W, (i // cols) * (H + 28)
+    hoja.paste(Image.open(p), (x, y + 28))
+    d.text((x + 6, y + 4), f"{t:.1f}s", fill=(255, 230, 0), font=f)
+hoja.save(salida)
+print(salida)

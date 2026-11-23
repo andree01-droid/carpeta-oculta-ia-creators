@@ -1,0 +1,77 @@
+// Fondo de cada estilo: color, cuadrícula, resplandor, polvo, estrellas y viñeta (CLAUDE.md §2).
+import React, {useMemo} from 'react';
+import {AbsoluteFill, random, useCurrentFrame} from 'remotion';
+import {COLOR_BRILLO} from '../motor/estilos';
+import type {FondoSpec} from '../motor/tipos';
+
+export const Fondo: React.FC<{f: Required<FondoSpec>; semilla?: string}> = ({f, semilla = 'fondo'}) => {
+  const frame = useCurrentFrame();
+  const polvo = useMemo(
+    () =>
+      new Array(f.polvo).fill(0).map((_, i) => ({
+        x: random(`${semilla}-px-${i}`) * 1080,
+        y: random(`${semilla}-py-${i}`) * 1920,
+        r: 0.75 + random(`${semilla}-pr-${i}`) * 0.75,
+        o: 0.15 + random(`${semilla}-po-${i}`) * 0.35,
+        vx: (random(`${semilla}-vx-${i}`) - 0.5) * 0.2,
+        vy: (random(`${semilla}-vy-${i}`) - 0.5) * 0.2,
+      })),
+    [f.polvo, semilla],
+  );
+  const estrellas = useMemo(
+    () =>
+      new Array(f.estrellas).fill(0).map((_, i) => ({
+        x: random(`${semilla}-ex-${i}`) * 1080,
+        y: random(`${semilla}-ey-${i}`) * 1920,
+        r: 0.5 + random(`${semilla}-er-${i}`) * 0.6,
+        o: 0.2 + random(`${semilla}-eo-${i}`) * 0.5,
+      })),
+    [f.estrellas, semilla],
+  );
+  const rgb = COLOR_BRILLO[f.brillo];
+  return (
+    <AbsoluteFill style={{background: f.color, overflow: 'hidden'}}>
+      {f.estrellas > 0 ? (
+        <AbsoluteFill style={{background: 'linear-gradient(180deg, #000116 0%, #04102E 100%)'}} />
+      ) : null}
+      {f.cuadricula ? (
+        <AbsoluteFill
+          style={{
+            backgroundImage:
+              'linear-gradient(rgba(255,255,255,0.03) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,0.03) 1.5px, transparent 1.5px)',
+            backgroundSize: `${f.celda}px ${f.celda}px`,
+            backgroundPosition: `${540 - f.celda / 2}px ${960 - f.celda / 2}px`,
+          }}
+        />
+      ) : null}
+      {rgb ? (
+        <AbsoluteFill
+          style={{
+            background: `radial-gradient(circle ${f.brilloRadio}px at ${f.brilloX}px ${f.brilloY}px, rgba(${rgb},${0.95 * f.brilloIntensidad}) 0%, rgba(${rgb},${0.45 * f.brilloIntensidad}) 40%, rgba(${rgb},0) 100%)`,
+          }}
+        />
+      ) : null}
+      {estrellas.length ? (
+        <svg width={1080} height={1920} style={{position: 'absolute'}}>
+          {estrellas.map((s, i) => (
+            <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#fff" opacity={s.o} />
+          ))}
+        </svg>
+      ) : null}
+      {polvo.length ? (
+        <svg width={1080} height={1920} style={{position: 'absolute'}}>
+          {polvo.map((p, i) => (
+            <circle key={i} cx={p.x + p.vx * frame} cy={p.y + p.vy * frame} r={p.r} fill="#fff" opacity={p.o} />
+          ))}
+        </svg>
+      ) : null}
+      {f.vineta > 0 ? (
+        <AbsoluteFill
+          style={{
+            background: `radial-gradient(ellipse 75% 60% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,${f.vineta}) 100%)`,
+          }}
+        />
+      ) : null}
+    </AbsoluteFill>
+  );
+};

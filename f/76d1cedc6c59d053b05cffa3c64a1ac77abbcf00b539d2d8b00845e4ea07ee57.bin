@@ -1,0 +1,54 @@
+// Utilidades de tiempo para las escenas 3D: palabras de la voz y fotogramas clave con curvas.
+import {Easing, interpolate} from 'remotion';
+
+export type Pal = {word: string; start: number; end: number};
+
+export const FPS = 30;
+
+/** curvas de los videos de referencia (CLAUDE.md §4) */
+export const EASE = {
+  suave: Easing.bezier(0.65, 0, 0.35, 1),
+  salida: Easing.bezier(0.16, 1, 0.3, 1),
+  entrada: Easing.bezier(0.7, 0, 0.84, 0),
+  lineal: Easing.linear,
+};
+
+export type Clave<T> = [number, T, (keyof typeof EASE)?];
+
+const lerp = (a: number, b: number, p: number) => a + (b - a) * p;
+
+/** Interpola entre claves [segundo, valor, curva hacia esta clave]. Valores número o arreglo de números. */
+export function kf<T extends number | number[]>(seg: number, claves: Clave<T>[]): T {
+  if (seg <= claves[0][0]) return claves[0][1];
+  for (let i = 1; i < claves.length; i++) {
+    const [t1, v1, c] = claves[i];
+    const [t0, v0] = claves[i - 1];
+    if (seg <= t1) {
+      const p = interpolate(seg, [t0, t1], [0, 1], {easing: EASE[c ?? 'suave'], extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+      if (Array.isArray(v0)) return (v0 as number[]).map((a, k) => lerp(a, (v1 as number[])[k], p)) as T;
+      return lerp(v0 as number, v1 as number, p) as T;
+    }
+  }
+  return claves[claves.length - 1][1];
+}
+
+/** 0 → 1 entre a y b con curva */
+export const rampa = (seg: number, a: number, b: number, c: keyof typeof EASE = 'salida') =>
+  interpolate(seg, [a, b], [0, 1], {easing: EASE[c], extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+
+/** pulso de pulsación de tecla: baja en 0.06 s y vuelve con rebote en 0.2 s */
+export const pulso = (seg: number, t: number) => {
+  const d = seg - t;
+  if (d < 0 || d > 0.35) return 0;
+  if (d < 0.06) return d / 0.06;
+  const k = (d - 0.06) / 0.29;
+  return Math.max(-0.25, Math.cos(k * Math.PI * 1.5) * (1 - k));
+};
+
+/** resorte amortiguado 0 → 1 (con sobrepaso), para caídas y apariciones */
+export const resorte = (seg: number, t: number, dur = 0.6, amort = 5) => {
+  const d = (seg - t) / dur;
+  if (d <= 0) return 0;
+  if (d >= 3) return 1;
+  return 1 - Math.exp(-amort * d) * Math.cos(d * 9);
+};

@@ -1,0 +1,19 @@
+// Renderiza varios cuadros sueltos de una composición con un solo empaquetado.
+// Uso: node scripts/cuadros.mjs <id> <seg1,seg2,...> [carpeta=out/cuadros] [escala=0.5]
+import {bundle} from '@remotion/bundler';
+import {renderStill, selectComposition} from '@remotion/renderer';
+import {mkdirSync} from 'node:fs';
+import {join, dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
+const [id, segs, carpeta = 'out/cuadros', escala = '0.5'] = process.argv.slice(2);
+mkdirSync(join(raiz, carpeta), {recursive: true});
+const serveUrl = await bundle({entryPoint: join(raiz, 'src/index.ts')});
+const comp = await selectComposition({serveUrl, id, chromiumOptions: {gl: 'angle'}});
+for (const s of segs.split(',')) {
+  const frame = Math.min(comp.durationInFrames - 1, Math.round(parseFloat(s) * comp.fps));
+  const out = join(raiz, carpeta, `${id}_${s}.jpg`);
+  await renderStill({serveUrl, composition: comp, frame, output: out, imageFormat: 'jpeg', jpegQuality: 85, scale: parseFloat(escala), chromiumOptions: {gl: 'angle'}});
+  console.log(out);
+}

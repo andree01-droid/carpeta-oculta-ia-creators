@@ -1,0 +1,286 @@
+// Objetos de dinero y comercio: ticket, billete partible, pantalla de propina, precio congelado, sello.
+import React from 'react';
+import {Easing, interpolate} from 'remotion';
+import {COLORES} from '../motor/estilos';
+import {FUENTE, FUENTE_UI} from '../motor/fuentes';
+import {useVideo} from '../motor/contexto';
+import {num, str, type PropsElemento} from './tipos';
+
+const CL = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+const MONO = 'ui-monospace, "Cascadia Mono", Consolas, "Courier New", monospace';
+
+type LineaTicket = {texto: string; valor?: string; destacar?: boolean; cambiaEn?: string | number; nuevo?: string; colorNuevo?: string};
+
+/**
+ * Ticket de restaurante que sale de una impresora (ranura arriba).
+ * props: titulo, lineas[{texto, valor, destacar, cambiaEn, nuevo}], total, dur (cuadros de impresión) o impresion (0..1)
+ * En cambiaEn la línea se tacha (6 f) y aparece "nuevo" en color.
+ */
+export const Ticket: React.FC<PropsElemento> = ({p, ancho, alto, frame, f0}) => {
+  const {reloj} = useVideo();
+  const imp =
+    p.impresion !== undefined
+      ? num(p.impresion, 1)
+      : interpolate(frame, [f0, f0 + num(p.dur, 30)], [0, 1], {...CL, easing: Easing.out(Easing.cubic)});
+  const lineas = (p.lineas as LineaTicket[]) ?? [];
+  const W = ancho;
+  const H = alto;
+  // borde inferior en zigzag (de derecha a izquierda)
+  const dientes = Array.from({length: Math.ceil(W / 24)}, (_, i) => `L ${Math.max(0, W - i * 24 - 12)} ${H} L ${Math.max(0, W - (i + 1) * 24)} ${H - 14}`).join(' ');
+  return (
+    <div style={{position: 'absolute', inset: 0, width: W, height: H}}>
+      {/* papel (recortado bajo la ranura) */}
+      <div style={{position: 'absolute', left: 0, top: 30, width: W, height: H, overflow: 'hidden'}}>
+        <div style={{position: 'absolute', left: 0, top: 0, width: W, height: H, translate: `0 ${-(1 - imp) * H}px`}}>
+          <svg width={W} height={H} style={{position: 'absolute', inset: 0, filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.5))'}}>
+            <path d={`M 0 0 L ${W} 0 L ${W} ${H - 14} ${dientes} L 0 ${H - 14} Z`} fill="#F3EFE6" />
+          </svg>
+          <div style={{position: 'absolute', inset: '50px 44px', fontFamily: MONO, color: '#2A2724', fontSize: 34}}>
+            <div style={{textAlign: 'center', fontWeight: 800, fontSize: 40, letterSpacing: '0.1em'}}>{str(p.titulo, 'RESTAURANTE')}</div>
+            <div style={{textAlign: 'center', fontSize: 24, opacity: 0.6, marginTop: 6}}>{str(p.subtitulo, 'Mesa 7 · 2 personas')}</div>
+            <div style={{borderTop: '3px dashed #2A272466', margin: '26px 0'}} />
+            {lineas.map((l, i) => {
+              const cambia = l.cambiaEn !== undefined;
+              const fc = cambia ? reloj.cuadro(l.cambiaEn) : 0;
+              const tach = cambia ? interpolate(frame, [fc, fc + 6], [0, 1], CL) : 0;
+              const nuevoOp = cambia ? interpolate(frame, [fc + 4, fc + 9], [0, 1], CL) : 0;
+              const nuevoEsc = cambia ? interpolate(frame, [fc + 4, fc + 10], [1.6, 1], {...CL, easing: Easing.out(Easing.cubic)}) : 1;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    position: 'relative',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    padding: l.destacar ? '10px 12px' : '6px 0',
+                    margin: l.destacar ? `${l.nuevo ? 62 : 10}px -12px 10px` : 0,
+                    borderRadius: 8,
+                    background: l.destacar ? 'rgba(239,163,45,0.28)' : 'transparent',
+                    fontWeight: l.destacar ? 800 : 500,
+                  }}
+                >
+                  <span style={{position: 'relative'}}>
+                    {l.texto}
+                    {tach > 0 ? (
+                      <span style={{position: 'absolute', left: -4, top: '52%', height: 5, width: `calc(${tach * 100}% + 8px)`, background: COLORES.coral, borderRadius: 3}} />
+                    ) : null}
+                    {l.nuevo && nuevoOp > 0 ? (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          top: -46,
+                          whiteSpace: 'nowrap',
+                          fontFamily: FUENTE,
+                          fontWeight: 800,
+                          fontSize: 44,
+                          color: l.colorNuevo ?? COLORES.coral,
+                          opacity: nuevoOp,
+                          scale: String(nuevoEsc),
+                          transformOrigin: '0 50%',
+                          rotate: '-4deg',
+                        }}
+                      >
+                        {l.nuevo}
+                      </span>
+                    ) : null}
+                  </span>
+                  <span>{l.valor ?? ''}</span>
+                </div>
+              );
+            })}
+            <div style={{borderTop: '3px dashed #2A272466', margin: '26px 0 14px'}} />
+            <div style={{display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: 40}}>
+              <span>TOTAL</span>
+              <span>{str(p.total, '')}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* impresora: ranura */}
+      <div style={{position: 'absolute', left: -40, top: 0, width: W + 80, height: 46, borderRadius: 18, background: 'linear-gradient(#3A3A3C, #1C1C1E)', boxShadow: '0 10px 24px rgba(0,0,0,0.6)'}}>
+        <div style={{position: 'absolute', left: 30, right: 30, top: 26, height: 8, borderRadius: 4, background: '#050505'}} />
+      </div>
+    </div>
+  );
+};
+
+/**
+ * Billete de dólar que se puede partir en dos.
+ * props: valor ("7.25"), division (0..1, dónde se corta), separar (0..1),
+ *        izquierda {valor, etiqueta, color}, derecha {valor, etiqueta, color}, tinte (0..1)
+ */
+export const Billete: React.FC<PropsElemento> = ({p, ancho, alto}) => {
+  const W = ancho;
+  const H = alto;
+  const div = num(p.division, 1);
+  const sep = num(p.separar, 0) * 90;
+  const tinte = num(p.tinte, 0);
+  const tinteIzq = num(p.tinteIzq, tinte);
+  const tinteDer = num(p.tinteDer, tinte);
+  const izq = (p.izquierda as {valor?: string; etiqueta?: string; color?: string}) ?? {};
+  const der = (p.derecha as {valor?: string; etiqueta?: string; color?: string}) ?? {};
+  const cara = (
+    <svg width={W} height={H} style={{position: 'absolute', inset: 0}}>
+      <defs>
+        <linearGradient id="bill-g" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stopColor="#9CBF92" />
+          <stop offset="0.5" stopColor="#7FA37A" />
+          <stop offset="1" stopColor="#6A9067" />
+        </linearGradient>
+      </defs>
+      <rect x={0} y={0} width={W} height={H} rx={18} fill="url(#bill-g)" />
+      <rect x={18} y={18} width={W - 36} height={H - 36} rx={10} fill="none" stroke="#3F6B45" strokeWidth={5} />
+      <rect x={30} y={30} width={W - 60} height={H - 60} rx={8} fill="none" stroke="#3F6B45" strokeWidth={1.5} strokeDasharray="4 6" />
+      <ellipse cx={W / 2} cy={H / 2} rx={H * 0.3} ry={H * 0.36} fill="#6A9067" stroke="#3F6B45" strokeWidth={4} />
+      <circle cx={W / 2} cy={H / 2 - 18} r={H * 0.11} fill="#3F6B45" opacity={0.55} />
+      <path d={`M ${W / 2 - H * 0.2} ${H / 2 + H * 0.28} Q ${W / 2} ${H / 2 + 10} ${W / 2 + H * 0.2} ${H / 2 + H * 0.28}`} fill="#3F6B45" opacity={0.55} />
+      {['tl', 'tr', 'bl', 'br'].map((c) => (
+        <text key={c} x={c.includes('l') ? 62 : W - 62} y={c.includes('t') ? 92 : H - 50} textAnchor="middle" fontFamily={FUENTE} fontWeight={800} fontSize={58} fill="#2F5535">
+          $
+        </text>
+      ))}
+    </svg>
+  );
+  const parte = (x0: number, x1: number, dx: number, info: typeof izq, mostrarInfo: boolean, tinte: number) => (
+    <div style={{position: 'absolute', inset: 0, clipPath: `inset(-40px ${W - x1}px -140px ${x0}px)`, translate: `${dx}px 0`}}>
+      {cara}
+      {info.color ? <div style={{position: 'absolute', left: x0, top: 0, width: x1 - x0, height: H, background: info.color, opacity: tinte * 0.55, borderRadius: 18}} /> : null}
+      {mostrarInfo && info.valor ? (
+        <div style={{position: 'absolute', left: x0, width: x1 - x0, top: H / 2 - 50, textAlign: 'center', fontFamily: FUENTE, fontWeight: 800, fontSize: 84, color: '#fff', textShadow: '0 4px 14px rgba(0,0,0,0.5)', opacity: tinte}}>
+          {info.valor}
+        </div>
+      ) : null}
+      {mostrarInfo && info.etiqueta ? (
+        <div style={{position: 'absolute', left: x0, width: x1 - x0, top: H + 24, textAlign: 'center', fontFamily: FUENTE, fontWeight: 700, fontSize: 30, letterSpacing: '0.18em', color: info.color ?? '#fff', opacity: tinte}}>
+          {info.etiqueta}
+        </div>
+      ) : null}
+    </div>
+  );
+  const cx = W * div;
+  return (
+    <div style={{position: 'absolute', inset: 0, width: W, height: H, filter: 'drop-shadow(0 24px 30px rgba(0,0,0,0.55))'}}>
+      {div >= 1 ? (
+        <>
+          {cara}
+          <div style={{position: 'absolute', left: 0, right: 0, top: H / 2 - 62, textAlign: 'center', fontFamily: FUENTE, fontWeight: 800, fontSize: 112, color: '#F6FBF2', textShadow: '0 4px 16px rgba(0,0,0,0.45)'}}>
+            ${str(p.valor, '1')}
+          </div>
+        </>
+      ) : (
+        <>
+          {parte(0, cx, -sep / 2, izq, true, tinteIzq)}
+          {parte(cx, W, sep / 2, der, true, tinteDer)}
+        </>
+      )}
+    </div>
+  );
+};
+
+/** Pantallita de propina de la terminal de pago. props: total, botones[], seleccion, seleccionEn (Tiempo) */
+export const PantallaPropina: React.FC<PropsElemento> = ({p, ancho, alto, frame}) => {
+  const {reloj} = useVideo();
+  const botones = (p.botones as string[]) ?? ['18%', '20%', '25%', 'Otra'];
+  const sel = str(p.seleccion, '20%');
+  const hay = p.seleccionEn !== undefined;
+  const fs = hay ? reloj.cuadro(p.seleccionEn as string | number) : 0;
+  const activo = hay && frame >= fs;
+  const pulso = hay ? interpolate(frame, [fs, fs + 4, fs + 10], [1, 0.94, 1], CL) : 1;
+  return (
+    <div style={{position: 'absolute', inset: 0, width: ancho, height: alto, borderRadius: 54, background: '#141414', border: '4px solid #2E2E2E', boxShadow: '0 30px 80px rgba(0,0,0,0.6)', padding: 34, boxSizing: 'border-box'}}>
+      <div style={{position: 'absolute', inset: 34, borderRadius: 26, background: '#F5F5F2', padding: '56px 44px', boxSizing: 'border-box', fontFamily: FUENTE_UI, color: '#1A1A1A'}}>
+        <div style={{fontSize: 34, color: '#777', textAlign: 'center'}}>{str(p.encabezado, 'Total')}</div>
+        <div style={{fontSize: 84, fontWeight: 800, textAlign: 'center', fontFamily: FUENTE}}>{str(p.total, '$48.00')}</div>
+        <div style={{fontSize: 46, fontWeight: 700, textAlign: 'center', margin: '34px 0 30px', fontFamily: FUENTE}}>{str(p.pregunta, '¿Agregar propina?')}</div>
+        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22}}>
+          {botones.map((b) => {
+            const es = b === sel && activo;
+            return (
+              <div
+                key={b}
+                style={{
+                  height: 150,
+                  borderRadius: 22,
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontFamily: FUENTE,
+                  fontWeight: 800,
+                  fontSize: 56,
+                  background: es ? COLORES.ambar : b === sel ? '#FFFFFF' : '#FFFFFF',
+                  color: es ? '#1A1A1A' : '#1A1A1A',
+                  border: b === sel ? `4px solid ${COLORES.ambar}` : '3px solid #DDD',
+                  boxShadow: es ? '0 0 40px rgba(239,163,45,0.7)' : '0 3px 0 #DDD',
+                  scale: es ? String(pulso) : '1',
+                }}
+              >
+                {b}
+              </div>
+            );
+          })}
+        </div>
+        <div style={{textAlign: 'center', marginTop: 34, fontSize: 30, color: '#999', textDecoration: 'underline'}}>{str(p.sinPropina, 'Sin propina')}</div>
+      </div>
+    </div>
+  );
+};
+
+/** Etiqueta de precio que se congela. props: texto, subtexto, hielo (0..1) */
+export const PrecioCongelado: React.FC<PropsElemento> = ({p, ancho, alto, frame}) => {
+  const hielo = num(p.hielo, 0);
+  const brillo = 0.5 + 0.5 * Math.sin(frame / 9);
+  return (
+    <div style={{position: 'absolute', inset: 0, width: ancho, height: alto}}>
+      <svg width={ancho} height={alto} style={{position: 'absolute', inset: 0, overflow: 'visible', filter: 'drop-shadow(0 24px 30px rgba(0,0,0,0.55))'}}>
+        <path d={`M 120 0 L ${ancho - 24} 0 Q ${ancho} 0 ${ancho} 24 L ${ancho} ${alto - 24} Q ${ancho} ${alto} ${ancho - 24} ${alto} L 120 ${alto} L 0 ${alto / 2} Z`} fill={COLORES.ambar} />
+        <circle cx={90} cy={alto / 2} r={18} fill="#101010" />
+        {/* escarcha */}
+        <path d={`M 120 0 L ${ancho - 24} 0 Q ${ancho} 0 ${ancho} 24 L ${ancho} ${alto - 24} Q ${ancho} ${alto} ${ancho - 24} ${alto} L 120 ${alto} L 0 ${alto / 2} Z`} fill={COLORES.paisCeleste} opacity={hielo * 0.78} />
+        {Array.from({length: 7}).map((_, i) => {
+          const x = 150 + i * ((ancho - 190) / 6);
+          const largo = (22 + ((i * 37) % 30)) * hielo;
+          return <path key={i} d={`M ${x - 12} ${alto - 2} L ${x} ${alto + largo} L ${x + 12} ${alto - 2} Z`} fill="#E6F6FF" opacity={hielo} />;
+        })}
+      </svg>
+      <div style={{position: 'absolute', left: 130, right: 20, top: 0, bottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: FUENTE, color: '#1A1208'}}>
+        <div style={{fontSize: 128, fontWeight: 800, lineHeight: 1}}>{str(p.texto, '$2.13')}</div>
+        <div style={{fontSize: 38, fontWeight: 600, opacity: 0.7}}>{str(p.subtexto, 'la hora')}</div>
+      </div>
+      {hielo > 0.5 ? <div style={{position: 'absolute', right: -30, top: -40, fontSize: 90, opacity: (hielo - 0.5) * 2 * (0.7 + 0.3 * brillo)}}>❄️</div> : null}
+    </div>
+  );
+};
+
+/** Sello de goma que cae girado. props: texto, color */
+export const Sello: React.FC<PropsElemento> = ({p, frame, f0}) => {
+  const s = interpolate(frame, [f0, f0 + 6], [2.2, 1], {...CL, easing: Easing.in(Easing.cubic)});
+  const op = interpolate(frame, [f0, f0 + 3], [0, 1], CL);
+  const temblor = frame >= f0 + 6 && frame < f0 + 10 ? (frame % 2 === 0 ? 4 : -4) : 0;
+  const c = str(p.color, COLORES.coral);
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        translate: `calc(-50% + ${temblor}px) -50%`,
+        rotate: `${num(p.giro, -12)}deg`,
+        scale: String(s),
+        opacity: op,
+        padding: '14px 36px',
+        border: `8px solid ${c}`,
+        borderRadius: 18,
+        color: c,
+        fontFamily: FUENTE,
+        fontWeight: 800,
+        fontSize: num(p.tamano, 86),
+        letterSpacing: '0.08em',
+        whiteSpace: 'nowrap',
+        textTransform: 'uppercase',
+        background: 'rgba(16,16,16,0.25)',
+      }}
+    >
+      {str(p.texto, 'SELLO')}
+    </div>
+  );
+};

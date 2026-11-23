@@ -1,0 +1,182 @@
+{
+  "titulo": "teclado-15s",
+  "estilo": "interfaz-grid",
+  "audio": "voz/teclado_ref.mp3",
+  "duracion": 15.5,
+  "claves": ["teclado", "pulgar", "letra#1", "siempre", "posible", "tocas#1", "escribes", "invisible"],
+  "emojis": {"pulgar": "👍"},
+  "subtitulos": {"cortes": ["@del", "@que#2", "@no", "@hay"]},
+  "palabras": [
+    {"word": "Cada", "start": 0.0, "end": 0.22},
+    {"word": "tecla", "start": 0.22, "end": 0.54},
+    {"word": "del", "start": 0.54, "end": 0.72},
+    {"word": "teclado", "start": 0.72, "end": 1.12},
+    {"word": "de", "start": 1.12, "end": 1.24},
+    {"word": "tu", "start": 1.24, "end": 1.38},
+    {"word": "iPhone", "start": 1.38, "end": 1.7},
+    {"word": "es", "start": 1.7, "end": 2.04},
+    {"word": "más", "start": 2.04, "end": 2.32},
+    {"word": "pequeña", "start": 2.32, "end": 2.74},
+    {"word": "que", "start": 2.74, "end": 2.88},
+    {"word": "tu", "start": 2.88, "end": 3.02},
+    {"word": "pulgar,", "start": 3.02, "end": 3.42},
+    {"word": "y", "start": 3.82, "end": 3.88},
+    {"word": "aun", "start": 3.88, "end": 4.06},
+    {"word": "así", "start": 4.06, "end": 4.32},
+    {"word": "aciertas", "start": 4.46, "end": 4.88},
+    {"word": "la", "start": 4.88, "end": 5.06},
+    {"word": "letra", "start": 5.06, "end": 5.3},
+    {"word": "casi", "start": 5.3, "end": 5.58},
+    {"word": "siempre.", "start": 5.58, "end": 5.96},
+    {"word": "Entonces,", "start": 6.18, "end": 6.52},
+    {"word": "¿cómo", "start": 6.82, "end": 7.04},
+    {"word": "es", "start": 7.04, "end": 7.18},
+    {"word": "posible?", "start": 7.18, "end": 7.56},
+    {"word": "Porque", "start": 7.74, "end": 8.04},
+    {"word": "las", "start": 8.04, "end": 8.2},
+    {"word": "teclas", "start": 8.2, "end": 8.56},
+    {"word": "que", "start": 8.56, "end": 8.68},
+    {"word": "ves", "start": 8.68, "end": 8.96},
+    {"word": "no", "start": 8.96, "end": 9.3},
+    {"word": "son", "start": 9.3, "end": 9.56},
+    {"word": "las", "start": 9.56, "end": 9.74},
+    {"word": "que", "start": 9.74, "end": 9.9},
+    {"word": "tocas,", "start": 9.9, "end": 10.26},
+    {"word": "y", "start": 10.42, "end": 10.58},
+    {"word": "las", "start": 10.58, "end": 10.72},
+    {"word": "que", "start": 10.72, "end": 10.86},
+    {"word": "tocas", "start": 10.86, "end": 11.16},
+    {"word": "cambian", "start": 11.16, "end": 11.64},
+    {"word": "de", "start": 11.64, "end": 11.78},
+    {"word": "tamaño", "start": 11.78, "end": 12.16},
+    {"word": "mientras", "start": 12.16, "end": 12.44},
+    {"word": "escribes.", "start": 12.44, "end": 13.02},
+    {"word": "Debajo", "start": 13.2, "end": 13.58},
+    {"word": "de", "start": 13.58, "end": 13.7},
+    {"word": "cada", "start": 13.7, "end": 13.86},
+    {"word": "letra", "start": 13.86, "end": 14.2},
+    {"word": "hay", "start": 14.2, "end": 14.44},
+    {"word": "una", "start": 14.44, "end": 14.58},
+    {"word": "zona", "start": 14.58, "end": 14.8},
+    {"word": "invisible,", "start": 14.8, "end": 15.3}
+  ],
+  "escenas": [
+    {
+      "id": "macro-teclas",
+      "desde": 0,
+      "transicion": "corte",
+      "empuje": 0.05,
+      "perspectiva": 6500,
+      "fondo": {"brillo": "calido", "brilloX": 520, "brilloY": 760, "brilloRadio": 560, "polvo": 30},
+      "elementos": [
+        {
+          "tipo": "Grupo", "id": "mesa", "x": 540, "y": 1210, "ancho": 1080, "alto": 1080, "rotX": 76,
+          "hijos": [
+            {
+              "tipo": "TecladoIOS", "id": "teclado-macro", "x": 1620, "y": 588, "escala": 4.8,
+              "props": {
+                "profundidad": 16, "fondoZonas": true, "colorZonas": "#A8721F", "invertirTexto": true,
+                "mayusculas": false, "campo": "esta tard", "burbuja": "¿quedamos hoy?", "sugerencias": null, "campoY": 125
+              },
+              "anim": [
+                {"t": 0.45, "dur": 0, "popup": "e"},
+                {"t": 0.9, "dur": 0, "popup": "", "pulsada": "e"},
+                {"t": 1.45, "dur": 0, "pulsada": ""}
+              ]
+            }
+          ]
+        }
+      ],
+      "encima": [
+        {
+          "tipo": "Yema", "id": "yema", "x": 20, "y": 770, "escala": 1.28, "blur": 10,
+          "anim": [
+            {"t": 0.3, "dur": 0.4, "x": 7, "y": 620, "escala": 0.75},
+            {"t": 0.7, "dur": 0.4, "x": 71, "y": 578, "escala": 0.47, "curva": "salida"},
+            {"t": 1.1, "dur": 0.65, "x": 257, "y": 585, "escala": 0.5},
+            {"t": 1.9, "dur": 0.6, "x": 620, "y": 470, "escala": 1.35, "rotZ": 18},
+            {"t": 2.5, "dur": 0.7, "x": 540, "y": -60, "escala": 2.6, "rotZ": 90, "curva": "salida"}
+          ]
+        },
+        {"tipo": "Brillo", "id": "luz-yema", "x": 560, "y": 1180, "ancho": 800, "alto": 220, "desde": 2.6, "entrada": "fundido",
+         "props": {"color": "rgba(255,210,140,0.6)"}},
+        {"tipo": "Caja", "id": "fundido-inferior", "x": 540, "y": 1740, "ancho": 1080, "alto": 480,
+         "props": {"fondo": "linear-gradient(180deg, rgba(16,16,16,0) 0%, #101010 40%)"}},
+        {"tipo": "Etiqueta", "id": "zona-tactil", "x": 112, "y": 1290, "desde": 1.45, "hasta": 2.05, "salida": "fundido",
+         "props": {"texto": "zona táctil, invisible", "dx": 2, "dy": -600, "tamano": 38}}
+      ]
+    },
+    {
+      "id": "teclado-plano",
+      "desde": 3.62,
+      "transicion": "empujeDesenfoque",
+      "empuje": 0,
+      "perspectiva": 3300,
+      "camara": [
+        {"t": 3.62, "dur": 0, "x": 329, "y": 836, "zoom": 2.29},
+        {"t": 3.63, "dur": 1.7, "x": 329, "y": 836, "zoom": 2.36, "curva": "lineal"},
+        {"t": 5.36, "dur": 0.38, "x": 540, "y": 960, "zoom": 1, "curva": "suave"}
+      ],
+      "elementos": [
+        {
+          "tipo": "TecladoIOS", "id": "abajo", "x": 540, "y": 1120, "rotX": 56, "escala": 0.95, "desde": 8.35, "entrada": "fundido",
+          "props": {"modo": "ranuras", "deformar": 0},
+          "anim": [
+            {"t": 8.35, "dur": 0, "y": 820},
+            {"t": 8.36, "dur": 0.45, "y": 1120, "curva": "salida"},
+            {"t": "@tocas", "dur": 0, "modo": "zonas"},
+            {"t": "@cambian", "dur": 1.0, "deformar": 0.75},
+            {"t": "@mientras", "dur": 0, "semilla": 2},
+            {"t": "@escribes", "dur": 0, "semilla": 3},
+            {"t": "@escribes+0.3", "dur": 0, "semilla": 4},
+            {"t": "@invisible", "dur": 0, "modo": "contornos"}
+          ]
+        },
+        {
+          "tipo": "TecladoIOS", "id": "arriba", "x": 540, "y": 996,
+          "props": {
+            "mayusculas": false, "campo": "esta tard", "campoColor": "#B5B5B5", "sugerencias": ["“tard”", "tarde", "tardes"],
+            "fondoZonas": true, "zonaGrande": "e", "zonaFactor": 1.28, "colorZonas": "#D6922A"
+          },
+          "anim": [
+            {"t": "@aciertas", "dur": 0, "campo": "esta tarde", "sugerencias": ["“tarde”", "tarde", "tardes"], "pulsada": "e"},
+            {"t": "@aciertas+0.4", "dur": 0, "pulsada": ""},
+            {"t": "@la", "dur": 0, "popup": "e"},
+            {"t": "@letra", "dur": 0, "popup": ""},
+            {"t": 5.38, "dur": 0, "fondoZonas": false, "campo": "", "campoColor": "#FFFFFF", "sugerencias": ["Hola", "Vale", "Sí"], "mayusculas": true},
+            {"t": "@posible-0.2", "dur": 0, "pulsada": "d,shift"},
+            {"t": "@posible+0.25", "dur": 0, "pulsada": ""},
+            {"t": "@Porque", "dur": 0, "campoDentro": true},
+            {"t": "@Porque", "dur": 0.55, "rotX": 45, "y": 930, "escala": 1.12, "curva": "suave"},
+            {"t": 8.3, "dur": 0.55, "rotX": 56, "y": 705, "escala": 1.07, "curva": "suave"},
+            {"t": 11.9, "dur": 0, "campo": "H"},
+            {"t": 12.15, "dur": 0, "campo": "Ho", "mayusculas": false},
+            {"t": 12.4, "dur": 0, "campo": "Hol"},
+            {"t": 12.7, "dur": 0, "campo": "Hola", "sugerencias": ["“Hola”", "Hola,", "Holaa"]}
+          ]
+        },
+        {"tipo": "Reticula", "id": "toque-e", "x": 267, "y": 867, "ancho": 80, "hasta": 5.36, "props": {"toques": ["@aciertas"], "dura": 14}},
+        {"tipo": "Reticula", "id": "toque-d", "x": 277, "y": 952, "ancho": 180, "desde": 5.4, "hasta": 7.74, "props": {"toques": ["@posible-0.2"], "dura": 14}},
+        {
+          "tipo": "Dedo", "id": "dedo-plano", "x": -60, "y": 1330, "rotZ": 35, "escala": 1.1,
+          "desde": 5.38, "hasta": 7.0, "entrada": {"tipo": "subir", "dur": 6},
+          "props": {"toques": ["@casi", "@siempre"]},
+          "anim": [{"t": 6.45, "dur": 0.4, "x": -520, "y": 1900, "curva": "entrada"}]
+        }
+      ],
+      "encima": [
+        {"tipo": "Caja", "id": "fundido-inferior", "x": 540, "y": 1740, "ancho": 1080, "alto": 480, "hasta": 5.45, "salida": {"tipo": "fundido", "dur": 6},
+         "props": {"fondo": "linear-gradient(180deg, rgba(16,16,16,0) 0%, #101010 40%)"}},
+        {
+          "tipo": "HilosTeclado", "id": "hilos", "desde": "@Debajo+0.2",
+          "props": {"arriba": {"x": 540, "y": 705, "escala": 1.07, "rotX": 56}, "abajo": {"x": 540, "y": 1120, "escala": 0.95, "rotX": 56}, "perspectiva": 3300, "progreso": 0},
+          "anim": [{"t": "@Debajo+0.2", "dur": 0.8, "progreso": 1, "curva": "salida"}]
+        },
+        {"tipo": "Etiqueta", "id": "lo-que-ves", "x": 540, "y": 918, "desde": "@ves", "hasta": "@Debajo", "salida": "fundido",
+         "props": {"texto": "lo que ves", "dx": -263, "dy": 46, "tamano": 39}},
+        {"tipo": "Etiqueta", "id": "lo-que-tocas", "x": 540, "y": 1298, "desde": "@tocas+0.1", "hasta": "@Debajo", "salida": "fundido",
+         "props": {"texto": "lo que tocas", "dx": -220, "dy": 63, "tamano": 39}}
+      ]
+    }
+  ]
+}

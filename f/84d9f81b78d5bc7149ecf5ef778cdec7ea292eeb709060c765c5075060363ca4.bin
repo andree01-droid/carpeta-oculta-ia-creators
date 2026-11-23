@@ -1,0 +1,99 @@
+// Efectos de sonido automáticos (según los elementos del JSON) + manuales (spec.sonidos).
+import {staticFile} from 'remotion';
+import type {Reloj} from './reloj';
+import type {ElementoSpec, VideoSpec} from './tipos';
+
+/** Catálogo de efectos. Los "remotion.media" son los oficiales de Remotion; el resto se generan con herramientas/sfx.py */
+export const SFX: Record<string, string> = {
+  whoosh: 'https://remotion.media/whoosh.wav',
+  whip: 'https://remotion.media/whip.wav',
+  clic: 'https://remotion.media/mouse-click.wav',
+  ding: 'https://remotion.media/ding.wav',
+  interruptor: 'https://remotion.media/switch.wav',
+  papel: 'https://remotion.media/page-turn.wav',
+  foto: 'https://remotion.media/shutter-modern.wav',
+  notificacion: 'https://remotion.media/snapchat-notification.wav',
+  pop: 'sfx/pop.wav',
+  golpe: 'sfx/golpe.wav',
+  caja: 'sfx/caja.wav',
+  hielo: 'sfx/hielo.wav',
+  impresora: 'sfx/impresora.wav',
+  tic: 'sfx/tic.wav',
+  conteo: 'sfx/conteo.wav',
+  subida: 'sfx/subida.wav',
+  swoosh: 'sfx/swoosh.wav',
+  moneda: 'sfx/moneda.wav',
+  error: 'sfx/error.wav',
+};
+
+export const srcSfx = (nombre: string) => {
+  const s = SFX[nombre] ?? nombre;
+  return s.startsWith('http') ? s : staticFile(s);
+};
+
+export type Sonido = {f: number; sfx: string; vol: number; dur?: number};
+
+const t = (reloj: Reloj, v: unknown) => reloj.cuadro(v as string | number);
+
+export const calcularSonidos = (spec: VideoSpec, reloj: Reloj): Sonido[] => {
+  const out: Sonido[] = [];
+  if (spec.sinSonidosAuto !== true) {
+    spec.escenas.forEach((e, i) => {
+      const f0 = reloj.cuadro(e.desde);
+      const tr = e.transicion ?? (i === 0 ? 'corte' : 'empujeDesenfoque');
+      if (i > 0 && tr !== 'corte') out.push({f: f0 - 6, sfx: tr === 'barrido' ? 'whip' : i % 2 ? 'whoosh' : 'swoosh', vol: tr === 'barrido' ? 0.32 : 0.4});
+      const visitar = (el: ElementoSpec, fEsc: number) => {
+        const fe = el.desde !== undefined ? t(reloj, el.desde) : fEsc;
+        const p = (el.props ?? {}) as Record<string, unknown>;
+        const ent = typeof el.entrada === 'string' ? el.entrada : el.entrada?.tipo;
+        switch (el.tipo) {
+          case 'Sello':
+            out.push({f: fe + 5, sfx: 'golpe', vol: 0.55});
+            break;
+          case 'Contador':
+            out.push({f: p.cuentaDesde !== undefined ? t(reloj, p.cuentaDesde) : fe, sfx: 'conteo', vol: 0.22, dur: (Number(p.dur) || 20) / 30 + 0.1});
+            break;
+          case 'Ticket':
+            if (p.impresion === undefined) out.push({f: fe, sfx: 'impresora', vol: 0.3, dur: (Number(p.dur) || 30) / 30});
+            break;
+          case 'PrecioCongelado':
+            (el.anim ?? []).forEach((c) => c.hielo !== undefined && out.push({f: t(reloj, c.t), sfx: 'hielo', vol: 0.35}));
+            break;
+          case 'PantallaPropina':
+            if (p.seleccionEn !== undefined && p.seleccionEn !== 0) out.push({f: t(reloj, p.seleccionEn), sfx: 'caja', vol: 0.4});
+            break;
+          case 'Dedo':
+          case 'Reticula':
+            ((p.toques as unknown[]) ?? []).forEach((x) => out.push({f: t(reloj, x), sfx: 'clic', vol: 0.4}));
+            break;
+          case 'CTACompartir':
+            ['tSeguir', 'tCompartir', 'tAmigo'].forEach((k) => p[k] !== undefined && out.push({f: t(reloj, p[k]), sfx: 'clic', vol: 0.4}));
+            if (p.tEnviar !== undefined) out.push({f: t(reloj, p.tEnviar), sfx: 'notificacion', vol: 0.35});
+            break;
+          case 'Particulas':
+            if (p.modo !== 'lluvia') out.push({f: fe, sfx: String(p.sonido ?? 'moneda'), vol: 0.3});
+            break;
+          case 'Icono':
+            if (!ent) out.push({f: fe, sfx: 'pop', vol: 0.26});
+            break;
+          case 'TextoCinetico':
+            out.push({f: fe + 3, sfx: 'golpe', vol: 0.38});
+            break;
+          case 'Mesero':
+            if (ent === 'caer') out.push({f: fe + 10, sfx: 'golpe', vol: 0.3});
+            break;
+          default:
+            break;
+        }
+        if (ent === 'pop' || ent === 'rebote') out.push({f: fe, sfx: 'pop', vol: 0.28});
+        if (ent === 'volarIzq' || ent === 'volarDer') out.push({f: fe - 2, sfx: 'swoosh', vol: 0.3});
+        (el.hijos ?? []).forEach((h) => visitar(h, fe));
+      };
+      [...e.elementos, ...(e.encima ?? [])].forEach((el) => visitar(el, f0));
+    });
+  }
+  (spec.sonidos ?? []).forEach((s) => out.push({f: reloj.cuadro(s.t), sfx: s.sfx, vol: s.vol ?? 0.4}));
+  // no amontonar el mismo sonido en menos de 3 cuadros
+  out.sort((a, b) => a.f - b.f);
+  return out.filter((s, i) => !out.slice(0, i).some((o) => o.sfx === s.sfx && Math.abs(o.f - s.f) < 3) && s.f >= 0);
+};

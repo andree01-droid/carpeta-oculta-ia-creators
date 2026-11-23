@@ -1,0 +1,142 @@
+"""Genera la voz en off de un guion y los tiempos de cada palabra.
+
+Uso:
+  .venv/Scripts/python.exe herramientas/voz.py <id> "<guion>"            (o --archivo guion.txt)
+
+Motores:
+  --motor=gemini   (RECOMENDADO) voz natural de Google Gemini TTS. Necesita GEMINI_API_KEY en .env
+                   --voz=Achird   (voces: Achird, Puck, Fenrir, Sadachbia, Charon, Orus, Iapetus…)
+                   --estilo="..." indicación de actuación (por defecto: cercano, amigable, con energía)
+                   --modelo=gemini-3.8-flash-tts   --tempo=1.0 (acelera/frena sin cambiar el tono)
+  --motor=edge     voz Microsoft gratuita (más robótica)
+                   --voz=es-ES-AlvaroNeural --velocidad=+18% --tono=-2Hz  (con "=", por los signos)
+                   Latinos EE. UU.: --voz=es-US-AlonsoNeural --velocidad=+40%
+
+Salida:
+  fabrica/public/voz/<id>.mp3                      ← audio (normalizado a -14 LUFS)
+  videos_referencia/transcripciones/<id>.json      ← palabras con tiempos (formato de transcribir.py)
+Los tiempos salen de faster-whisper sobre el audio generado.
+"""
+import argparse, asyncio, base64, json, os, re, subprocess, sys, tempfile, urllib.request, wave
+
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+ESTILO = ("Read this Spanish script aloud in a warm, friendly, smiling Latin American voice, like a content "
+          "creator excitedly telling a friend a surprising fact, upbeat and fast-paced, stressing the numbers")
+
+
+def clave_gemini():
+    ruta = os.path.join(RAIZ, ".env")
+    if os.environ.get("GEMINI_API_KEY"):
+        return os.environ["GEMINI_API_KEY"]
+    for l in open(ruta, encoding="utf-8"):
+        if l.startswith("GEMINI_API_KEY="):
+            return l.split("=", 1)[1].strip()
+    raise SystemExit("Falta GEMINI_API_KEY en .env")
+
+
+def sintetizar_gemini(texto, voz, estilo, modelo, salida_wav):
+    # Formato de la guía de prompts de Gemini TTS: notas del director separadas de la transcripción.
+    # (Con "estilo: texto" a veces lee el estilo en voz alta; por eso además se verifica y reintenta.)
+    prompt = (f"### DIRECTOR'S NOTES (do not read aloud)\nStyle: {estilo}.\n\n"
+              f"#### TRANSCRIPT (read only this, word for word)\n{texto}")
+    cuerpo = {
+        "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "responseModalities": ["AUDIO"],
+            "speechConfig": {"voiceConfig": {"prebuiltVoiceConfig": {"voiceName": voz}}},
+        },
+    }
+    req = urllib.request.Request(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{modelo}:generateContent",
+        data=json.dumps(cuerpo).encode(),
+        headers={"x-goog-api-key": clave_gemini(), "Content-Type": "application/json"},
+    )
+    try:
+        r = json.load(urllib.request.urlopen(req, timeout=300))
+    except urllib.error.HTTPError as e:
+        raise SystemExit(f"Gemini HTTP {e.code}: {e.read().decode()[:800]}")
+    parte = r["candidates"][0]["content"]["parts"][0]["inlineData"]
+    datos = base64.b64decode(parte["data"])
+    mime = parte.get("mimeType", "")
+    print("Gemini devolvió:", mime, f"{len(datos)/1024:.0f} KB")
+    if "l16" in mime.lower() or "pcm" in mime.lower():
+        m = re.search(r"rate=(\d+)", mime)
+        with wave.open(salida_wav, "wb") as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(int(m.group(1)) if m else 24000)
+            w.writeframes(datos)
+    else:
+        # ya viene en un contenedor (wav/mp3/ogg): ffmpeg lo detecta solo
+        open(salida_wav, "wb").write(datos)
+
+
+async def sintetizar_edge(texto, voz, velocidad, tono, salida):
+    import edge_tts
+    com = edge_tts.Communicate(texto, voz, rate=velocidad, pitch=tono)
+    await com.save(salida)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("id")
+    ap.add_argument("guion", nargs="?")
+    ap.add_argument("--archivo")
+    ap.add_argument("--motor", default="gemini")
+    ap.add_argument("--voz")
+    ap.add_argument("--estilo", default=ESTILO)
+    ap.add_argument("--modelo", default="gemini-3.8-flash-tts")
+    ap.add_argument("--tempo", type=float, default=1.0)
+    ap.add_argument("--velocidad", default="+18%")
+    ap.add_argument("--tono", default="-2Hz")
+    ap.add_argument("--lang", default="es", help="idioma para Whisper (es, en…)")
+    a = ap.parse_args()
+    texto = open(a.archivo, encoding="utf-8").read() if a.archivo else a.guion
+    texto = re.sub(r"\s+", " ", texto).strip()
+
+    os.makedirs(os.path.join(RAIZ, "fabrica", "public", "voz"), exist_ok=True)
+    mp3 = os.path.join(RAIZ, "fabrica", "public", "voz", f"{a.id}.mp3")
+    out_dir = os.path.join(RAIZ, "videos_referencia", "transcripciones")
+    tj = os.path.join(out_dir, f"{a.id}.json")
+    norm = lambda s: re.sub(r"[^a-záéíóúñü ]", "", s.lower()).split()
+    inicio_guion = norm(texto)[:3]
+    largo_guion = len(texto)
+
+    for intento in range(1, 5):
+        tmpdir = tempfile.mkdtemp()
+        if a.motor == "gemini":
+            tmp = os.path.join(tmpdir, "voz.wav")
+            sintetizar_gemini(texto, a.voz or "Achird", a.estilo, a.modelo, tmp)
+        else:
+            tmp = os.path.join(tmpdir, "voz.mp3")
+            asyncio.run(sintetizar_edge(texto, a.voz or "es-ES-AlvaroNeural", a.velocidad, a.tono, tmp))
+
+        filtros = []
+        if abs(a.tempo - 1.0) > 1e-3:
+            filtros.append(f"atempo={a.tempo}")
+        # recorta silencio inicial/final y normaliza
+        filtros += ["silenceremove=start_periods=1:start_threshold=-45dB",
+                    "areverse", "silenceremove=start_periods=1:start_threshold=-45dB", "areverse",
+                    "loudnorm=I=-14:TP=-1:LRA=7"]
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", tmp, "-af", ",".join(filtros),
+                        "-ar", "44100", "-ac", "1", "-b:a", "192k", mp3], check=True)
+
+        subprocess.run([sys.executable, os.path.join(RAIZ, "herramientas", "transcribir.py"), mp3, "--out", out_dir,
+                        "--lang", a.lang], check=True)
+        d = json.load(open(tj, encoding="utf-8"))
+        leido = " ".join(s["text"] for s in d["segments"])
+        # verificación: empieza como el guion y no es mucho más largo (no leyó instrucciones de más)
+        ok = norm(leido)[:3] == inicio_guion and len(leido) < largo_guion * 1.15
+        if ok or a.motor != "gemini":
+            break
+        print(f"Intento {intento}: la voz no coincide con el guion (leyó de más o empezó distinto). Reintentando…")
+    else:
+        print("AVISO: después de 4 intentos la voz sigue sin coincidir; revisá la transcripción a mano.")
+    dur = d["words"][-1]["end"] if d["words"] else 0
+    ppm = len(d["words"]) / (dur / 60) if dur else 0
+    print(f"Voz: {mp3}\nPalabras: {tj}\nDuración {dur:.2f}s · {len(d['words'])} palabras · {ppm:.0f} ppm")
+
+
+if __name__ == "__main__":
+    main()

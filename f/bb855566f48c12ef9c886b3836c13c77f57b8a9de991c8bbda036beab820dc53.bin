@@ -1,0 +1,12 @@
+.env
+.venv/
+.cache/
+node/
+ffmpeg/
+uv/
+python/
+mg
+mg.cmd
+fabrica/node_modules/
+fabrica/out/
+hyperframes/node_modules/

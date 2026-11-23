@@ -1,0 +1,67 @@
+<template>
+  <style>
+#root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; background: #0E0E10; }
+.fondo { position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.035) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,0.035) 1.5px, transparent 1.5px);
+  background-size: 120px 120px; background-position: -60px -60px; }
+.halo { position: absolute; left: -300px; top: 300px; width: 1680px; height: 1680px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(239,163,45,0.22) 0%, rgba(239,163,45,0.06) 40%, transparent 70%); }
+.vineta { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 62% at 50% 55%, transparent 55%, rgba(0,0,0,0.75) 100%); pointer-events: none; }
+.cam { position: absolute; inset: 0; }
+.persp { position: absolute; inset: 0; perspective: 1800px; perspective-origin: 540px 1000px; }
+.tablero { position: absolute; width: 1000px; height: 392px; transform-style: preserve-3d; }
+.base { position: absolute; left: -36px; top: -36px; right: -36px; bottom: -36px; border-radius: 42px;
+  background: linear-gradient(180deg, #1d1d20, #141416); box-shadow: 0 30px 0 #0a0a0b, 0 50px 90px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06); }
+.k { position: absolute; width: 88px; height: 88px; border-radius: 16px;
+  background: linear-gradient(180deg, #3b3b3f 0%, #2c2c30 100%);
+  box-shadow: 0 10px 0 #17171a, 0 16px 24px rgba(0,0,0,0.55), inset 0 2px 0 rgba(255,255,255,0.09);
+  color: #d7d7da; font-weight: 600; font-size: 40px; display: grid; place-items: center; }
+.k.esp { width: 520px; }
+.k .g { position: absolute; inset: 0; border-radius: 16px; opacity: 0; display: grid; place-items: center; color: #1a1206; font-weight: 800; }
+.k .b { position: absolute; left: 30px; width: 28px; bottom: 14px; height: 6px; border-radius: 3px; background: #6a6a70;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+.fila { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+.chip { padding: 14px 38px; border-radius: 999px; font-weight: 800; font-size: 50px; white-space: nowrap; }
+.etq { position: absolute; font-weight: 800; font-size: 40px; color: #fff; white-space: nowrap; }
+.dedo { position: absolute; width: 74px; height: 104px; border-radius: 37px 37px 30px 30px;
+  background: linear-gradient(180deg, #E8B496 0%, #C98B6B 100%); box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
+.dedo::after { content: ""; position: absolute; left: 14px; right: 14px; top: 8px; height: 40px; border-radius: 20px 20px 12px 12px;
+  background: linear-gradient(180deg, #F6D9CF, #E7C1B3); opacity: 0.9; }
+.anillo { position: absolute; border-radius: 50%; border: 4px solid #EFA32D; }
+</style>
+  <div data-hf-id="hf-h01u" id="root" data-composition-id="s10-pantalla" data-width="1080" data-height="1920" data-layout-allow-overlap data-layout-allow-overflow>
+
+    <div data-hf-id="hf-anbe" class="fondo"></div><div data-hf-id="hf-d1uq" class="halo"></div>
+    <div data-hf-id="hf-hpoj" class="cam" id="s10-cam">
+      <div data-hf-id="hf-ou4g" id="s10-mon" style="position:absolute;left:190px;top:600px;width:700px;height:440px;border-radius:26px;background:#1b1b1f;border:10px solid #2c2c31;box-shadow:0 0 80px rgba(46,211,192,0.25)">
+        <div data-hf-id="hf-amtf" style="position:absolute;inset:26px;border-radius:12px;background:linear-gradient(135deg,#123a37,#0f2421)">
+          <div data-hf-id="hf-33h7" class="s10-ln" style="position:absolute;left:30px;top:40px;width:420px;height:22px;border-radius:11px;background:#2ED3C0;opacity:0.7"></div>
+          <div data-hf-id="hf-1z2t" class="s10-ln" style="position:absolute;left:30px;top:90px;width:520px;height:22px;border-radius:11px;background:#fff;opacity:0.35"></div>
+          <div data-hf-id="hf-z62h" class="s10-ln" style="position:absolute;left:30px;top:140px;width:360px;height:22px;border-radius:11px;background:#fff;opacity:0.35"></div>
+          <div data-hf-id="hf-vygw" id="s10-cur" style="position:absolute;left:400px;top:136px;width:8px;height:30px;background:#fff"></div>
+        </div>
+        <div data-hf-id="hf-4fjb" style="position:absolute;left:290px;top:440px;width:100px;height:90px;background:#2c2c31"></div>
+      </div>
+      <div data-hf-id="hf-h2jq" class="etq" id="s10-ojos" style="left:420px;top:1160px;font-size:200px">👀</div>
+      <div data-hf-id="hf-j5bf" class="persp" id="s10-tecl" style="filter:blur(10px);opacity:0.5"><div data-hf-id="hf-rnqy" class="tablero" id="s10-tab" style="left:40px;top:1450px"><div data-hf-id="hf-9327" class="base"></div><div data-hf-id="hf-gmcr" class="k" id="s10-k-Q" style="left:0px;top:0px">Q<div data-hf-id="hf-2pcl" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Q</div></div><div data-hf-id="hf-yagm" class="k" id="s10-k-W" style="left:98px;top:0px">W<div data-hf-id="hf-536r" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">W</div></div><div data-hf-id="hf-597r" class="k" id="s10-k-E" style="left:196px;top:0px">E<div data-hf-id="hf-anh5" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">E</div></div><div data-hf-id="hf-abii" class="k" id="s10-k-R" style="left:294px;top:0px">R<div data-hf-id="hf-3w9o" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">R</div></div><div data-hf-id="hf-0pn3" class="k" id="s10-k-T" style="left:392px;top:0px">T<div data-hf-id="hf-4ovq" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">T</div></div><div data-hf-id="hf-hqi2" class="k" id="s10-k-Y" style="left:490px;top:0px">Y<div data-hf-id="hf-ziwd" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Y</div></div><div data-hf-id="hf-r2zc" class="k" id="s10-k-U" style="left:588px;top:0px">U<div data-hf-id="hf-4akp" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">U</div></div><div data-hf-id="hf-3yyr" class="k" id="s10-k-I" style="left:686px;top:0px">I<div data-hf-id="hf-5vst" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">I</div></div><div data-hf-id="hf-hjra" class="k" id="s10-k-O" style="left:784px;top:0px">O<div data-hf-id="hf-89mz" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">O</div></div><div data-hf-id="hf-u5wb" class="k" id="s10-k-P" style="left:882px;top:0px">P<div data-hf-id="hf-33nm" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">P</div></div><div data-hf-id="hf-o9in" class="k" id="s10-k-A" style="left:30px;top:98px">A<div data-hf-id="hf-9291" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">A</div></div><div data-hf-id="hf-h1qp" class="k" id="s10-k-S" style="left:128px;top:98px">S<div data-hf-id="hf-3hyn" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">S</div></div><div data-hf-id="hf-qxsc" class="k" id="s10-k-D" style="left:226px;top:98px">D<div data-hf-id="hf-b1s6" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">D</div></div><div data-hf-id="hf-lplr" class="k" id="s10-k-F" style="left:324px;top:98px">F<div data-hf-id="hf-bue8" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">F</div><div data-hf-id="hf-goiq" class="b"></div></div><div data-hf-id="hf-qbze" class="k" id="s10-k-G" style="left:422px;top:98px">G<div data-hf-id="hf-bg37" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">G</div></div><div data-hf-id="hf-qagl" class="k" id="s10-k-H" style="left:520px;top:98px">H<div data-hf-id="hf-6a3u" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">H</div></div><div data-hf-id="hf-4ywv" class="k" id="s10-k-J" style="left:618px;top:98px">J<div data-hf-id="hf-72pw" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">J</div><div data-hf-id="hf-ys5i" class="b"></div></div><div data-hf-id="hf-gpoc" class="k" id="s10-k-K" style="left:716px;top:98px">K<div data-hf-id="hf-6oev" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">K</div></div><div data-hf-id="hf-qnn9" class="k" id="s10-k-L" style="left:814px;top:98px">L<div data-hf-id="hf-7vby" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">L</div></div><div data-hf-id="hf-y07t" class="k" id="s10-k-NN" style="left:912px;top:98px">Ñ<div data-hf-id="hf-hkk5" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Ñ</div></div><div data-hf-id="hf-dwqb" class="k" id="s10-k-Z" style="left:75px;top:196px">Z<div data-hf-id="hf-0ptg" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Z</div></div><div data-hf-id="hf-41rc" class="k" id="s10-k-X" style="left:173px;top:196px">X<div data-hf-id="hf-zx7e" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">X</div></div><div data-hf-id="hf-n98t" class="k" id="s10-k-C" style="left:271px;top:196px">C<div data-hf-id="hf-9uv3" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">C</div></div><div data-hf-id="hf-sxol" class="k" id="s10-k-V" style="left:369px;top:196px">V<div data-hf-id="hf-5hhs" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">V</div></div><div data-hf-id="hf-k432" class="k" id="s10-k-B" style="left:467px;top:196px">B<div data-hf-id="hf-a964" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">B</div></div><div data-hf-id="hf-gswb" class="k" id="s10-k-N" style="left:565px;top:196px">N<div data-hf-id="hf-8ny0" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">N</div></div><div data-hf-id="hf-o7me" class="k" id="s10-k-M" style="left:663px;top:196px">M<div data-hf-id="hf-7h0x" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">M</div></div><div data-hf-id="hf-im98" class="k esp" id="s10-k-ESP" style="left:240px;top:294px"><div data-hf-id="hf-69vd" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D"></div></div></div></div>
+      <div data-hf-id="hf-ssb0" class="etq" id="s10-q" style="left:770px;top:1180px;font-size:200px;color:#EFA32D;font-weight:900">?</div>
+    </div>
+    <div data-hf-id="hf-3ox1" class="vineta"></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    const T0 = 45.52;
+    const at = (s) => Math.max(0, s - T0);
+
+    tl.fromTo("#s10-cam", {y: -400, filter: "blur(16px)"}, {y: 0, filter: "blur(0px)", duration: 0.35, ease: "power3.out"}, 0);
+    tl.fromTo("#s10-tab", {rotationX: 50}, {rotationX: 50, duration: 0.1}, 0);
+    tl.fromTo("#s10-cur", {opacity: 1}, {keyframes: [{opacity: 0, duration: 0.25}, {opacity: 1, duration: 0.25}, {opacity: 0, duration: 0.25}, {opacity: 1, duration: 0.25}, {opacity: 0, duration: 0.25}, {opacity: 1, duration: 0.25}]}, 0.5);
+    tl.fromTo("#s10-ojos", {scale: 0}, {scale: 1, duration: 0.45, ease: "elastic.out(1, 0.55)"}, at(46.74));
+    tl.fromTo("#s10-mon", {scale: 1}, {scale: 1.04, duration: 0.3, ease: "back.out(3)"}, at(47.4));
+    tl.fromTo("#s10-q", {scale: 0, rotation: 20}, {scale: 1, rotation: 0, duration: 0.45, ease: "back.out(2.6)"}, at(48.12));
+    tl.to("#s10-tecl", {opacity: 0.8, duration: 0.4}, at(48.98));
+
+    window.__timelines["s10-pantalla"] = tl;
+  </script>
+</template>

@@ -1,0 +1,34 @@
+"""Corrige las llamadas w(i, 'texto') de un archivo .tsx para que el índice apunte a la palabra esperada (la más cercana)."""
+import json, re, sys, unicodedata
+
+src, palabras = sys.argv[1], sys.argv[2]
+P = json.load(open(palabras, encoding="utf-8"))
+
+
+def norm(s):
+    s = unicodedata.normalize("NFD", s.lower())
+    return re.sub(r"[^a-z0-9ñ]", "", "".join(c for c in s if unicodedata.category(c) != "Mn"))
+
+
+txt = open(src, encoding="utf-8").read()
+cambios = 0
+
+
+def fix(m):
+    global cambios
+    i, t = int(m.group(1)), m.group(2)
+    if i < len(P) and norm(P[i]["word"]).startswith(norm(t)):
+        return m.group(0)
+    cand = [k for k in range(len(P)) if norm(P[k]["word"]).startswith(norm(t))]
+    if not cand:
+        print(f"SIN CANDIDATO: {i} '{t}'")
+        return m.group(0)
+    k = min(cand, key=lambda k: abs(k - i))
+    cambios += 1
+    print(f"{i} '{t}' -> {k} ({P[k]['word']})")
+    return f"w({k}, '{t}')"
+
+
+txt = re.sub(r"w\((\d+), '([^']+)'\)", fix, txt)
+open(src, "w", encoding="utf-8").write(txt)
+print(cambios, "cambios")

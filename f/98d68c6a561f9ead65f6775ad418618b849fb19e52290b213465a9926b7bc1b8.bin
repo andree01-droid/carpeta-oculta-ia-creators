@@ -1,0 +1,58 @@
+"""Corta un video en planos usando el CSV de camara_ref.py y arma una tira por plano (5 cuadros).
+
+Uso: planos_ref.py <video> <camara.csv> <carpeta_salida>
+Un plano termina donde hay una ráfaga de cámara (> 30 px/cuadro) o un salto de histograma (> 0.35).
+Escribe <carpeta>/planos.csv y <carpeta>/plano_NN.jpg (inicio, 25 %, 50 %, 75 %, final).
+"""
+import csv, os, subprocess, sys, tempfile
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+
+video, cam, out = sys.argv[1:4]
+os.makedirs(out, exist_ok=True)
+r = list(csv.DictReader(open(cam)))
+t = np.array([float(x["t"]) for x in r])
+vel = np.hypot([float(x["dx"]) for x in r], [float(x["dy"]) for x in r])
+corte = np.array([float(x["corte"]) for x in r])
+evento = (vel > 30) | (corte > 0.35)
+# agrupar ráfagas: un evento = tramo continuo de cuadros marcados
+limites, i = [0.0], 0
+while i < len(t):
+    if evento[i]:
+        j = i
+        while j + 1 < len(t) and (evento[j + 1] or (j + 2 < len(t) and evento[j + 2])):
+            j += 1
+        mid = t[(i + j) // 2]
+        if mid - limites[-1] > 0.6:
+            limites.append(round(mid, 2))
+        i = j + 1
+    else:
+        i += 1
+limites.append(round(t[-1], 2))
+try:
+    f = ImageFont.truetype("arialbd.ttf", 20)
+except OSError:
+    f = ImageFont.load_default()
+tmp = tempfile.mkdtemp()
+filas = []
+for k in range(len(limites) - 1):
+    a, b = limites[k], limites[k + 1]
+    marcas = [a + 0.15, a + (b - a) * 0.25, a + (b - a) * 0.5, a + (b - a) * 0.75, b - 0.15]
+    ims = []
+    for m in marcas:
+        p = os.path.join(tmp, "x.jpg")
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{m:.2f}", "-i", video, "-frames:v", "1", "-vf", "scale=216:384", p], check=True)
+        ims.append(Image.open(p).copy())
+    tira = Image.new("RGB", (216 * 5, 384 + 30), (30, 30, 30))
+    d = ImageDraw.Draw(tira)
+    for n, im in enumerate(ims):
+        tira.paste(im, (n * 216, 30))
+    d.text((6, 4), f"plano {k + 1:02d}: {a:.2f}–{b:.2f}s ({b - a:.2f}s)", fill=(255, 220, 0), font=f)
+    tira.save(os.path.join(out, f"plano_{k + 1:02d}.jpg"))
+    filas.append([k + 1, a, b, round(b - a, 2)])
+with open(os.path.join(out, "planos.csv"), "w", newline="") as fh:
+    w = csv.writer(fh)
+    w.writerow(["plano", "inicio", "fin", "dur"])
+    w.writerows(filas)
+d = np.array([x[3] for x in filas])
+print(f"{len(filas)} planos | duración media {d.mean():.2f}s | mediana {np.median(d):.2f}s | min {d.min():.2f} | max {d.max():.2f}")

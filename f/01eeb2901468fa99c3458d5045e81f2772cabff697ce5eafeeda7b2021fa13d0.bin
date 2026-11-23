@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Baja la última versión (solo lo que ha cambiado). No toca vídeos, guiones, voces ni el .env.
+set -e
+cd "$(dirname "$0")/.."
+curl -fsSL "$(cat config/origen.txt)" | bash

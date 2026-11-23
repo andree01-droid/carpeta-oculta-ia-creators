@@ -1,0 +1,306 @@
+// Piezas de dibujo para "¿Cripto o acciones?" (canvas 2D, estilo ref6).
+import {G, W, H, FF, rnd, cl, lerp, glow, pantalla, salida} from '../habano/dibujo';
+
+export {G, W, H, FF, rnd, cl, lerp, glow, pantalla, salida};
+export {vista, viñeta, velo, numero, pildora, fuente, puntos, nebulosa, fondoLiso, golpeTexto, onda, rayos, grieta, fragmentos, estallar, cabeza, pregunta, cruz, confeti, personita, calendario} from '../habano/dibujo';
+
+export const BTC = '247,147,26';
+export const VERDE = '46,204,113';
+export const ROJO = '239,59,69';
+export const AZUL = '58,119,213';
+export const ORO = '242,208,123';
+
+/** fondo oscuro con cuadrícula fina que se desliza y dos brillos de color */
+export function fondoGrid(g: G, s: number, c1 = BTC, c2 = VERDE, a1 = 0.3, a2 = 0.3) {
+  pantalla(g);
+  const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#0b0c10'); gr.addColorStop(1, '#06070a');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  glow(g, 260 + Math.sin(s * 0.3) * 60, 1050, 900, c1, a1);
+  glow(g, 820 + Math.cos(s * 0.25) * 60, 1300, 900, c2, a2);
+  g.strokeStyle = 'rgba(255,255,255,0.045)'; g.lineWidth = 1.5;
+  const off = (s * 14) % 120;
+  for (let x = -120 + off; x < W + 120; x += 120) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke(); }
+  for (let y = -120 + off * 0.6; y < H + 120; y += 120) { g.beginPath(); g.moveTo(0, y); g.lineTo(W, y); g.stroke(); }
+  for (let i = 0; i < 50; i++) {
+    const x = rnd(i * 1.9) * W, y = (rnd(i * 2.7) * H - s * (10 + rnd(i) * 18) + H * 4) % H, a = 0.12 + 0.3 * rnd(i * 4.1) * (0.6 + 0.4 * Math.sin(s * 2 + i));
+    g.fillStyle = `rgba(255,255,255,${a})`; g.beginPath(); g.arc(x, y, 1 + rnd(i * 5.3) * 1.8, 0, 7); g.fill();
+  }
+}
+
+/** moneda con canto; giro = ángulo (rad) de rotación sobre su eje vertical */
+export function moneda(g: G, x: number, y: number, r: number, o: {giro?: number; a?: number; tipo?: 'btc' | 'perro' | 'gris' | 'dolar'; brillo?: number} = {}) {
+  const {giro = 0, a = 1, tipo = 'btc', brillo = 0.5} = o;
+  if (a <= 0 || r <= 0) return;
+  const cx = Math.cos(giro), k = Math.max(0.06, Math.abs(cx));
+  const pal: Record<string, [string, string, string, string]> = {
+    btc: ['#ffd38a', '#f7931a', '#b8640a', '#7a3f04'], perro: ['#fff0b0', '#e8c26a', '#b08a2e', '#6d5414'],
+    gris: ['#d8d8dc', '#8a8a92', '#55555c', '#2e2e33'], dolar: ['#d9ffe6', '#2ecc71', '#1c8a4a', '#0e4a28'],
+  };
+  const [c0, c1, c2, c3] = pal[tipo];
+  g.save(); g.globalAlpha = a; g.translate(x, y);
+  if (brillo > 0) glow(g, 0, 0, r * 2.4, tipo === 'gris' ? '160,160,170' : tipo === 'dolar' ? VERDE : BTC, brillo);
+  // canto
+  const esp = r * 0.16 * Math.sqrt(1 - k * k) * Math.sign(cx || 1);
+  g.fillStyle = c3; g.beginPath(); g.ellipse(esp, 0, r * k, r, 0, 0, 7); g.fill();
+  g.fillRect(Math.min(0, esp), -r, Math.abs(esp), r * 2);
+  // cara
+  g.scale(k, 1);
+  const gr = g.createLinearGradient(-r, -r, r, r); gr.addColorStop(0, c0); gr.addColorStop(0.45, c1); gr.addColorStop(1, c2);
+  g.fillStyle = gr; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill();
+  g.strokeStyle = c2; g.lineWidth = r * 0.08; g.beginPath(); g.arc(0, 0, r * 0.84, 0, 7); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,0.35)'; g.lineWidth = r * 0.03; g.beginPath(); g.arc(0, 0, r * 0.95, Math.PI * 1.1, Math.PI * 1.6); g.stroke();
+  {
+    g.fillStyle = tipo === 'gris' ? '#3a3a40' : '#ffffff';
+    if (tipo === 'btc' || tipo === 'gris') {
+      g.font = `900 ${r * 1.15}px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.save(); g.rotate(0.22); g.fillText('B', 0, r * 0.05);
+      g.fillRect(-r * 0.2, -r * 0.62, r * 0.1, r * 0.2); g.fillRect(r * 0.02, -r * 0.62, r * 0.1, r * 0.2);
+      g.fillRect(-r * 0.2, r * 0.44, r * 0.1, r * 0.2); g.fillRect(r * 0.02, r * 0.44, r * 0.1, r * 0.2); g.restore();
+    } else if (tipo === 'dolar') {
+      g.font = `900 ${r * 1.1}px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('$', 0, r * 0.06);
+    } else {
+      // cara de perro
+      g.fillStyle = '#7a5a1c';
+      g.beginPath(); g.moveTo(-r * 0.55, -r * 0.2); g.lineTo(-r * 0.45, -r * 0.72); g.lineTo(-r * 0.12, -r * 0.42); g.fill();
+      g.beginPath(); g.moveTo(r * 0.55, -r * 0.2); g.lineTo(r * 0.45, -r * 0.72); g.lineTo(r * 0.12, -r * 0.42); g.fill();
+      g.fillStyle = '#f3dca0'; g.beginPath(); g.ellipse(0, 0, r * 0.5, r * 0.46, 0, 0, 7); g.fill();
+      g.fillStyle = '#fff6dc'; g.beginPath(); g.ellipse(0, r * 0.2, r * 0.3, r * 0.22, 0, 0, 7); g.fill();
+      g.fillStyle = '#2a1c08'; g.beginPath(); g.arc(-r * 0.18, -r * 0.08, r * 0.06, 0, 7); g.arc(r * 0.18, -r * 0.08, r * 0.06, 0, 7); g.fill();
+      g.beginPath(); g.ellipse(0, r * 0.1, r * 0.09, r * 0.06, 0, 0, 7); g.fill();
+      g.strokeStyle = '#2a1c08'; g.lineWidth = r * 0.03; g.beginPath(); g.arc(0, r * 0.2, r * 0.1, 0.3, Math.PI - 0.3); g.stroke();
+    }
+  }
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+// ------------------------------------------------------------------ series de precio (0..1)
+const interp = (k: number[], n: number, ruido: number, sem: number) => Array.from({length: n}, (_, i) => {
+  const u = (i / (n - 1)) * (k.length - 1), j = Math.min(k.length - 2, Math.floor(u)), f = u - j;
+  return cl(lerp(k[j], k[j + 1], f * f * (3 - 2 * f)) + (rnd(i * 3.7 + sem) - 0.5) * ruido, 0.01, 1);
+});
+/** índice de acciones: sube lento y parejo, con algún tropiezo */
+export const SERIE_SP = Array.from({length: 70}, (_, i) => {
+  const u = i / 69, base = (Math.exp(u * 2.6) - 1) / (Math.exp(2.6) - 1);
+  return cl(0.04 + base * 0.9 + (rnd(i * 5.1) - 0.5) * 0.035 - (i > 50 && i < 54 ? 0.06 : 0) - (i > 25 && i < 28 ? 0.03 : 0), 0.01, 1);
+});
+/** cripto: cohete, caída, cohete, caída */
+export const SERIE_BTC = interp([0.05, 0.12, 0.08, 0.35, 0.18, 0.12, 0.55, 0.3, 0.42, 0.98, 0.6, 0.25, 0.22, 0.5, 0.82, 0.45], 70, 0.07, 9);
+
+/** línea de precio que se dibuja hasta p (0..1), con relleno y punto brillante en la punta */
+export function grafica(g: G, x0: number, y0: number, w: number, h: number, serie: number[], p: number, col: string, o: {grosor?: number; relleno?: number; punto?: boolean; desde?: number} = {}) {
+  const {grosor = 8, relleno = 0.25, punto = true, desde = 0} = o;
+  if (p <= 0) return;
+  const n = serie.length, N = Math.max(2, (n - 1) * cl(p) + 1);
+  const pt = (i: number) => { const j = Math.min(n - 2, Math.floor(i)), f = i - j; return [x0 + (i / (n - 1)) * w, y0 + h - lerp(serie[j], serie[Math.min(n - 1, j + 1)], f) * h]; };
+  const pts: number[][] = [];
+  for (let i = desde * (n - 1); i <= N - 1 + 1e-6; i += 0.5) pts.push(pt(Math.min(n - 1, i)));
+  const fin = pt(Math.min(n - 1, N - 1)); pts.push(fin);
+  g.save();
+  if (relleno > 0) {
+    const gr = g.createLinearGradient(0, y0, 0, y0 + h); gr.addColorStop(0, `rgba(${col},${relleno})`); gr.addColorStop(1, `rgba(${col},0)`);
+    g.fillStyle = gr; g.beginPath(); g.moveTo(pts[0][0], y0 + h); pts.forEach(([x, y]) => g.lineTo(x, y)); g.lineTo(fin[0], y0 + h); g.closePath(); g.fill();
+  }
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  g.strokeStyle = `rgba(${col},0.35)`; g.lineWidth = grosor * 3; g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke();
+  g.strokeStyle = `rgb(${col})`; g.lineWidth = grosor; g.stroke();
+  if (punto) { glow(g, fin[0], fin[1], 70, col, 1); g.fillStyle = '#fff'; g.beginPath(); g.arc(fin[0], fin[1], grosor * 1.2, 0, 7); g.fill(); }
+  g.restore();
+  return fin;
+}
+
+/** velas japonesas desde la serie; p = cuántas se ven (0..1) */
+export function velas(g: G, x0: number, y0: number, w: number, h: number, serie: number[], p: number) {
+  const n = serie.length, m = Math.floor((n - 1) * cl(p)), cw = (w / (n - 1)) * 0.62;
+  g.save();
+  for (let i = 1; i <= m; i++) {
+    const a = serie[i - 1], b = serie[i], sube = b >= a, x = x0 + (i / (n - 1)) * w;
+    const hi = Math.max(a, b) + rnd(i * 2.2) * 0.04, lo = Math.min(a, b) - rnd(i * 3.1) * 0.04;
+    const col = sube ? VERDE : ROJO;
+    g.strokeStyle = `rgb(${col})`; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y0 + h - hi * h); g.lineTo(x, y0 + h - lo * h); g.stroke();
+    g.fillStyle = `rgb(${col})`; g.shadowColor = `rgba(${col},0.7)`; g.shadowBlur = 12;
+    const ya = y0 + h - Math.max(a, b) * h, hh = Math.max(4, Math.abs(a - b) * h); g.fillRect(x - cw / 2, ya, cw, hh); g.shadowBlur = 0;
+  }
+  g.restore();
+}
+
+/** ejes finos con rótulos en x */
+export function ejes(g: G, x0: number, y0: number, w: number, h: number, rot: string[], a = 1) {
+  if (a <= 0) return;
+  g.save(); g.globalAlpha = a; g.strokeStyle = 'rgba(255,255,255,0.25)'; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(x0, y0); g.lineTo(x0, y0 + h); g.lineTo(x0 + w, y0 + h); g.stroke();
+  g.setLineDash([6, 10]); g.strokeStyle = 'rgba(255,255,255,0.08)';
+  for (let k = 1; k < 4; k++) { g.beginPath(); g.moveTo(x0, y0 + (h * k) / 4); g.lineTo(x0 + w, y0 + (h * k) / 4); g.stroke(); }
+  g.setLineDash([]);
+  g.font = `700 28px ${FF}`; g.fillStyle = 'rgba(255,255,255,0.7)'; g.textAlign = 'center';
+  rot.forEach((t, i) => g.fillText(t, x0 + (rot.length === 1 ? 0 : (i / (rot.length - 1)) * w), y0 + h + 44));
+  g.restore(); g.textAlign = 'left';
+}
+
+/** torre de oficinas con ventanas encendidas */
+export function edificio(g: G, x: number, y: number, sc: number, s: number, o: {a?: number; luz?: number; col?: string; letrero?: string; gris?: number} = {}) {
+  const {a = 1, luz = 1, col = VERDE, letrero = '', gris = 0} = o;
+  if (a <= 0 || sc <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.scale(sc, sc);
+  g.fillStyle = 'rgba(0,0,0,0.4)'; g.beginPath(); g.ellipse(0, 6, 190, 22, 0, 0, 7); g.fill();
+  const cuerpo = g.createLinearGradient(-150, 0, 150, 0);
+  cuerpo.addColorStop(0, gris ? '#2a2a2e' : '#1d2a3a'); cuerpo.addColorStop(0.5, gris ? '#3c3c42' : '#2c4058'); cuerpo.addColorStop(1, gris ? '#1c1c20' : '#142030');
+  g.fillStyle = cuerpo; g.beginPath(); g.roundRect(-150, -560, 300, 560, [16, 16, 0, 0]); g.fill();
+  g.fillStyle = gris ? '#26262a' : '#18222f'; g.fillRect(-110, -620, 220, 70); g.fillRect(-12, -700, 24, 90);
+  glow(g, 0, -700, 40, ROJO, 0.8 * (0.5 + 0.5 * Math.sin(s * 4)));
+  for (let f = 0; f < 9; f++) for (let c = 0; c < 4; c++) {
+    const on = rnd(f * 7 + c * 3.1 + Math.floor(s * 0.5)) < 0.75 * luz;
+    g.fillStyle = on && !gris ? `rgba(255,236,170,${0.75 + 0.2 * Math.sin(s * 2 + f + c)})` : 'rgba(120,140,170,0.18)';
+    g.fillRect(-120 + c * 64, -520 + f * 56, 44, 34);
+  }
+  if (letrero) {
+    g.fillStyle = `rgb(${col})`; g.shadowColor = `rgba(${col},0.8)`; g.shadowBlur = 20; g.beginPath(); g.roundRect(-120, -610, 240, 50, 10); g.fill(); g.shadowBlur = 0;
+    g.font = `900 30px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#06140c'; g.fillText(letrero, 0, -584);
+  }
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** pastel (la empresa) con una porción que sale hacia (dx, dy) */
+export function pastel(g: G, x: number, y: number, r: number, sale: number, dx: number, dy: number, a = 1) {
+  if (a <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y);
+  const N = 12, cols = ['#2ecc71', '#27ae60'];
+  for (let i = 0; i < N; i++) {
+    const a0 = (i / N) * Math.PI * 2 - Math.PI / 2, a1 = a0 + (Math.PI * 2) / N;
+    const ox = i === 0 ? dx * sale : 0, oy = i === 0 ? dy * sale : 0;
+    g.fillStyle = i === 0 ? `rgb(${ORO})` : cols[i % 2]; if (i === 0) { g.shadowColor = `rgba(${ORO},0.8)`; g.shadowBlur = 30; }
+    g.beginPath(); g.moveTo(ox, oy); g.arc(ox, oy, r, a0, a1); g.closePath(); g.fill(); g.shadowBlur = 0;
+    g.strokeStyle = '#0b0c10'; g.lineWidth = 5; g.stroke();
+  }
+  g.restore();
+}
+
+/** cohete; ang 0 = apunta arriba */
+export function cohete(g: G, x: number, y: number, ang: number, sc: number, s: number, fuego = 1, col = BTC) {
+  g.save(); g.translate(x, y); g.rotate(ang); g.scale(sc, sc);
+  if (fuego > 0) {
+    for (let i = 0; i < 3; i++) {
+      const L = (140 + Math.sin(s * 40 + i) * 30) * fuego * (1 - i * 0.25);
+      const gr = g.createLinearGradient(0, 110, 0, 110 + L); gr.addColorStop(0, ['rgba(255,255,220,1)', 'rgba(255,190,60,0.9)', 'rgba(255,90,30,0.7)'][i]); gr.addColorStop(1, 'rgba(255,60,20,0)');
+      g.fillStyle = gr; g.beginPath(); g.moveTo(-34 + i * 8, 110); g.quadraticCurveTo(0, 110 + L * 1.2, 34 - i * 8, 110); g.fill();
+    }
+    glow(g, 0, 160, 180, '255,160,60', 0.8 * fuego);
+  }
+  g.fillStyle = `rgb(${col})`; g.beginPath(); g.moveTo(-50, 60); g.lineTo(-95, 125); g.lineTo(-48, 112); g.fill(); g.beginPath(); g.moveTo(50, 60); g.lineTo(95, 125); g.lineTo(48, 112); g.fill();
+  const cu = g.createLinearGradient(-50, 0, 50, 0); cu.addColorStop(0, '#9aa0aa'); cu.addColorStop(0.45, '#ffffff'); cu.addColorStop(1, '#7c828c');
+  g.fillStyle = cu; g.beginPath(); g.moveTo(0, -170); g.bezierCurveTo(62, -110, 56, 40, 46, 112); g.lineTo(-46, 112); g.bezierCurveTo(-56, 40, -62, -110, 0, -170); g.fill();
+  g.fillStyle = `rgb(${col})`; g.beginPath(); g.moveTo(0, -170); g.bezierCurveTo(30, -140, 40, -110, 43, -90); g.lineTo(-43, -90); g.bezierCurveTo(-40, -110, -30, -140, 0, -170); g.fill();
+  g.fillStyle = '#20324a'; g.beginPath(); g.arc(0, -30, 26, 0, 7); g.fill(); g.strokeStyle = '#d0d6e0'; g.lineWidth = 7; g.stroke();
+  g.fillStyle = 'rgba(160,220,255,0.7)'; g.beginPath(); g.arc(-8, -38, 9, 0, 7); g.fill();
+  g.restore();
+}
+
+/** lápida con texto */
+export function lapida(g: G, x: number, y: number, sc: number, txt: string, a = 1) {
+  if (a <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.scale(sc, sc);
+  g.fillStyle = 'rgba(0,0,0,0.45)'; g.beginPath(); g.ellipse(0, 4, 90, 14, 0, 0, 7); g.fill();
+  const gr = g.createLinearGradient(-70, 0, 70, 0); gr.addColorStop(0, '#5a5c64'); gr.addColorStop(0.5, '#8c8e98'); gr.addColorStop(1, '#4a4c54');
+  g.fillStyle = gr; g.beginPath(); g.moveTo(-70, 0); g.lineTo(-70, -120); g.arc(0, -120, 70, Math.PI, 0); g.lineTo(70, 0); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,0.18)'; g.lineWidth = 3; g.stroke();
+  g.font = `900 36px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#2a2b30'; g.fillText('RIP', 0, -130);
+  g.font = `800 20px ${FF}`; g.fillText(txt, 0, -80);
+  g.fillStyle = '#3c5a2a'; g.fillRect(-90, -4, 180, 8);
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** balanza; inc = inclinación (-1 izquierda abajo .. 1 derecha abajo) */
+export function balanza(g: G, x: number, y: number, sc: number, inc: number, izq: () => void, der: () => void) {
+  g.save(); g.translate(x, y); g.scale(sc, sc);
+  const gr = g.createLinearGradient(-20, 0, 20, 0); gr.addColorStop(0, '#9a7a30'); gr.addColorStop(0.5, '#ffe7a8'); gr.addColorStop(1, '#8a6a20');
+  g.fillStyle = gr; g.fillRect(-14, -300, 28, 520); g.beginPath(); g.roundRect(-130, 210, 260, 40, 14); g.fill();
+  const ang = inc * 0.28;
+  g.save(); g.translate(0, -300); g.rotate(ang);
+  g.fillStyle = gr; g.beginPath(); g.roundRect(-330, -12, 660, 24, 12); g.fill();
+  g.fillStyle = `rgb(${ORO})`; g.beginPath(); g.arc(0, 0, 30, 0, 7); g.fill();
+  for (const sx of [-1, 1]) {
+    g.save(); g.translate(sx * 310, 0); g.rotate(-ang);
+    g.strokeStyle = 'rgba(255,231,168,0.8)'; g.lineWidth = 4; g.beginPath(); g.moveTo(0, 0); g.lineTo(-120, 230); g.moveTo(0, 0); g.lineTo(120, 230); g.stroke();
+    g.fillStyle = gr; g.beginPath(); g.ellipse(0, 236, 150, 26, 0, 0, 7); g.fill();
+    g.translate(0, 200); (sx < 0 ? izq : der)();
+    g.restore();
+  }
+  g.restore(); g.restore();
+}
+
+/** maceta con planta que crece (p 0..1) y monedas como frutos */
+export function planta(g: G, x: number, y: number, sc: number, p: number, s: number) {
+  g.save(); g.translate(x, y); g.scale(sc, sc);
+  g.fillStyle = '#b5653a'; g.beginPath(); g.moveTo(-110, 0); g.lineTo(110, 0); g.lineTo(85, 170); g.lineTo(-85, 170); g.closePath(); g.fill();
+  g.fillStyle = '#8f4c2a'; g.fillRect(-125, -10, 250, 40);
+  const alto = 520 * salida(p), sw = Math.sin(s * 1.6) * 8;
+  g.strokeStyle = '#3e9b4f'; g.lineWidth = 16; g.lineCap = 'round';
+  g.beginPath(); g.moveTo(0, -10); g.quadraticCurveTo(sw, -alto / 2, sw * 2, -10 - alto); g.stroke();
+  for (let i = 0; i < 6; i++) {
+    const q = cl(p * 6 - i), yy = -60 - i * 78, lado = i % 2 ? 1 : -1; if (q <= 0) continue;
+    g.save(); g.translate(sw * (yy / -alto) * 2, yy); g.rotate(lado * 0.7 + Math.sin(s * 2 + i) * 0.08); g.scale(q, q);
+    g.fillStyle = i % 2 ? '#2ecc71' : '#27ae60'; g.beginPath(); g.ellipse(lado * 60, 0, 62, 26, 0, 0, 7); g.fill(); g.restore();
+    if (i % 2 === 0 && q >= 1) moneda(g, lado * -70, yy - 10, 24, {tipo: 'dolar', giro: Math.sin(s * 2 + i) * 0.8, brillo: 0.3});
+  }
+  g.restore();
+}
+
+/** carita redonda: expr 0 feliz, 1 llorando, 2 asustada, 3 con ojos de estrella */
+export function carita(g: G, x: number, y: number, r: number, expr: number, s: number, a = 1) {
+  if (a <= 0 || r <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y);
+  const gr = g.createRadialGradient(-r * 0.3, -r * 0.4, r * 0.1, 0, 0, r); gr.addColorStop(0, '#fff3a0'); gr.addColorStop(0.6, '#ffcc33'); gr.addColorStop(1, '#e09a10');
+  g.fillStyle = gr; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill();
+  g.fillStyle = '#3a2408'; g.strokeStyle = '#3a2408'; g.lineCap = 'round'; g.lineWidth = r * 0.09;
+  if (expr === 3) {
+    for (const sx of [-1, 1]) { g.save(); g.translate(sx * r * 0.36, -r * 0.18); g.fillStyle = '#ff7a1a'; g.beginPath(); for (let k = 0; k < 10; k++) { const rr = k % 2 ? r * 0.1 : r * 0.24, an = (k / 10) * Math.PI * 2 - Math.PI / 2; k ? g.lineTo(Math.cos(an) * rr, Math.sin(an) * rr) : g.moveTo(Math.cos(an) * rr, Math.sin(an) * rr); } g.closePath(); g.fill(); g.restore(); }
+    g.beginPath(); g.arc(0, r * 0.15, r * 0.45, 0.15, Math.PI - 0.15); g.fill();
+  } else if (expr === 2) {
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(-r * 0.34, -r * 0.15, r * 0.2, 0, 7); g.arc(r * 0.34, -r * 0.15, r * 0.2, 0, 7); g.fill();
+    g.fillStyle = '#3a2408'; g.beginPath(); g.arc(-r * 0.34, -r * 0.15, r * 0.08, 0, 7); g.arc(r * 0.34, -r * 0.15, r * 0.08, 0, 7); g.fill();
+    g.beginPath(); g.ellipse(0, r * 0.45, r * 0.2, r * 0.26, 0, 0, 7); g.fill();
+  } else if (expr === 1) {
+    g.beginPath(); g.arc(-r * 0.34, -r * 0.1, r * 0.17, Math.PI + 0.3, -0.3); g.stroke(); g.beginPath(); g.arc(r * 0.34, -r * 0.1, r * 0.17, Math.PI + 0.3, -0.3); g.stroke();
+    g.beginPath(); g.arc(0, r * 0.62, r * 0.3, Math.PI + 0.4, -0.4); g.stroke();
+    g.fillStyle = 'rgba(110,190,255,0.95)';
+    for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) { const ph = (s * 1.4 + k / 3) % 1; g.beginPath(); g.ellipse(sx * r * (0.36 + ph * 0.25), -r * 0.02 + ph * r * 1.1, r * 0.08, r * 0.12, 0, 0, 7); g.fill(); }
+  } else {
+    g.beginPath(); g.arc(-r * 0.34, -r * 0.15, r * 0.1, 0, 7); g.arc(r * 0.34, -r * 0.15, r * 0.1, 0, 7); g.fill();
+    g.beginPath(); g.arc(0, r * 0.1, r * 0.45, 0.25, Math.PI - 0.25); g.stroke();
+  }
+  g.restore();
+}
+
+/** engranaje */
+export function engranaje(g: G, x: number, y: number, r: number, rot: number, col: string, a = 1) {
+  if (a <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.rotate(rot);
+  g.fillStyle = `rgb(${col})`; g.shadowColor = `rgba(${col},0.6)`; g.shadowBlur = 24;
+  g.beginPath(); const n = 12;
+  for (let i = 0; i < n * 2; i++) { const an = (i / (n * 2)) * Math.PI * 2, rr = i % 2 ? r : r * 1.18; g.lineTo(Math.cos(an - 0.08) * rr, Math.sin(an - 0.08) * rr); g.lineTo(Math.cos(an + 0.08) * rr, Math.sin(an + 0.08) * rr); }
+  g.closePath(); g.fill(); g.shadowBlur = 0;
+  g.fillStyle = '#0b0c10'; g.beginPath(); g.arc(0, 0, r * 0.62, 0, 7); g.fill();
+  g.restore();
+}
+
+/** caja de "índice" (cesta) */
+export function cesta(g: G, x: number, y: number, sc: number, txt: string, a = 1) {
+  if (a <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.scale(sc, sc);
+  glow(g, 0, -60, 360, VERDE, 0.4);
+  const gr = g.createLinearGradient(0, -200, 0, 60); gr.addColorStop(0, '#1f6b40'); gr.addColorStop(1, '#0d3a22');
+  g.fillStyle = gr; g.beginPath(); g.moveTo(-280, -180); g.lineTo(280, -180); g.lineTo(230, 60); g.lineTo(-230, 60); g.closePath(); g.fill();
+  g.strokeStyle = `rgb(${VERDE})`; g.lineWidth = 6; g.stroke();
+  g.strokeStyle = 'rgba(46,204,113,0.35)'; g.lineWidth = 3;
+  for (let k = 1; k < 6; k++) { g.beginPath(); g.moveTo(-280 + k * 93, -180); g.lineTo(-230 + k * 77, 60); g.stroke(); }
+  g.font = `900 64px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#eafff2'; g.fillText(txt, 0, -50);
+  g.restore(); g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+}
+
+/** edificio pequeño (icono) */
+export function mini(g: G, x: number, y: number, sc: number, col: string, a = 1) {
+  if (a <= 0) return;
+  g.save(); g.globalAlpha = a; g.translate(x, y); g.scale(sc, sc);
+  g.fillStyle = col; g.fillRect(-14, -40, 28, 40); g.fillRect(-22, -22, 10, 22); g.fillRect(12, -28, 10, 28);
+  g.fillStyle = 'rgba(0,0,0,0.35)'; for (let f = 0; f < 3; f++) { g.fillRect(-9, -34 + f * 11, 6, 6); g.fillRect(3, -34 + f * 11, 6, 6); }
+  g.restore();
+}

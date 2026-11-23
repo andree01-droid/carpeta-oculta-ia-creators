@@ -1,0 +1,7 @@
+// ARCHIVO GENERADO por scripts/registrar.mjs — no editar a mano.
+import type {VideoSpec} from './motor/tipos';
+import v0 from '../videos/propina-mesero.json';
+
+export const VIDEOS: {id: string; spec: VideoSpec}[] = [
+  {id: 'propina-mesero', spec: v0 as unknown as VideoSpec},
+];

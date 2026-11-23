@@ -1,0 +1,150 @@
+"""Genera la sub-composición de subtítulos HyperFrames (estilo de la casa, CLAUDE.md §3).
+
+Uso: hf_subtitulos.py <palabras.json> <salida.html> --claves "efectivo#1,ojo,…" [--emojis "efectivo:💵,ojo:👀"]
+       [--y 383] [--tamano 68] [--fuente Poppins]
+
+Palabras activas en blanco y negrita, las ya dichas en gris; cada palabra entra con desenfoque de 2 cuadros;
+palabra clave dentro de una caja de selección azul con dos manijas (4 cuadros). Bloques de ≤2 líneas.
+"""
+import argparse, html, json, re, unicodedata
+
+ap = argparse.ArgumentParser()
+ap.add_argument("palabras")
+ap.add_argument("salida")
+ap.add_argument("--claves", default="")
+ap.add_argument("--emojis", default="")
+ap.add_argument("--y", type=float, default=383)
+ap.add_argument("--tamano", type=float, default=68)
+ap.add_argument("--fuente", default="Poppins")
+ap.add_argument("--duracion", type=float, default=0)
+a = ap.parse_args()
+
+W = json.load(open(a.palabras, encoding="utf-8-sig"))
+FPS = 30
+
+
+def norm(s):
+    s = unicodedata.normalize("NFD", s.lower())
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")
+    return re.sub(r"[^a-z0-9ñ%$. ]", "", s).strip(". ")
+
+
+# --- claves y emojis ---
+for c in [x.strip() for x in a.claves.split(",") if x.strip()]:
+    txt, _, n = c.partition("#")
+    k = 0
+    for w in W:
+        if norm(w["word"]) == norm(txt):
+            k += 1
+            if not n or int(n) == k:
+                w["clave"] = True
+emo = dict(p.split(":", 1) for p in a.emojis.split(",") if ":" in p)
+for w in W:
+    for k, e in emo.items():
+        if w.get("clave") and norm(w["word"]) == norm(k) and "emoji" not in w:
+            w["emoji"] = e
+            break
+
+# --- bloques (misma regla que fabrica/src/motor/bloques.ts) ---
+ENLACE = set("de del que y e o es son la las el los lo no a al en con para por se su sus tu tus mi un una unos unas pero porque mientras casi cuando donde como si ni ya hay".split())
+MAXC, MINENL = 21, 11
+lineas, actual = [], []
+largo = lambda l: len(" ".join(x["word"] for x in l))
+for i, w in enumerate(W):
+    sig = W[i + 1] if i + 1 < len(W) else None
+    actual.append(w)
+    fin_or = bool(re.search(r"[.?!…][\"»”]?$", w["word"]))
+    pausa = sig is not None and sig["start"] - w["end"] > 0.35
+    cortar = sig is None or fin_or or pausa
+    cierra = cortar
+    if not cortar:
+        if largo(actual) + 1 + len(sig["word"]) > MAXC:
+            cortar = True
+        elif largo(actual) >= MINENL and norm(sig["word"]) in ENLACE:
+            cortar = True
+        elif largo(actual) >= 12 and re.search(r"[,;:]$", w["word"]):
+            cortar = True
+    if cortar:
+        lineas.append((actual, cierra))
+        actual = []
+bloques, cur = [], []
+for l, cierra in lineas:
+    if len(cur) == 2 or sum(len(x) for x in cur) + len(l) > 7:
+        bloques.append(cur)
+        cur = []
+    cur.append(l)
+    if cierra:
+        bloques.append(cur)
+        cur = []
+if cur:
+    bloques.append(cur)
+
+# --- HTML ---
+fin_video = a.duracion or (W[-1]["end"] + 0.6)
+partes, js = [], []
+for bi, b in enumerate(bloques):
+    t0 = b[0][0]["start"]
+    sig = bloques[bi + 1][0][0]["start"] if bi + 1 < len(bloques) else fin_video
+    t1 = max(t0 + 0.1, sig - 2 / FPS)
+    t0r = max(0.0, round(t0, 3))
+    lineas_html = []
+    for li, l in enumerate(b):
+        spans = []
+        for w in l:
+            wid = f"w{W.index(w)}"
+            txt = html.escape(w["word"])
+            emoji = f'<span class="em">{w["emoji"]}</span>' if w.get("emoji") else ""
+            if w.get("clave"):
+                spans.append(
+                    f'<span class="pal clave" id="{wid}"><span class="relleno"></span><span class="borde"></span>'
+                    f'<span class="tx">{emoji}{txt}</span><span class="man m1"></span><span class="man m2"></span></span>')
+            else:
+                spans.append(f'<span class="pal" id="{wid}"><span class="tx">{txt}</span></span>')
+            ws, we = round(w["start"] - t0r, 3), round(w["end"] - t0r, 3)
+            sel = f"#{wid}"
+            js.append(f'tl.set("{sel}", {{display: "inline-flex"}}, {ws + t0r:.3f});')
+            js.append(f'tl.fromTo("{sel} .tx", {{filter: "blur(9px)", opacity: 0.7}}, {{filter: "blur(0px)", opacity: 1, duration: 0.067, ease: "none"}}, {ws + t0r:.3f});')
+            if w.get("clave"):
+                js.append(f'tl.fromTo("{sel} .man", {{scale: 0.3}}, {{scale: 1, duration: 0.033, ease: "power2.out"}}, {ws + t0r:.3f});')
+                js.append(f'tl.fromTo("{sel} .borde", {{clipPath: "inset(0 50% 0 50%)"}}, {{clipPath: "inset(0 0% 0 0%)", duration: 0.067, ease: "none"}}, {ws + t0r + 0.033:.3f});')
+                js.append(f'tl.fromTo("{sel} .relleno", {{opacity: 0}}, {{opacity: 0.18, duration: 0.033, ease: "none"}}, {ws + t0r + 0.067:.3f});')
+            else:
+                js.append(f'tl.set("{sel}", {{color: "#FFFFFF", fontWeight: 700}}, {ws + t0r:.3f});')
+                js.append(f'tl.set("{sel}", {{color: "rgba(255,255,255,0.5)", fontWeight: 400}}, {max(we + t0r, ws + t0r + 0.034):.3f});')
+        lineas_html.append(f'<div class="linea">{"".join(spans)}</div>')
+    partes.append(
+        f'<div id="b{bi}" class="clip bloque" data-start="{t0r}" data-duration="{round(t1 - t0r, 3)}" data-track-index="1">'
+        + "".join(lineas_html) + "</div>")
+
+doc = f"""<template>
+  <style>
+    #root {{ position: absolute; inset: 0; pointer-events: none; }}
+    .bloque {{ position: absolute; left: 0; right: 0; top: {a.y - 82 * 0.78:.0f}px; text-align: center;
+      font-family: "{a.fuente}", sans-serif; font-size: {a.tamano}px; line-height: 82px; color: rgba(255,255,255,0.5);
+      text-shadow: 0 3px 14px rgba(0,0,0,0.55); overflow: visible; }}
+    .linea {{ display: flex; justify-content: center; gap: 0.26em; white-space: nowrap; }}
+    .pal {{ display: none; position: relative; align-items: center; font-weight: 400; }}
+    .pal.clave {{ color: #FFFFFF; font-weight: 700; padding: 0 12px; margin: 0 -4px; }}
+    .em {{ font-size: 0.82em; margin-right: 8px; }}
+    .relleno, .borde {{ position: absolute; inset: 9px 0 5px 0; border-radius: 4px; }}
+    .relleno {{ background: #3A77D5; opacity: 0; }}
+    .borde {{ border: 3px solid #3A77D5; }}
+    .tx {{ position: relative; display: inline-flex; align-items: center; }}
+    .man {{ position: absolute; width: 12px; height: 12px; border-radius: 6px; background: #3A77D5;
+      border: 2px solid #fff; box-sizing: border-box; }}
+    .m1 {{ left: -6px; top: 3px; }}
+    .m2 {{ right: -6px; bottom: -1px; }}
+  </style>
+  <div id="root" data-composition-id="subtitulos" data-width="1080" data-height="1920" data-layout-allow-overlap>
+    {chr(10).join("    " + p for p in partes)}
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {{}};
+    const tl = gsap.timeline({{ paused: true }});
+    {chr(10).join("    " + x for x in js)}
+    window.__timelines["subtitulos"] = tl;
+  </script>
+</template>
+"""
+open(a.salida, "w", encoding="utf-8").write(doc)
+print(f"{a.salida}: {len(bloques)} bloques, {len(W)} palabras, {sum(1 for w in W if w.get('clave'))} claves")

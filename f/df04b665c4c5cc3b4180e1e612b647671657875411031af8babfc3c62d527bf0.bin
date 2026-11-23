@@ -1,0 +1,31 @@
+// Contornos de Oriente Medio para el video nuclear-iran (Natural Earth vía world-atlas, dominio público).
+// Salida: src/v3d/nuclear/region.json  { region: [[lon,lat,...]], iran: [...], fronteras: [...] }
+import {createRequire} from 'module';
+import fs from 'fs';
+const require = createRequire(import.meta.url);
+const topo = require('topojson-client');
+const paises = require('world-atlas/countries-50m.json');
+
+const REGION = new Set(['364', '368', '682', '414', '634', '048', '784', '512', '887', '792', '760', '400', '376', '422', '818', '004', '586', '795', '860', '031', '051', '268', '356', '398', '762', '417', '196', '275', '736', '729', '232', '231', '262', '706', '434', '642', '100', '804', '643', '144', '524', '050', '156']);
+
+function anillos(geo, tol) {
+  const out = [];
+  const polys = geo.type === 'Polygon' ? [geo.coordinates] : geo.type === 'MultiPolygon' ? geo.coordinates : [];
+  for (const poly of polys) {
+    const k = [];
+    let lx = 1e9, ly = 1e9;
+    for (const [x, y] of poly[0]) {
+      if (Math.hypot(x - lx, y - ly) >= tol) { k.push(Math.round(x * 1000) / 1000, Math.round(y * 1000) / 1000); lx = x; ly = y; }
+    }
+    if (k.length >= 8) out.push(k);
+  }
+  return out;
+}
+const geomP = paises.objects.countries.geometries;
+const region = anillos(topo.merge(paises, geomP.filter((g) => REGION.has(g.id))), 0.04);
+const iran = anillos(topo.feature(paises, geomP.find((g) => g.id === '364')).geometry, 0.03);
+const fr = topo.mesh(paises, {type: 'GeometryCollection', geometries: geomP.filter((g) => REGION.has(g.id))}, (a, b) => a !== b);
+const fronteras = fr.coordinates.map((l) => { const k = []; let lx = 1e9, ly = 1e9; for (const [x, y] of l) if (Math.hypot(x - lx, y - ly) >= 0.06) { k.push(Math.round(x * 1000) / 1000, Math.round(y * 1000) / 1000); lx = x; ly = y; } return k; }).filter((k) => k.length >= 4);
+fs.mkdirSync('src/v3d/nuclear', {recursive: true});
+fs.writeFileSync('src/v3d/nuclear/region.json', JSON.stringify({region, iran, fronteras}));
+console.log('region', region.length, region.reduce((a, r) => a + r.length / 2, 0), 'iran', iran.length, iran.reduce((a, r) => a + r.length / 2, 0), 'fronteras', fronteras.length);

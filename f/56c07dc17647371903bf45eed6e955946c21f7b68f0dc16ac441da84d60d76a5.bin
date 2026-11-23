@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# ¿Hay publicada una versión más nueva que la de esta carpeta? Solo lee un archivo de texto (nunca espera más de 4 s).
+cd "$(dirname "$0")/.."
+[ -f config/origen.txt ] || { echo "Versión: sin origen (no se puede mirar)."; exit 0; }
+origen=$(tr -d '\r\n' < config/origen.txt)
+mia=$(head -1 config/version.txt 2>/dev/null | tr -d '\r'); mia=${mia:-v0}
+remota=$(curl -fsS --max-time 4 "${origen%/*}/version.txt" 2>/dev/null | tr -d '\r')
+nueva=$(echo "$remota" | head -1)
+notas=$(echo "$remota" | tail -n +2)
+if [ -z "$nueva" ]; then
+  echo "Versión: $mia (no he podido mirar si hay otra nueva; sigue sin problema)."
+elif [ "${nueva#v}" -gt "${mia#v}" ] 2>/dev/null; then
+  echo "HAY UNA VERSIÓN NUEVA: $nueva (tienes la $mia)."
+  [ -n "$notas" ] && echo "Novedades: $notas"
+  echo "Para ponerla: bash instalar/actualizar.sh"
+else
+  echo "Versión: $mia (la última)."
+fi

@@ -1,0 +1,28 @@
+// Uso: npm run render -- <id> [--frames=0-449] [--salida=out/x.mp4]
+//      npm run render -- <id> --cuadro=3.5      (exporta un PNG del segundo 3.5)
+import {execSync} from 'node:child_process';
+import {mkdirSync} from 'node:fs';
+import {dirname, join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
+const args = process.argv.slice(2);
+const id = args.find((a) => !a.startsWith('--'));
+if (!id) {
+  console.error('Falta el id del video (nombre del JSON sin .json)');
+  process.exit(1);
+}
+const opt = Object.fromEntries(args.filter((a) => a.startsWith('--')).map((a) => a.slice(2).split('=')));
+execSync('node scripts/registrar.mjs', {cwd: raiz, stdio: 'inherit'});
+mkdirSync(join(raiz, 'out'), {recursive: true});
+
+if (opt.cuadro !== undefined) {
+  const f = Math.round(parseFloat(opt.cuadro) * 30);
+  const salida = opt.salida ?? `out/${id}_${opt.cuadro}s.png`;
+  execSync(`npx remotion still src/index.ts ${id} ${salida} --frame=${f}`, {cwd: raiz, stdio: 'inherit'});
+} else {
+  const salida = opt.salida ?? `out/${id}.mp4`;
+  const frames = opt.frames ? `--frames=${opt.frames}` : '';
+  execSync(`npx remotion render src/index.ts ${id} ${salida} ${frames}`, {cwd: raiz, stdio: 'inherit'});
+  console.log(`\nListo: fabrica/${salida}`);
+}

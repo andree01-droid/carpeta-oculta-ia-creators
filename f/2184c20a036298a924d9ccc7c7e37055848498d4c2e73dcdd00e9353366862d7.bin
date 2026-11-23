@@ -1,0 +1,24 @@
+// Genera src/videos.generated.ts con un import por cada videos/*.json.
+// Se corre solo antes de "npm run dev" y "npm run render".
+import {readdirSync, writeFileSync} from 'node:fs';
+import {dirname, join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
+const archivos = readdirSync(join(raiz, 'videos'))
+  .filter((f) => f.endsWith('.json'))
+  .sort();
+
+const idValido = (f) => f.replace(/\.json$/, '').replace(/[^a-zA-Z0-9-]/g, '-');
+const lineas = [
+  '// ARCHIVO GENERADO por scripts/registrar.mjs — no editar a mano.',
+  "import type {VideoSpec} from './motor/tipos';",
+  ...archivos.map((f, i) => `import v${i} from '../videos/${f}';`),
+  '',
+  'export const VIDEOS: {id: string; spec: VideoSpec}[] = [',
+  ...archivos.map((f, i) => `  {id: '${idValido(f)}', spec: v${i} as unknown as VideoSpec},`),
+  '];',
+  '',
+];
+writeFileSync(join(raiz, 'src', 'videos.generated.ts'), lineas.join('\n'));
+console.log(`Registrados ${archivos.length} videos: ${archivos.map(idValido).join(', ')}`);

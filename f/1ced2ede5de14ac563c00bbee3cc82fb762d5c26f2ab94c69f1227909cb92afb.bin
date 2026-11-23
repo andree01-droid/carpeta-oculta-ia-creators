@@ -1,0 +1,43 @@
+"""Compara fotogramas del video original y del render en los mismos segundos.
+
+Uso: comparar.py <original.mp4> <render.mp4> <salida.png> t1 t2 t3 ...
+Genera una hoja con pares (ORIGINAL | RENDER) de 360×640 y el segundo escrito.
+También imprime la diferencia media de color por par (0 = idénticos).
+"""
+import subprocess, sys, os, tempfile
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+
+orig, rend, salida = sys.argv[1:4]
+tiempos = [float(t) for t in sys.argv[4:]]
+W, H = 360, 640
+tmp = tempfile.mkdtemp()
+
+
+def frame(video, t, nombre):
+    out = os.path.join(tmp, nombre)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{t}", "-i", video, "-frames:v", "1",
+                    "-vf", f"scale={W}:{H}", out], check=True)
+    return Image.open(out).convert("RGB")
+
+
+cols = 3  # pares por fila
+filas = (len(tiempos) + cols - 1) // cols
+hoja = Image.new("RGB", (cols * (2 * W + 20), filas * (H + 30)), (40, 40, 40))
+d = ImageDraw.Draw(hoja)
+try:
+    fuente = ImageFont.truetype("arialbd.ttf", 20)
+except OSError:
+    fuente = ImageFont.load_default()
+for i, t in enumerate(tiempos):
+    a = frame(orig, t, f"o{i}.png")
+    b = frame(rend, t, f"r{i}.png")
+    diff = np.abs(np.asarray(a, float) - np.asarray(b, float)).mean()
+    x = (i % cols) * (2 * W + 20)
+    y = (i // cols) * (H + 30)
+    hoja.paste(a, (x, y + 30))
+    hoja.paste(b, (x + W, y + 30))
+    d.text((x + 6, y + 4), f"{t:.2f}s  ORIGINAL | RENDER   dif={diff:.1f}", fill=(255, 230, 0), font=fuente)
+    print(f"{t:6.2f}s  diferencia media = {diff:.1f}")
+hoja.save(salida)
+print("Hoja:", salida)

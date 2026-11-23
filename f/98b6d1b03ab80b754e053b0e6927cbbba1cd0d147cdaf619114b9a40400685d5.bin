@@ -1,0 +1,23 @@
+"""Junta imágenes en una hoja con el nombre encima. Uso: hoja.py <salida.png> <img1> <img2> ... [--cols 6] [--ancho 300]"""
+import os, sys
+from PIL import Image, ImageDraw, ImageFont
+
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+cols = int(sys.argv[sys.argv.index("--cols") + 1]) if "--cols" in sys.argv else 6
+ancho = int(sys.argv[sys.argv.index("--ancho") + 1]) if "--ancho" in sys.argv else 300
+salida, imgs = args[0], [a for a in args[1:] if not a.isdigit()]
+ims = [Image.open(p).convert("RGB") for p in imgs]
+alto = int(ancho * ims[0].height / ims[0].width)
+filas = (len(ims) + cols - 1) // cols
+hoja = Image.new("RGB", (cols * ancho, filas * (alto + 26)), (40, 40, 40))
+d = ImageDraw.Draw(hoja)
+try:
+    f = ImageFont.truetype("arialbd.ttf", 18)
+except OSError:
+    f = ImageFont.load_default()
+for i, (p, im) in enumerate(zip(imgs, ims)):
+    x, y = (i % cols) * ancho, (i // cols) * (alto + 26)
+    hoja.paste(im.resize((ancho, alto)), (x, y + 26))
+    d.text((x + 6, y + 4), os.path.splitext(os.path.basename(p))[0].split("_")[-1] + "s", fill=(255, 230, 0), font=f)
+hoja.save(salida)
+print(salida)

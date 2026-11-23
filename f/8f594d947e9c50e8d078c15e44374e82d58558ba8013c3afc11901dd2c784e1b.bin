@@ -1,0 +1,661 @@
+// "The man who ate an airplane" (Michel Lotito, "Monsieur Mangetout") — inglés EE. UU. (voz Achird), canvas HD.
+// Modelo de las referencias (ref6 / electrocutarte) y nivel de sullivan v2: 4 mundos que vuelven (cielo y aeródromo con la
+// avioneta enorme, escenario de cabaret con el comensal en primer plano, mesa con mantel y plato, sala de rayos X),
+// protagonistas grandes con luz de borde, el mundo siempre en movimiento, etiquetas finas y pocos títulos gigantes.
+// Datos (Wikipedia "Michel Lotito"; Guinness World Records, "The man who ate metal", 2022; Snopes 2022): Grenoble, pica;
+// 18 bicicletas, 15 carritos, 7 televisores, 6 lámparas de araña, un ataúd (con asas); Cessna 150 de 1978 a 1980 (~2 años);
+// ~900 g (2 lb) de metal al día con aceite mineral y agua; pared del estómago e intestinos inusualmente gruesa;
+// plátanos y huevos duros le sentaban mal; Guinness le dio una placa de latón por la "dieta más extraña" y se la comió.
+import React, {useLayoutEffect, useMemo, useRef} from 'react';
+import {AbsoluteFill, Sequence, interpolate, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {Audio} from '@remotion/media';
+import PEN from '../avion-comido-en.palabras.json';
+import {Subtitulos} from '../../componentes/Subtitulos';
+import {VideoCtx} from '../../motor/contexto';
+import {crearReloj, normalizar} from '../../motor/reloj';
+import {prepararPalabras} from '../../Video';
+import {rampa} from '../tiempo';
+import {HD, contextoHD} from '../hd';
+import type {VideoSpec} from '../../motor/tipos';
+import {G, W, H, FF, rnd, cl, lerp, glow, pantalla, salida, vista, viñeta, velo, numero, pildora, fuente, golpeTexto, onda, rayos, grieta, pregunta, cruz} from '../cripto/dibujo';
+import {confeti} from '../vodka/dibujo';
+import {sello} from '../dedos/dibujo';
+import {carrito, tele, llanta} from '../costco/dibujo';
+import {documento} from '../helado/dibujo';
+import {Tono, TONOS, cielo, cordillera, niebla, bokeh, brasas, etiqueta, iluminar, sombraSuelo} from '../sullivan/mundo';
+import {cessna, pieza, comensal, OpCom, plato, tenedor, cuchillo, mantel, escenario, marquesina, aerodromo, bici, lampara, ataud, platano, huevo,
+  botella, vaso, sierra, chispas, bascula, rayosX, salaX, tubo, placa, aviso, barraAnios, XR} from './dibujo';
+
+type Pal = {word: string; start: number; end: number};
+const ANCLAS: [string, number, string][] = [
+  ['ate2', 2, 'ate'], ['airplane5', 5, 'airplane'], ['not', 6, 'not'], ['toy', 8, 'toy'], ['real10', 10, 'real'], ['piece12', 12, 'piece'], ['piece14', 14, 'piece'],
+  ['his', 15, 'his'], ['michel18', 18, 'michel'], ['lotito', 19, 'lotito'], ['entertainer', 21, 'entertainer'], ['grenoble', 23, 'grenoble'], ['france', 24, 'france'],
+  ['people', 25, 'people'], ['monsieur', 28, 'monsieur'], ['mangetout', 29, 'mangetout'], ['mr', 30, 'mr'], ['everything', 32, 'everything'],
+  ['but', 33, 'but'], ['wait', 34, 'wait'], ['how', 35, 'how'], ['possible', 39, 'possible'], ['it40', 40, 'it'], ['condition', 45, 'condition'], ['pica', 47, 'pica'],
+  ['urge', 49, 'urge'], ['food', 56, 'food'], ['metal57', 57, 'metal'], ['glass', 58, 'glass'], ['rubber', 59, 'rubber'], ['michel60', 60, 'michel'], ['stage', 65, 'stage'],
+  ['show', 66, 'show'], ['over', 67, 'over'], ['n18', 72, '18'], ['bicycles', 73, 'bicycles'], ['n15', 74, '15'], ['shopping', 75, 'shopping'], ['n7', 77, '7'], ['tvs', 78, 'tvs'],
+  ['n6', 79, '6'], ['chandeliers', 80, 'chandeliers'], ['even', 82, 'even'], ['coffin', 84, 'coffin'], ['handles', 85, 'handles'], ['included', 86, 'included'],
+  ['then', 87, 'then'], ['n1978', 89, '1978'], ['cessna', 94, 'cessna'], ['n150', 95, '150'], ['a96', 96, 'a'], ['real97', 97, 'real'], ['wings', 100, 'wings'],
+  ['wheels', 101, 'wheels'], ['engine', 104, 'engine'], ['picture', 105, 'picture'], ['tiny111', 111, 'tiny'], ['pieces', 112, 'pieces'], ['swallow', 116, 'swallow'],
+  ['every', 117, 'every'], ['day', 118, 'day'], ['n2a', 120, '2'], ['pounds', 121, 'pounds'], ['metal123', 123, 'metal'], ['he124', 124, 'he'], ['gulped', 125, 'gulped'],
+  ['pills', 129, 'pills'], ['mineral', 131, 'mineral'], ['water', 136, 'water'], ['it137', 137, 'it'], ['took', 138, 'took'], ['n2b', 141, '2'], ['years142', 142, 'years'],
+  ['so143', 143, 'so'], ['why', 144, 'why'], ['kill', 147, 'kill'], ['doctors149', 149, 'doctors'], ['xray', 150, 'x'], ['stomach', 153, 'stomach'], ['lining', 157, 'lining'],
+  ['unusually', 159, 'unusually'], ['thick', 160, 'thick'], ['like161', 161, 'like'], ['pipe', 163, 'pipe'], ['armor', 165, 'armor'], ['inside', 167, 'inside'],
+  ['and168', 168, 'and'], ['weird', 171, 'weird'], ['bananas', 173, 'bananas'], ['eggs', 177, 'eggs'], ['made', 178, 'made'], ['sick', 180, 'sick'], ['guinness', 181, 'guinness'],
+  ['brass', 187, 'brass'], ['plaque', 188, 'plaque'], ['strangest', 191, 'strangest'], ['diet', 192, 'diet'], ['he193', 193, 'he'], ['ate194', 194, 'ate'], ['too', 196, 'too'],
+  ['doctors197', 197, 'doctors'], ['never', 200, 'never'], ['try', 201, 'try'], ['swallowing', 203, 'swallowing'], ['metal204', 204, 'metal'], ['tear', 206, 'tear'], ['apart', 209, 'apart'],
+  ['so210', 210, 'so'], ['really', 214, 'really'], ['airplane217', 217, 'airplane'], ['n2c', 218, '2'], ['one', 220, 'one'], ['tiny221', 221, 'tiny'], ['piece222', 222, 'piece'],
+  ['time', 225, 'time'], ['follow', 226, 'follow'], ['send', 229, 'send'], ['friend', 233, 'friend'], ['eats', 235, 'eats'], ['anything', 237, 'anything'],
+];
+
+function crear(P: Pal[]) {
+const w = (i: number, txt: string) => {
+  if (!normalizar(P[i].word).startsWith(normalizar(txt))) throw new Error(`palabra ${i} es "${P[i].word}", esperaba "${txt}"`);
+  return P[i].start;
+};
+const T: Record<string, number> = {};
+for (const [k, i, t] of ANCLAS) T[k] = w(i, t);
+const DUR = P[P.length - 1].end + 1.6;
+
+// ------------------------------------------------------------------ ayudantes
+type K = [number, number, number, number, number];
+const ap = (s: number, t: number, d = 0.35) => rampa(s, t, t + d, 'salida');
+const rebote = (s: number, t: number) => { const d = s - t; if (d <= 0) return 0; return 1 + Math.sin(d * 18) * 0.22 * Math.exp(-d * 8) - Math.exp(-d * 30); };
+const cuenta = (s: number, t: number, a: number, b: number, d = 0.7) => lerp(a, b, salida(cl((s - t) / d)));
+const enPantalla = (g: G, f: () => void) => { g.save(); pantalla(g); f(); g.restore(); };
+const flash = (g: G, s: number, t: number, col = '255,255,255', a0 = 0.8, d0 = 0.2) => { const d = s - t; if (d < 0 || d > d0) return; enPantalla(g, () => { g.fillStyle = `rgba(${col},${a0 * (1 - d / d0)})`; g.fillRect(0, 0, W, H); }); };
+const aP = (g: G, x: number, y: number): [number, number] => { const R = g.canvas.width / W, p = g.getTransform().transformPoint(new DOMPoint(x, y)); return [p.x / R, p.y / R]; };
+/** figura con luz de borde, sombra propia y tinte del ambiente */
+const heroe = (g: G, tono: Tono, dib: (x: G) => void, ang = -Math.PI / 2, ancho = 7, borde?: string) =>
+  iluminar(g, dib, {borde: borde ?? TONOS[tono].luz, bordeA: 0.75, ang, ancho, sombra: 0.55, tinte: TONOS[tono].nubeOsc, tinteA: 0.18});
+const cierre = (g: G, vi = 0.5, fl = 0) => { if (fl > 0) enPantalla(g, () => { g.fillStyle = `rgba(255,240,220,${0.2 * fl})`; g.fillRect(0, 0, W, H); }); viñeta(g, vi); velo(g); };
+const slam = (g: G, s: number, t: number, txt: string, x: number, y: number, ang: number, tam: number, col = '#ffffff', sombra = 'rgba(0,0,0,0.55)', hasta = 1e9) => {
+  if (s < t || s >= hasta) return;
+  g.save(); pantalla(g);
+  g.font = `900 ${tam}px ${FF}`; const k = Math.min(1, 900 / (g.measureText(txt).width * 1.04 + 20));
+  const d = s - t;
+  golpeTexto(g, s, txt, x, y + Math.sin(d * 2.6) * 6, ang + Math.sin(d * 1.9) * 0.012, tam * k, t, col, sombra);
+  g.restore();
+};
+type Sl = [number, string, number, string?];
+const slams = (g: G, s: number, lista: Sl[], sombra: string, hastaFin = 1e9, y = 720) => {
+  for (let i = 0; i < lista.length; i++) { const [t, tx, tam, col] = lista[i]; slam(g, s, t - 0.05, tx, 540, y, i % 2 ? 0.04 : -0.05, tam, col ?? '#ffffff', sombra, i + 1 < lista.length ? lista[i + 1][0] - 0.05 : hastaFin); }
+};
+const golpeCam = (t: number, x: number, y: number, z: number, zb: number): K[] => [[t - 0.04, 0.08, x, y, z], [t + 0.08, 0.5, x, y, zb]];
+const mich = (g: G, s: number, tono: Tono, x: number, y: number, r: number, o: OpCom, ang = -2.2) => heroe(g, tono, (c) => comensal(c, s, x, y, r, o), ang, 9);
+/** trozos de metal que vuelan de (x0,y0) hacia (x1,y1) en tandas */
+const vuelo = (g: G, s: number, t0: number, x0: number, y0: number, x1: number, y1: number, n: number, cada = 0.12, r = 34) => {
+  for (let i = 0; i < n; i++) { const ph = (s - t0 - i * cada) / 0.55; if (ph < 0 || ph > 1) continue; const q = salida(ph);
+    pieza(g, lerp(x0, x1, q) + Math.sin(ph * 6 + i) * 30, lerp(y0, y1, q) - Math.sin(ph * Math.PI) * 220, r * (1 - ph * 0.6), s * 6 + i, i * 3.3 + 1, {brillo: 1 - ph}); }
+};
+/** mesa con mantel (mundo) + plato */
+const bk = (g: G, s: number, col: string, n: number, a: number) => { g.save(); bokeh(g, s, col, n, a); g.restore(); };
+const mesa = (g: G, s: number, yp = 1380) => { mantel(g, yp + 260); bk(g, s, "255,190,120", 16, 0.18); };
+const FRAG = Array.from({length: 70}, (_, i) => ({x: -520 + rnd(i * 2.3) * 1020, y: -200 + rnd(i * 4.7) * 380, r: 18 + rnd(i * 6.1) * 22, sem: i * 7.7}));
+
+// ------------------------------------------------------------------ planos
+type Plano = {t0: number; dib: (g: G, s: number) => void};
+const PLANOS: Plano[] = [
+  // 1 — gancho: la avioneta vuela hacia la cámara y raja la pantalla; "THIS MAN ATE"; el comensal con la boca abierta
+  {t0: 0, dib: (g, s) => {
+    const tc = T.ate2 - 0.04, choque = s >= tc, ok = s >= T.airplane5 - 0.05;
+    cielo(g, s, ok ? 'oro' : 'atardecer', {relampagos: false, nubes: 0.65, hor: 1400});
+    if (choque) enPantalla(g, () => rayos(g, 540, 900, s, 0.8, '255,220,150', 18));
+    vista(g, s, [[0, 0, 540, 1100, 1.0], ...golpeCam(tc, 540, 1100, 1.2, 1.05), ...golpeCam(T.airplane5, 540, 1150, 1.16, 1.04)], 1.6);
+    cordillera(g, s, 1750, ok ? 'oro' : 'atardecer', {capas: 3, pinos: false});
+    if (!choque) { const p = cl(s / tc), k = p * p; heroe(g, 'atardecer', (c) => cessna(c, s, lerp(860, 560, k), lerp(760, 1050, k), lerp(0.25, 2.6, k), {rot: lerp(-0.15, 0.05, k)}), -2.4, 6); }
+    else {
+      mich(g, s, ok ? 'oro' : 'atardecer', 540, 1330, 270, {boca: ok ? 0.4 : 1, mastica: ok ? 1 : 0, expr: 'feliz', servilleta: 1, mira: 0});
+      if (ok) {
+        const p = rebote(s, T.airplane5);
+        heroe(g, 'oro', (c) => { cuchillo(c, 150, 1500, 1.1 * p, -0.35); tenedor(c, 930, 1500, 1.1 * p, 0.35); cessna(c, s, 540, 1060, 0.62 * p, {rot: Math.sin(s * 3) * 0.05}); }, -2.0, 6);
+        vuelo(g, s, T.airplane5 + 0.1, 600, 1000, 540, 1490, 6, 0.1);
+      }
+    }
+    slams(g, s, [[tc, 'THIS MAN ATE', 190], [T.airplane5, 'AN AIRPLANE', 210, '#ffe08a']], '#2a1402');
+    grieta(g, s, tc, 540, 1000, 3, false, 1.3, 1.5);
+    flash(g, s, tc, '255,240,220', 0.9, 0.2);
+    onda(g, s, tc, 540, 1000, '255,230,180'); onda(g, s, T.airplane5, 540, 1100, '255,230,160');
+    cierre(g, 0.45);
+  }},
+  // 2 — no es un juguete: avioneta de juguete en la palma… y cae la de verdad
+  {t0: T.not - 0.1, dib: (g, s) => {
+    const real = s >= T.real10 - 0.05;
+    cielo(g, s, real ? 'oro' : 'atardecer', {relampagos: false, nubes: 0.5, hor: 1300});
+    vista(g, s, [[T.not - 0.1, 0, 540, 1250, 1.3], [T.not, 0.45, 540, 1250, 1.05], ...golpeCam(T.real10, 540, 1200, 1.2, 1.0)], 1.4);
+    aerodromo(g, s, 1300, {luz: '255,210,140'});
+    if (!real) {
+      const p = rebote(s, T.not);
+      heroe(g, 'atardecer', (c) => { c.fillStyle = '#e8b28c'; c.beginPath(); c.ellipse(540, 1420, 300 * p, 110 * p, 0, 0, 7); c.fill(); cessna(c, s, 540, 1330, 0.28 * p, {rot: Math.sin(s * 2) * 0.06}); }, -2.3, 6);
+      const [tx, ty] = aP(g, 470, 1300);
+      etiqueta(g, s, T.toy, 'A TOY?', 230, 900, tx, ty, {col: '255,232,200'});
+      if (s > T.toy + 0.25) cruz(g, 540, 1330, rebote(s, T.toy + 0.3), 150);
+    } else {
+      const p = rebote(s, T.real10), cae = 1 - salida(cl((s - T.real10) / 0.18));
+      sombraSuelo(g, 540, 1560, 700 * p, 0.6);
+      heroe(g, 'oro', (c) => cessna(c, s, 540, 1340 - cae * 900, 1.0 * p, {sombra: false}), -2.2, 7);
+      brasas(g, s, 540, 1560, 900, Math.exp(-(s - T.real10) * 2), 30);
+    }
+    slams(g, s, [[T.real10, 'A REAL ONE', 220, '#ffe08a']], '#2a1402');
+    grieta(g, s, T.real10, 540, 1500, 9, false, 1.2, 1.2);
+    flash(g, s, T.real10, '255,240,220', 0.6, 0.15);
+    onda(g, s, T.real10, 540, 1550, '255,230,160');
+    cierre(g, 0.45);
+  }},
+  // 3 — trozo a trozo: la avioneta se va mordiendo desde la cola
+  {t0: T.piece12 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'atardecer', {relampagos: false, nubes: 0.55, hor: 1300});
+    vista(g, s, [[T.piece12 - 0.1, 0, 640, 1260, 1.25], [T.piece12, 0.45, 600, 1260, 1.05], [T.piece14, 0.8, 680, 1240, 1.12]], 1.3);
+    aerodromo(g, s, 1300);
+    const come = Math.max(ap(s, T.piece12, 0.25) * 0.25, 0) + ap(s, T.piece14, 0.25) * 0.25 + ap(s, T.piece14 + 0.45, 0.2) * 0.12;
+    sombraSuelo(g, 560, 1560, 650, 0.6);
+    heroe(g, 'atardecer', (c) => cessna(c, s, 560, 1340, 1.0, {come}), -2.4, 7);
+    const xb = 560 - 560 + come * 1080;
+    for (const t of [T.piece12, T.piece14, T.piece14 + 0.45]) { vuelo(g, s, t, xb, 1300, -200, 1700, 5, 0.06, 40); chispas(g, s, xb, 1300, Math.PI * 0.9, Math.exp(-Math.max(0, s - t) * 5) * (s > t ? 1 : 0), 20); }
+    pildora(g, 540, 1640, 'PIECE BY PIECE', rebote(s, T.piece12 + 0.1), {col: '#ffe08a', tam: 40});
+    cierre(g, 0.45);
+  }},
+  // 4 — el telón se abre: Michel Lotito, artista
+  {t0: T.his - 0.1, dib: (g, s) => {
+    vista(g, s, [[T.his - 0.1, 0, 540, 1150, 1.25], [T.his, 0.6, 540, 1150, 1.0], [T.michel18, 2.4, 540, 1180, 1.1]], 1.2);
+    escenario(g, s, {telon: ap(s, T.his, 0.9), focoA: ap(s, T.his + 0.2, 0.4)});
+    const p = rebote(s, T.his + 0.3);
+    mich(g, s, 'oro', 540, 1180, 230 * p, {expr: 'feliz', brazo: 'arriba', boca: 0.2});
+    const [hx, hy] = aP(g, 540, 940), [bx, by] = aP(g, 700, 1450);
+    etiqueta(g, s, T.lotito, 'MICHEL LOTITO', 150, 760, hx - 60, hy, {col: '255,236,190'});
+    etiqueta(g, s, T.entertainer, 'ENTERTAINER', 930, 1540, bx, by, {col: '255,236,190'});
+    if (s > T.michel18) confeti(g, s, T.michel18, 540, 700, 40, 0.8);
+    cierre(g, 0.5);
+  }},
+  // 5 — Grenoble, Francia: los Alpes al anochecer y las luces de la ciudad
+  {t0: T.grenoble - 0.1, dib: (g, s) => {
+    cielo(g, s, 'atardecer', {relampagos: false, nubes: 0.45, hor: 1250});
+    vista(g, s, [[T.grenoble - 0.1, 0, 380, 1250, 1.2], [T.grenoble, 1.4, 600, 1220, 1.0]], 1);
+    cordillera(g, s, 1650, 'atardecer', {capas: 5, pinos: false, x0: -900, x1: 2100});
+    for (let i = 0; i < 80; i++) { const lx = 180 + rnd(i * 2.1) * 720, ly = 1560 + rnd(i * 3.3) * 120, on = 0.5 + 0.5 * Math.sin(s * 3 + i); glow(g, lx, ly, 16, '255,210,130', 0.6 * on); }
+    niebla(g, s, 1520, TONOS.atardecer.niebla, 0.25);
+    // banderita tricolor en el pin
+    const p = rebote(s, T.grenoble + 0.05);
+    g.save(); g.translate(560, 1560); g.scale(p, p);
+    glow(g, 0, 0, 120, '255,225,150', 0.9); g.fillStyle = '#ffe7a8'; g.beginPath(); g.arc(0, 0, 14, 0, 7); g.fill();
+    g.strokeStyle = '#ddd'; g.lineWidth = 6; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -230); g.stroke();
+    const ond = (k: number) => Math.sin(s * 6 - k * 0.04) * 8;
+    for (const [i, c] of [[0, '#1f4aa8'], [1, '#ffffff'], [2, '#e1263a']] as const) { g.fillStyle = c; g.beginPath(); g.moveTo(i * 50, -228 + ond(i * 50)); g.lineTo(i * 50 + 50, -228 + ond(i * 50 + 50)); g.lineTo(i * 50 + 50, -128 + ond(i * 50 + 50)); g.lineTo(i * 50, -128 + ond(i * 50)); g.closePath(); g.fill(); }
+    g.restore();
+    const [px, py] = aP(g, 560, 1560);
+    etiqueta(g, s, T.grenoble + 0.1, 'GRENOBLE, FRANCE', 140, 1000, px, py, {col: '255,232,200', tam: 32});
+    bk(g, s, '255,210,160', 14, 0.2);
+    cierre(g, 0.45);
+  }},
+  // 6 — el cartel: MONSIEUR MANGETOUT = "Mister Eats Everything"
+  {t0: T.people - 0.1, dib: (g, s) => {
+    vista(g, s, [[T.people - 0.1, 0, 540, 1100, 1.3], [T.people, 0.5, 540, 1100, 1.0], ...golpeCam(T.monsieur, 540, 1100, 1.12, 1.04), [T.mr, 1, 540, 1140, 1.08]], 1.2);
+    escenario(g, s, {focoX: 540 + Math.sin(s * 1.5) * 200, focoA: 0.8, tinte: '255,214,150'});
+    heroe(g, 'oro', (c) => marquesina(c, s, 540, 1050, 1.0 * rebote(s, T.people), 'MONSIEUR', 'MANGETOUT', ap(s, T.monsieur - 0.05, 0.25)), -2.2, 7);
+    pildora(g, 540, 1420, '= MR. EATS EVERYTHING', rebote(s, T.mr), {col: '#ffe08a', tam: 38});
+    if (s > T.everything) confeti(g, s, T.everything, 540, 800, 60);
+    flash(g, s, T.monsieur, '255,236,190', 0.35, 0.12);
+    cierre(g, 0.45);
+  }},
+  // 7 — ¿cómo es posible? la avioneta servida en el plato, con cubiertos
+  {t0: T.but - 0.1, dib: (g, s) => {
+    cielo(g, s, 'violeta', {relampagos: false, nubes: 0, hor: 1300});
+    enPantalla(g, () => rayos(g, 540, 1150, s, 0.6, '230,190,255', 16));
+    vista(g, s, [[T.but - 0.1, 0, 540, 1300, 1.3], [T.but, 0.5, 540, 1300, 1.0], ...golpeCam(T.possible, 540, 1260, 1.16, 1.06)], 1.4);
+    mesa(g, s);
+    heroe(g, 'violeta', (c) => { plato(c, 540, 1420, 1.15); cuchillo(c, 110, 1520, 0.95, -0.12); tenedor(c, 970, 1520, 0.95, 0.12); cessna(c, s, 540, 1300, 0.62 * rebote(s, T.but), {rot: -0.04}); }, -2.0, 7);
+    pregunta(g, 840, 980, rebote(s, T.how) * 0.85, 1);
+    slams(g, s, [[T.possible, 'HOW?!', 300, '#e6c8ff']], '#1a0630');
+    flash(g, s, T.possible, '240,220,255', 0.4, 0.12);
+    cierre(g, 0.45);
+  }},
+  // 8 — pica: el diagnóstico en la sala de rayos X
+  {t0: T.it40 - 0.1, dib: (g, s) => {
+    salaX(g, s);
+    vista(g, s, [[T.it40 - 0.1, 0, 540, 1200, 1.25], [T.it40, 0.5, 540, 1200, 1.0], ...golpeCam(T.pica, 540, 1150, 1.15, 1.06), [T.urge, 1, 560, 1180, 1.1]], 1.2);
+    heroe(g, 'lago', (c) => documento(c, 540, 1180, 0.95 * rebote(s, T.it40), 'MEDICAL FILE', 'Patient: M. Lotito', -0.04, 0), -2.2, 7, XR);
+    if (s > T.pica - 0.05) sello(g, 560, 1260, 'PICA', ap(s, T.pica - 0.05, 0.12), {tam: 150, col: '#e23b3b'});
+    const [dx, dy] = aP(g, 700, 1320);
+    etiqueta(g, s, T.condition, 'RARE CONDITION', 120, 1600, dx - 300, dy + 60, {col: '170,235,255'});
+    etiqueta(g, s, T.urge, 'URGE TO EAT NON-FOOD', 120, 820, dx, dy - 300, {col: '255,200,200', tam: 30});
+    flash(g, s, T.pica, '255,200,200', 0.35, 0.1);
+    cierre(g, 0.5);
+  }},
+  // 9 — metal, cristal, goma caen al plato uno a uno
+  {t0: T.metal57 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'fuego', {relampagos: false, nubes: 0, hor: 1300});
+    vista(g, s, [[T.metal57 - 0.1, 0, 300, 1300, 1.25], [T.metal57, 0.4, 330, 1320, 1.15], [T.glass, 0.4, 560, 1320, 1.12], [T.rubber, 0.4, 760, 1320, 1.1]], 1.2);
+    mesa(g, s);
+    const cae = (t: number) => 1 - salida(cl((s - t) / 0.25));
+    heroe(g, 'fuego', (c) => {
+      plato(c, 540, 1460, 1.35);
+      if (s > T.metal57) { const k = cae(T.metal57); for (let i = 0; i < 5; i++) pieza(c, 260 + i * 34, 1380 - k * 900 - i * 10, 46, i * 1.3 + s * 0.2, i * 9.1); }
+      if (s > T.glass) { const k = cae(T.glass); botella(c, 560, 1290 - k * 900, 0.75, 'GLASS', '160,230,200', 0.15); }
+      if (s > T.rubber) { const k = cae(T.rubber); llanta(c, 800, 1360 - k * 900, 110, s * 0.5); }
+    }, -2.2, 7);
+    for (const [t, x] of [[T.metal57, 320], [T.glass, 560], [T.rubber, 800]] as const) brasas(g, s, x, 1420, 200, s > t + 0.2 ? Math.exp(-(s - t - 0.2) * 3) : 0, 14);
+    const [m1x, m1y] = aP(g, 300, 1370), [m2x, m2y] = aP(g, 560, 1200), [m3x, m3y] = aP(g, 800, 1300);
+    etiqueta(g, s, T.metal57 + 0.15, 'METAL', 160, 860, m1x, m1y, {hasta: T.glass});
+    etiqueta(g, s, T.glass + 0.15, 'GLASS', 460, 860, m2x, m2y, {hasta: T.rubber});
+    etiqueta(g, s, T.rubber + 0.15, 'RUBBER', 900, 860, m3x, m3y);
+    cierre(g, 0.5);
+  }},
+  // 10 — lo convirtió en un espectáculo: en el escenario, tenedor en mano
+  {t0: T.michel60 - 0.1, dib: (g, s) => {
+    vista(g, s, [[T.michel60 - 0.1, 0, 540, 1200, 1.3], [T.michel60, 0.5, 540, 1200, 1.04], ...golpeCam(T.show, 540, 1160, 1.12, 1.04)], 1.3);
+    escenario(g, s, {focoX: 540, focoA: 1, publico: 1});
+    mich(g, s, 'oro', 540, 1100, 240 * rebote(s, T.michel60), {expr: 'orgullo', brazo: 'tenedor', boca: 0.5, mastica: s > T.show ? 1 : 0});
+    heroe(g, 'oro', (c) => tenedor(c, 760, 960, 0.6, -0.5, () => pieza(c, 0, -200, 60, 0.4, 5.5, {brillo: 1})), -2.0, 6);
+    if (s > T.show) confeti(g, s, T.show, 540, 700, 80);
+    const [bx, by] = aP(g, 540, 1460);
+    etiqueta(g, s, T.stage, 'STAGE SHOW', 900, 1530, bx + 150, by, {col: '255,236,190'});
+    cierre(g, 0.45);
+  }},
+  // 11 — 18 bicicletas se apilan
+  {t0: T.over - 0.1, dib: (g, s) => {
+    cielo(g, s, 'rojo', {relampagos: false, nubes: 0, hor: 1300});
+    enPantalla(g, () => rayos(g, 540, 1200, s, 0.5, '255,170,170', 18));
+    vista(g, s, [[T.over - 0.1, 0, 540, 1250, 1.2], [T.over, 0.5, 540, 1250, 1.0], ...golpeCam(T.n18, 540, 1250, 1.1, 1.0)], 1.3);
+    mesa(g, s, 1450);
+    const n = s < T.n18 ? 0 : 18;
+    heroe(g, 'rojo', (c) => { for (let i = 0; i < n; i++) { const t = T.n18 + i * 0.05, q = salida(cl((s - t) / 0.3)); if (q <= 0) continue; const fila = Math.floor(i / 4), x = 260 + (i % 4) * 190 + (fila % 2) * 90 + (rnd(i) - 0.5) * 50, y = 1560 - fila * 120;
+      bici(c, s, x, y - (1 - q) * 900, 0.6, {rot: (rnd(i * 3.1) - 0.5) * 0.7, col: ['#e23b3b', '#3A77D5', '#27AE60', '#F2994A', '#ffd23f'][i % 5], rueda: s * 2}); } }, -2.2, 6);
+    numero(g, 540, 820, String(Math.round(cuenta(s, T.n18, 0, 18, 0.9))), rebote(s, T.n18), {tam: 150, unidad: 'BICYCLES', col: '#ffffff'});
+    cierre(g, 0.45);
+  }},
+  // 12 — 15 carritos entran rodando
+  {t0: T.n15 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'lago', {relampagos: false, nubes: 0, hor: 1300});
+    enPantalla(g, () => rayos(g, 540, 1200, s, 0.45, '170,235,255', 18));
+    vista(g, s, [[T.n15 - 0.1, 0, 640, 1250, 1.2], [T.n15, 0.5, 540, 1260, 1.0]], 1.3);
+    mesa(g, s, 1450);
+    heroe(g, 'lago', (c) => { for (let i = 14; i >= 0; i--) { const t = T.n15 + i * 0.06, q = salida(cl((s - t) / 0.35)); if (q <= 0) continue; const fila = Math.floor(i / 5), x = 200 + (i % 5) * 170 + fila * 40, y = 1580 - fila * 150;
+      carrito(c, s, lerp(1700, x, q), y, 0.42, s * 4 * (1 - q) + q * 3); } }, -2.2, 6);
+    numero(g, 540, 820, String(Math.round(cuenta(s, T.n15, 0, 15, 0.9))), rebote(s, T.n15), {tam: 150, unidad: 'SHOPPING CARTS'});
+    cierre(g, 0.45);
+  }},
+  // 13 — 7 televisores y 6 lámparas de araña (la cámara sube)
+  {t0: T.n7 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'violeta', {relampagos: false, nubes: 0, hor: 1500});
+    vista(g, s, [[T.n7 - 0.1, 0, 540, 1350, 1.15], [T.n7, 0.4, 540, 1360, 1.0], [T.n6 - 0.05, 0.4, 540, 820, 1.0]], 1.2);
+    bk(g, s, '255,210,150', 22, 0.25);
+    heroe(g, 'violeta', (c) => {
+      const pos: [number, number][] = [[300, 1600], [540, 1600], [780, 1600], [420, 1450], [660, 1450], [420, 1300], [660, 1300]];
+      pos.forEach(([x, y], i) => { const q = rebote(s, T.n7 + i * 0.06); if (q > 0) tele(c, x, y, 0.58 * q, s + i, (rnd(i) - 0.5) * 0.1); });
+      for (let i = 0; i < 6; i++) { const t = T.n6 + i * 0.07, q = salida(cl((s - t) / 0.4)); if (q <= 0) continue; const x = 190 + (i % 3) * 350 + Math.floor(i / 3) * 175, y = 560 + Math.floor(i / 3) * 330; lampara(c, s + i, x, y - (1 - q) * 700, 0.5); }
+    }, -2.2, 6);
+    if (s < T.n6 - 0.05) pildora(g, 540, 940, '7 TVs', rebote(s, T.tvs), {col: '#bfe3ff', tam: 44});
+    else pildora(g, 540, 1190, '6 CHANDELIERS', rebote(s, T.chandeliers), {col: '#ffe08a', tam: 44});
+    cierre(g, 0.45);
+  }},
+  // 14 — y hasta un ataúd. Con asas incluidas.
+  {t0: T.even - 0.1, dib: (g, s) => {
+    cielo(g, s, 'noche', {nubes: 0.8, hor: 1400});
+    vista(g, s, [[T.even - 0.1, 0, 540, 1250, 1.25], [T.even, 0.5, 540, 1250, 1.0], ...golpeCam(T.coffin, 540, 1250, 1.12, 1.04), [T.handles, 0.5, 640, 1330, 1.25]], 1.2);
+    cordillera(g, s, 1700, 'noche', {capas: 3});
+    niebla(g, s, 1560, TONOS.noche.niebla, 0.35);
+    glow(g, 540, 1280, 750, '190,160,255', 0.4);
+    sombraSuelo(g, 540, 1460, 560, 0.7);
+    heroe(g, 'noche', (c) => ataud(c, s, 540, 1300, 1.0 * rebote(s, T.coffin - 0.05), {brillo: ap(s, T.handles, 0.3) * (0.7 + 0.3 * Math.sin(s * 8)), rot: -0.04}), -2.2, 7, '200,215,255');
+    for (const vx of [170, 910]) { glow(g, vx, 1180, 160, '255,190,90', 0.7 + 0.1 * Math.sin(s * 13 + vx)); g.fillStyle = '#efe6cf'; g.fillRect(vx - 16, 1200, 32, 240); g.fillStyle = '#ffd27a'; g.beginPath(); g.ellipse(vx, 1180, 12, 26 + 3 * Math.sin(s * 15), 0, 0, 7); g.fill(); }
+    const [hx, hy] = aP(g, 600, 1370);
+    etiqueta(g, s, T.handles, 'HANDLES INCLUDED', 200, 860, hx, hy, {col: '255,225,150', tam: 34});
+    cierre(g, 0.5);
+  }},
+  // 15 — 1978: la Cessna 150 en el aeródromo al amanecer
+  {t0: T.then - 0.1, dib: (g, s) => {
+    cielo(g, s, 'oro', {relampagos: false, nubes: 0.6, hor: 1250});
+    vista(g, s, [[T.then - 0.1, 0, 540, 900, 1.15], [T.then, 1.2, 540, 1200, 1.0], ...golpeCam(T.cessna, 540, 1230, 1.1, 1.04)], 1.1);
+    aerodromo(g, s, 1250, {luz: '255,220,150'});
+    sombraSuelo(g, 560, 1610, 640, 0.6);
+    heroe(g, 'oro', (c) => cessna(c, s, 560, 1400, 0.95, {helice: s * 2}), -2.5, 7);
+    enPantalla(g, () => { const q = rebote(s, T.n1978); if (q > 0) { g.save(); g.translate(540, 760); g.scale(q, q); g.fillStyle = 'rgba(12,10,6,0.8)'; g.beginPath(); g.roundRect(-230, -95, 460, 190, 40); g.fill(); g.strokeStyle = 'rgba(255,220,150,0.6)'; g.lineWidth = 3; g.stroke();
+      g.font = `900 140px ${FF}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#ffe08a'; g.shadowColor = 'rgba(255,200,90,0.8)'; g.shadowBlur = 30; g.fillText('1978', 0, 6); g.restore(); } });
+    const [px, py] = aP(g, 300, 1330);
+    etiqueta(g, s, T.cessna, 'CESSNA 150', 150, 1000, px, py, {col: '255,232,190'});
+    cierre(g, 0.45);
+  }},
+  // 16 — un avión de verdad: alas, ruedas y motor (la cámara lo recorre)
+  {t0: T.a96 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'oro', {relampagos: false, nubes: 0.6, hor: 1250});
+    vista(g, s, [[T.a96 - 0.1, 0, 540, 1300, 1.3], [T.a96, 0.5, 560, 1330, 1.12], [T.wings - 0.1, 0.4, 420, 1170, 1.35], [T.wheels - 0.1, 0.4, 470, 1560, 1.4], [T.engine - 0.1, 0.4, 900, 1380, 1.45]], 0.8);
+    aerodromo(g, s, 1250, {hangar: false});
+    sombraSuelo(g, 560, 1640, 700, 0.6);
+    heroe(g, 'oro', (c) => cessna(c, s, 560, 1430, 1.0, {helice: s * 45}), -2.5, 7);
+    const [ax, ay] = aP(g, 470, 1215), [rx, ry] = aP(g, 535, 1630), [mx, my] = aP(g, 1020, 1440);
+    etiqueta(g, s, T.wings, 'WINGS', 260, 760, ax, ay, {hasta: T.wheels - 0.05});
+    etiqueta(g, s, T.wheels, 'WHEELS', 300, 1200, rx, ry, {hasta: T.engine - 0.05});
+    etiqueta(g, s, T.engine, 'ENGINE', 640, 1000, mx, my);
+    chispas(g, s, 900, 1300, -2.2, 0.0);
+    cierre(g, 0.45);
+  }},
+  // 17 — imagina: la sierra corta todo el avión en trocitos
+  {t0: T.picture - 0.1, dib: (g, s) => {
+    cielo(g, s, 'fuego', {relampagos: false, nubes: 0.4, hor: 1350});
+    vista(g, s, [[T.picture - 0.1, 0, 540, 1300, 1.25], [T.picture, 0.5, 540, 1300, 1.02], ...golpeCam(T.tiny111, 540, 1300, 1.12, 1.0)], 1.4);
+    aerodromo(g, s, 1350, {hangar: false, luz: '255,170,90'});
+    const roto = s >= T.tiny111;
+    if (!roto) {
+      heroe(g, 'fuego', (c) => cessna(c, s, 540, 1380, 0.95, {helice: 0}), -2.3, 7);
+      const sx = lerp(900, 200, cl((s - T.picture) / (T.tiny111 - T.picture)));
+      heroe(g, 'fuego', (c) => sierra(c, s, sx, 1180, 170), -2.3, 6);
+      chispas(g, s, sx, 1320, -2.6, 1, 45);
+    } else {
+      const d = s - T.tiny111;
+      for (const [i, f] of FRAG.entries()) { const q = salida(cl(d / 0.6)), ang = Math.atan2(f.y, f.x), pile = Math.min(1, cl((d - 0.6) / 0.8));
+        const x = 540 + f.x * 0.95 + Math.cos(ang) * 260 * q, y = 1380 + f.y * 0.95 + Math.sin(ang) * 200 * q - Math.sin(q * Math.PI) * 140;
+        pieza(g, lerp(x, 540 + f.x * 0.45, pile), lerp(y, 1560 - Math.abs(f.y) * 0.3 - rnd(i) * 70, pile), f.r * lerp(1, 0.75, pile), s * (1 - pile) * 3 + i, f.sem, {brillo: 0.6}); }
+      onda(g, s, T.tiny111, 540, 1380, '255,220,170');
+    }
+    const [px, py] = aP(g, 540, 1500);
+    etiqueta(g, s, T.swallow - 0.5, 'SMALL ENOUGH TO SWALLOW', 120, 900, px, py, {col: '255,225,190', tam: 30});
+    flash(g, s, T.tiny111, '255,230,200', 0.5, 0.14);
+    cierre(g, 0.45);
+  }},
+  // 18 — cada día, unas 2 libras de metal en la báscula
+  {t0: T.every - 0.1, dib: (g, s) => {
+    cielo(g, s, 'oro', {relampagos: false, nubes: 0, hor: 1350});
+    enPantalla(g, () => rayos(g, 540, 1200, s, 0.45, '255,225,150', 16));
+    vista(g, s, [[T.every - 0.1, 0, 540, 1300, 1.25], [T.every, 0.5, 540, 1300, 1.02], ...golpeCam(T.n2a, 540, 1280, 1.12, 1.04)], 1.3);
+    mesa(g, s, 1450);
+    const val = cuenta(s, T.day, 0, 0.55, T.metal123 - T.day);
+    heroe(g, 'oro', (c) => { bascula(c, 540, 1460, 1.15, val, '≈ 2 LB'); for (let i = 0; i < 16; i++) { const t = T.day + i * 0.07, q = salida(cl((s - t) / 0.3)); if (q <= 0) continue; pieza(c, 420 + rnd(i * 2.2) * 240, 1340 - Math.floor(i / 5) * 24 - (1 - q) * 700, 30, i * 1.7, i * 5.3); } }, -2.2, 7);
+    enPantalla(g, () => { const q = rebote(s, T.every); if (q > 0) { g.save(); g.translate(230, 790); g.scale(q * 0.8, q * 0.8); /* calendario: un día que pasa */ g.fillStyle = '#fbfbf6'; g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 20; g.beginPath(); g.roundRect(-110, -120, 220, 240, 18); g.fill(); g.shadowBlur = 0;
+      g.fillStyle = '#e23b3b'; g.beginPath(); g.roundRect(-110, -120, 220, 64, [18, 18, 0, 0]); g.fill(); g.fillStyle = '#fff'; g.font = `800 34px ${FF}`; g.textAlign = 'center'; g.fillText('EVERY DAY', 0, -76);
+      g.fillStyle = '#222'; g.font = `900 110px ${FF}`; g.fillText(String(1 + (Math.floor((s - T.every) * 8) % 30 + 30) % 30), 0, 70); g.restore(); } });
+    numero(g, 660, 800, `${cuenta(s, T.n2a, 0, 2, 0.6).toFixed(0)} LB`, rebote(s, T.n2a), {tam: 90, unidad: '≈ 900 g OF METAL'});
+    fuente(g, 540, 1590, 'Source: Guinness World Records', ap(s, T.pounds, 0.3));
+    cierre(g, 0.45);
+  }},
+  // 19 — se los tragaba como pastillas: aceite mineral y mucha agua
+  {t0: T.he124 - 0.1, dib: (g, s) => {
+    vista(g, s, [[T.he124 - 0.1, 0, 540, 1150, 1.3], [T.he124, 0.5, 540, 1180, 1.05], ...golpeCam(T.pills, 540, 1200, 1.12, 1.04)], 1.2);
+    escenario(g, s, {focoA: 0.9, publico: 0, tinte: '255,226,180'});
+    mich(g, s, 'oro', 540, 1180, 300, {boca: 0.35, mastica: 1, expr: 'feliz', servilleta: 1, mira: -0.3});
+    vuelo(g, s, T.gulped, 1100, 800, 540, 1345, 12, 0.18, 30);
+    const pb = salida(cl((s - T.mineral) / 0.35)), pv = salida(cl((s - T.water) / 0.35));
+    heroe(g, 'oro', (c) => { if (pb > 0) botella(c, lerp(-200, 240, pb), 1480, 0.95, 'MINERAL OIL', '230,180,60', -0.12); if (pv > 0) vaso(c, s, lerp(1300, 900, pv), 1560, 0.95); }, -2.2, 6);
+    const [bx, by] = aP(g, 240, 1330), [vx, vy] = aP(g, 900, 1400);
+    etiqueta(g, s, T.mineral + 0.1, 'MINERAL OIL', 150, 800, bx, by, {col: '255,225,150'});
+    etiqueta(g, s, T.water + 0.05, 'WATER', 950, 860, vx, vy, {col: '170,225,255'});
+    pildora(g, 540, 1720, 'LIKE PILLS', rebote(s, T.pills), {col: '#ffffff', tam: 36});
+    cierre(g, 0.5);
+  }},
+  // 20 — dos años: la avioneta desaparece mordisco a mordisco (golpe)
+  {t0: T.it137 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'atardecer', {relampagos: false, nubes: 0.6, hor: 1300, dx: -s * 150});
+    vista(g, s, [[T.it137 - 0.1, 0, 540, 1300, 1.2], [T.it137, 0.5, 540, 1300, 1.0], ...golpeCam(T.years142, 540, 1300, 1.12, 1.04)], 1.3);
+    aerodromo(g, s, 1300, {hangar: true});
+    const come = cuenta(s, T.it137, 0, 1, T.years142 + 0.5 - T.it137);
+    sombraSuelo(g, 560, 1600, 640 * (1 - come * 0.8), 0.6);
+    heroe(g, 'atardecer', (c) => cessna(c, s, 560, 1400, 0.95, {come: Math.min(0.995, come)}), -2.4, 7);
+    const xb = -532 + Math.min(0.995, come) * 1080 * 0.95 + 560;
+    if (come < 0.99) { vuelo(g, s, T.it137, xb, 1380, 1200, 1800, 30, 0.06, 26); chispas(g, s, xb, 1380, Math.PI * 0.3, 0.7, 14); }
+    barraAnios(g, 540, 1620, come, ap(s, T.it137, 0.3));
+    slams(g, s, [[T.years142, '2 YEARS', 300, '#ffd27a']], '#2a1002');
+    flash(g, s, T.years142, '255,230,200', 0.4, 0.12);
+    cierre(g, 0.45);
+  }},
+  // 21 — ¿por qué no le mató? alarma roja y latido
+  {t0: T.so143 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'rojo', {relampagos: true, nubes: 0.8, hor: 1400});
+    const lat = Math.max(0, Math.sin(s * 7.5)) ** 8;
+    vista(g, s, [[T.so143 - 0.1, 0, 540, 1200, 1.3], [T.so143, 0.5, 540, 1200, 1.05], ...golpeCam(T.kill, 540, 1200, 1.2, 1.1)], 1.6);
+    glow(g, 540, 1200, 900, '255,60,60', 0.25 + 0.3 * lat);
+    mich(g, s, 'rojo', 540, 1250, 300 * (1 + 0.02 * lat), {expr: 'susto', sudor: 1, mira: Math.sin(s * 3) * 0.6}, -2.0);
+    pregunta(g, 860, 900, rebote(s, T.why) * 0.7, 1);
+    for (const t of [T.why, T.kill]) onda(g, s, t, 540, 1250, '255,120,120');
+    pildora(g, 540, 1690, 'WHY DIDN\'T IT KILL HIM?', rebote(s, T.kill), {col: '#ffb0b0', tam: 34});
+    cierre(g, 0.55);
+  }},
+  // 22 — rayos X: los médicos encuentran la pared del estómago muy gruesa
+  {t0: T.doctors149 - 0.1, dib: (g, s) => {
+    salaX(g, s);
+    vista(g, s, [[T.doctors149 - 0.1, 0, 540, 1000, 1.0], [T.doctors149, 0.6, 540, 1050, 0.85], [T.stomach - 0.1, 0.6, 540, 1260, 1.35], ...golpeCam(T.thick, 540, 1280, 1.5, 1.4)], 1);
+    rayosX(g, s, 540, 1150, 1.0, {grosor: ap(s, T.thick - 0.1, 0.5), piezas: 14, scan: 1 - ap(s, T.thick, 0.4), brillo: ap(s, T.stomach, 0.3)});
+    const [ex, ey] = aP(g, 540 - 180, 1150 + 60), [lx, ly] = aP(g, 540 + 230, 1150 + 160);
+    etiqueta(g, s, T.stomach, 'STOMACH', 160, 800, ex, ey, {col: '170,235,255', hasta: T.lining});
+    etiqueta(g, s, T.thick, 'UNUSUALLY THICK LINING', 120, 820, lx, ly, {col: '255,214,170', tam: 30});
+    flash(g, s, T.xray, '170,235,255', 0.5, 0.15);
+    fuente(g, 540, 1700, 'Source: Guinness World Records', ap(s, T.thick + 0.2, 0.3));
+    cierre(g, 0.5);
+  }},
+  // 23 — como un tubo blindado por dentro
+  {t0: T.like161 - 0.1, dib: (g, s) => {
+    salaX(g, s, 0.6); bk(g, s, '120,220,255', 20, 0.22);
+    vista(g, s, [[T.like161 - 0.1, 0, 540, 1250, 1.25], [T.like161, 0.5, 540, 1250, 0.95], ...golpeCam(T.armor, 540, 1250, 1.08, 1.0)], 1.2);
+    heroe(g, 'lago', (c) => tubo(c, s, 540, 1250, 0.95 * rebote(s, T.like161), ap(s, T.armor - 0.05, 0.6)), -2.2, 7, XR);
+    const [ax, ay] = aP(g, 380, 1250 - 125);
+    etiqueta(g, s, T.armor, 'ARMOR PLATING', 160, 860, ax, ay, {col: '220,230,245'});
+    pildora(g, 540, 1600, 'PIPE', rebote(s, T.pipe), {col: '#ffd0a0', tam: 36});
+    cierre(g, 0.5);
+  }},
+  // 24 — lo raro: plátanos y huevos duros
+  {t0: T.and168 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'lago', {relampagos: false, nubes: 0, hor: 1300});
+    enPantalla(g, () => rayos(g, 540, 1250, s, 0.4, '200,255,200', 16));
+    vista(g, s, [[T.and168 - 0.1, 0, 540, 1300, 1.25], [T.and168, 0.5, 540, 1300, 1.02], ...golpeCam(T.bananas, 470, 1320, 1.14, 1.06), ...golpeCam(T.eggs, 620, 1320, 1.16, 1.08)], 1.3);
+    mesa(g, s);
+    const cae = (t: number) => (s < t ? -1 : 1 - salida(cl((s - t) / 0.25)));
+    heroe(g, 'lago', (c) => { plato(c, 540, 1440, 1.3); const kb = cae(T.bananas), ke = cae(T.eggs); if (kb >= 0) platano(c, 430, 1380 - kb * 900, 0.95, -0.15); if (ke >= 0) { huevo(c, 660, 1420 - ke * 900, 0.8, 0.2); huevo(c, 780, 1390 - ke * 1000, 0.7, -0.3); } }, -2.2, 7);
+    const [bx, by] = aP(g, 430, 1360), [ex, ey] = aP(g, 700, 1400);
+    etiqueta(g, s, T.bananas + 0.1, 'BANANAS', 160, 860, bx, by, {col: '255,240,150'});
+    etiqueta(g, s, T.eggs + 0.05, 'HARD-BOILED EGGS', 950, 1000, ex, ey, {col: '255,255,255', tam: 30});
+    pildora(g, 540, 1680, 'THE WEIRD PART', rebote(s, T.weird), {col: '#c8ffc0', tam: 36});
+    cierre(g, 0.45);
+  }},
+  // 25 — …le sentaban mal: se pone verde (golpe)
+  {t0: T.made - 0.1, dib: (g, s) => {
+    cielo(g, s, 'lago', {relampagos: false, nubes: 0.6, hor: 1400});
+    vista(g, s, [[T.made - 0.1, 0, 540, 1250, 1.25], [T.made, 0.4, 540, 1250, 1.04], ...golpeCam(T.sick, 540, 1230, 1.16, 1.06)], 1.6);
+    const v = ap(s, T.sick - 0.1, 0.3);
+    mich(g, s, 'lago', 540, 1260, 300, {expr: s > T.sick - 0.1 ? 'asco' : 'duda', verde: v, sudor: v, servilleta: 1}, -2.0);
+    heroe(g, 'lago', (c) => platano(c, 820, 1630, 0.6, 0.4), -2.0, 5);
+    for (let i = 0; i < 4; i++) { const ph = (s * 0.8 + i / 4) % 1; g.strokeStyle = `rgba(150,230,120,${0.7 * v * (1 - ph)})`; g.lineWidth = 8; g.beginPath(); for (let k = 0; k <= 10; k++) g.lineTo(380 + k * 32, 900 - ph * 220 + Math.sin(k + s * 6 + i) * 14); g.stroke(); }
+    pildora(g, 540, 720, 'MADE HIM SICK', rebote(s, T.sick), {col: '#c8ffc0', tam: 50});
+    onda(g, s, T.sick, 540, 1260, '160,255,140');
+    cierre(g, 0.5);
+  }},
+  // 26 — Guinness le da una placa de latón
+  {t0: T.guinness - 0.1, dib: (g, s) => {
+    cielo(g, s, 'oro', {relampagos: false, nubes: 0, hor: 1300});
+    enPantalla(g, () => { g.save(); g.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 3; i++) { const a = -Math.PI / 2 + Math.sin(s * 0.9 + i * 2) * 0.35, x0 = 200 + i * 340; const gr = g.createLinearGradient(x0, H, x0 + Math.cos(a) * 1900, H + Math.sin(a) * 1900); gr.addColorStop(0, 'rgba(255,230,160,0.35)'); gr.addColorStop(1, 'rgba(255,230,160,0)');
+        g.fillStyle = gr; g.beginPath(); g.moveTo(x0, H); g.lineTo(x0 + Math.cos(a - 0.12) * 2100, H + Math.sin(a - 0.12) * 2100); g.lineTo(x0 + Math.cos(a + 0.12) * 2100, H + Math.sin(a + 0.12) * 2100); g.closePath(); g.fill(); }
+      g.restore(); });
+    bk(g, s, '255,220,140', 28, 0.3);
+    vista(g, s, [[T.guinness - 0.1, 0, 540, 1220, 1.25], [T.guinness, 0.5, 540, 1220, 1.0], ...golpeCam(T.brass, 540, 1220, 1.12, 1.04), [T.strangest, 0.8, 540, 1220, 1.12]], 1.3);
+    heroe(g, 'oro', (c) => placa(c, s, 540, 1220, 1.0 * rebote(s, T.brass - 0.1), 0, Math.sin(s * 1.8) * 0.03), -2.2, 8);
+    pildora(g, 540, 1640, 'GUINNESS WORLD RECORDS', rebote(s, T.guinness), {col: '#ffe08a', tam: 34});
+    if (s > T.diet) confeti(g, s, T.diet, 540, 800, 70);
+    const [px, py] = aP(g, 790, 1000);
+    etiqueta(g, s, T.plaque, 'BRASS PLAQUE', 900, 760, px, py, {col: '255,225,150'});
+    cierre(g, 0.45);
+  }},
+  // 27 — también se la comió (golpe)
+  {t0: T.he193 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'fuego', {relampagos: false, nubes: 0, hor: 1300});
+    enPantalla(g, () => rayos(g, 540, 1100, s, 0.7, '255,200,120', 18));
+    vista(g, s, [[T.he193 - 0.1, 0, 540, 1150, 1.2], [T.he193, 0.4, 540, 1150, 1.0], ...golpeCam(T.ate194, 620, 1050, 1.18, 1.06), ...golpeCam(T.too, 640, 1050, 1.24, 1.1)], 1.6);
+    const m = Math.max(ap(s, T.ate194, 0.12) * 0.55, ap(s, T.ate194, 0.12) * 0.55 + ap(s, T.too, 0.12) * 0.45);
+    heroe(g, 'fuego', (c) => placa(c, s, 540, 1050, 0.95, m, -0.05), -2.2, 8);
+    mich(g, s, 'fuego', 300, 1560, 230, {boca: 0.2, mastica: s > T.ate194 ? 1 : 0, expr: 'orgullo', servilleta: 1, mira: 0.8}, -1.6);
+    for (const t of [T.ate194, T.too]) { vuelo(g, s, t, 830, 830, 300, 1680, 4, 0.05, 24); chispas(g, s, 830, 830, -0.8, s > t ? Math.exp(-(s - t) * 5) : 0, 20); }
+    slams(g, s, [[T.ate194, 'HE ATE IT', 230], [T.too, 'TOO!', 320, '#ffd27a']], '#2a1002');
+    flash(g, s, T.ate194, '255,230,200', 0.4, 0.12);
+    cierre(g, 0.45);
+  }},
+  // 28 — los médicos lo tienen claro: nunca lo intentes
+  {t0: T.doctors197 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'rojo', {relampagos: false, nubes: 0.6, hor: 1400});
+    const giro = s * 4;
+    enPantalla(g, () => { g.save(); g.globalCompositeOperation = 'lighter'; for (const k of [0, Math.PI]) { const a = giro + k; const gr = g.createRadialGradient(540, 560, 10, 540, 560, 1400); gr.addColorStop(0, 'rgba(255,60,60,0.45)'); gr.addColorStop(1, 'rgba(255,60,60,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(540, 560); g.arc(540, 560, 1400, a - 0.3, a + 0.3); g.closePath(); g.fill(); } g.restore(); });
+    vista(g, s, [[T.doctors197 - 0.1, 0, 540, 1220, 1.25], [T.doctors197, 0.5, 540, 1220, 1.0], ...golpeCam(T.never, 540, 1220, 1.14, 1.04)], 1.4);
+    cordillera(g, s, 1800, 'rojo', {capas: 3, pinos: false});
+    heroe(g, 'rojo', (c) => aviso(c, s, 540, 1220, 1.0 * rebote(s, T.never - 0.05), 'NEVER', 'TRY THIS', Math.sin(s * 2) * 0.03), -2.2, 8);
+    pildora(g, 540, 1620, 'DOCTORS AGREE', rebote(s, T.doctors197), {col: '#ffb0b0', tam: 36});
+    onda(g, s, T.never, 540, 1220, '255,120,120');
+    cierre(g, 0.5);
+  }},
+  // 29 — tragar metal puede desgarrarte por dentro (rayos X en rojo)
+  {t0: T.swallowing - 0.1, dib: (g, s) => {
+    salaX(g, s, 0.5);
+    enPantalla(g, () => { g.fillStyle = `rgba(120,0,10,${0.35 + 0.15 * Math.sin(s * 9)})`; g.fillRect(0, 0, W, H); });
+    vista(g, s, [[T.swallowing - 0.1, 0, 540, 1200, 1.0], [T.swallowing, 0.6, 540, 1260, 1.35], ...golpeCam(T.tear, 540, 1270, 1.5, 1.4)], 1.4);
+    rayosX(g, s, 540, 1150, 1.0, {grosor: 0, piezas: 10, brillo: 1});
+    if (s > T.tear) { grieta(g, s, T.tear, 420, 1330, 33, true, 0.3, 2); for (let i = 0; i < 3; i++) glow(g, 360 + i * 60, 1220 + i * 40, 120, '255,40,40', 0.6 + 0.3 * Math.sin(s * 12 + i)); }
+    const [ex, ey] = aP(g, 400, 1250);
+    etiqueta(g, s, T.tear, 'IT CAN TEAR YOUR INSIDES', 120, 860, ex, ey, {col: '255,170,170', tam: 30});
+    pildora(g, 540, 1640, 'DON\'T TRY THIS', rebote(s, T.metal204), {col: '#ff8a8a', tam: 40});
+    cierre(g, 0.55);
+  }},
+  // 30 — así que sí: del avión solo queda el contorno… y un plato de migas
+  {t0: T.so210 - 0.1, dib: (g, s) => {
+    cielo(g, s, 'atardecer', {relampagos: false, nubes: 0.5, hor: 1300});
+    vista(g, s, [[T.so210 - 0.1, 0, 540, 1150, 1.2], [T.so210, 0.6, 540, 1250, 1.0], ...golpeCam(T.airplane217, 540, 1250, 1.1, 1.04)], 1.2);
+    aerodromo(g, s, 1300);
+    g.save(); g.globalAlpha = 0.22 + 0.08 * Math.sin(s * 3); cessna(g, s, 560, 1250, 0.9, {helice: 0}); g.restore();
+    g.save(); g.setLineDash([20, 14]); g.strokeStyle = 'rgba(255,240,200,0.7)'; g.lineWidth = 4; g.beginPath(); g.ellipse(560, 1240, 560, 280, 0, 0, 7); g.stroke(); g.restore();
+    heroe(g, 'atardecer', (c) => { plato(c, 540, 1600, 1.0 * rebote(s, T.really)); for (let i = 0; i < 12; i++) pieza(c, 420 + rnd(i * 3.1) * 240, 1580 - rnd(i * 1.7) * 40, 14, i, i * 4.4); }, -2.3, 6);
+    pildora(g, 540, 820, 'A WHOLE PLANE. EATEN.', rebote(s, T.airplane217), {col: '#ffe08a', tam: 40});
+    pildora(g, 540, 940, '2 YEARS', rebote(s, T.n2c), {col: '#ffffff', tam: 36});
+    cierre(g, 0.45);
+  }},
+  // 31 — un trocito cada vez: el tenedor lleva el último trozo a la boca
+  {t0: T.one - 0.1, dib: (g, s) => {
+    vista(g, s, [[T.one - 0.1, 0, 540, 1200, 1.3], [T.one, 0.6, 540, 1250, 1.08], ...golpeCam(T.time, 540, 1300, 1.2, 1.1)], 1.1);
+    escenario(g, s, {focoA: 1, publico: 0, tinte: '255,230,180'});
+    const lleva = salida(cl((s - T.piece222) / (T.time - T.piece222)));
+    mich(g, s, 'oro', 540, 1280, 330, {boca: s < T.time ? 0.5 + 0.5 * lleva : 0, mastica: s > T.time ? 1 : 0, expr: 'feliz', servilleta: 1, mira: 0.4});
+    heroe(g, 'oro', (c) => tenedor(c, lerp(900, 600, lleva), lerp(1300, 1500, lleva), 0.75, lerp(-0.4, -1.2, lleva), () => { if (s < T.time) { glow(c, 0, -200, 120, '255,240,200', 0.8); pieza(c, 0, -200, 34, 0.3, 9.9, {brillo: 1}); } }), -2.2, 6);
+    if (s > T.time) confeti(g, s, T.time, 540, 1100, 60);
+    pildora(g, 540, 760, 'ONE TINY PIECE AT A TIME', rebote(s, T.one), {col: '#ffe08a', tam: 36});
+    cierre(g, 0.5);
+  }},
+  // 32 — CTA: sígueme y envíaselo al amigo que se come cualquier cosa
+  {t0: T.follow - 0.1, dib: (g, s) => {
+    vista(g, s, [[T.follow, 0, 540, 1200, 1.15], [T.follow + 0.05, 3, 540, 1220, 1.0]], 1.6);
+    escenario(g, s, {telon: 1 - ap(s, DUR - 1.3, 1.0), focoA: 1, publico: 1});
+    const seg = s >= T.follow + 0.35;
+    mich(g, s, 'oro', 540, 1280, 230 * rebote(s, T.follow - 0.05), {expr: 'feliz', brazo: 'saludo', servilleta: 1, mastica: s > T.eats ? 1 : 0});
+    pildora(g, 540, 640, seg ? 'FOLLOWING ✓' : 'FOLLOW', rebote(s, T.follow - 0.05), {col: '#ffffff', tam: 40, fondo: seg ? 'rgba(60,60,66,0.95)' : 'rgba(0,149,246,0.98)'});
+    const toque = s - T.follow - 0.3;
+    if (toque > 0 && toque < 0.4) enPantalla(g, () => { g.strokeStyle = `rgba(255,255,255,${0.6 * (1 - toque / 0.4)})`; g.lineWidth = 4; g.beginPath(); g.arc(540, 640, 40 + toque * 300, 0, 7); g.stroke(); });
+    pildora(g, 540, 745, '➤ SEND', rebote(s, T.send), {col: '#ffffff', tam: 36});
+    pildora(g, 540, 860, '"EATS LITERALLY ANYTHING"', rebote(s, T.friend), {col: '#ffd27a', tam: 30});
+    if (s > T.eats) vuelo(g, s, T.eats, 1100, 900, 540, 1440, 8, 0.12, 28);
+    const fin = cl((s - (DUR - 0.6)) / 0.6);
+    if (fin > 0) enPantalla(g, () => { g.fillStyle = `rgba(0,0,0,${fin})`; g.fillRect(0, 0, W, H); });
+    cierre(g, 0.5);
+  }},
+];
+const TRANS = ['', 'zoom', 'barrido', 'desenfoque', 'barridoV', 'zoom', 'desenfoque', 'zoom', 'barrido', 'desenfoque', 'barridoV', 'barrido', 'barrido', 'desenfoque', 'zoom',
+  'barridoV', 'desenfoque', 'barrido', 'zoom', 'desenfoque', 'giro', 'zoom', 'barrido', 'desenfoque', 'corte', 'zoom', 'desenfoque', 'zoom', 'barridoV', 'desenfoque', 'barrido', 'desenfoque'];
+
+const dibujar = (g: G, s: number) => {
+  let k = 0;
+  for (let i = 0; i < PLANOS.length; i++) if (s >= PLANOS[i].t0 - 0.06) k = i;
+  g.save(); PLANOS[k].dib(g, s); g.restore();
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  for (let i = 1; i < PLANOS.length; i++) {
+    const d = s - PLANOS[i].t0; if (Math.abs(d) > 0.16) continue;
+    const q = 1 - Math.abs(d) / 0.16, tr = TRANS[i];
+    if (tr === 'barrido' || tr === 'barridoV') {
+      g.save();
+      for (let j = 1; j <= 4; j++) { g.globalAlpha = 0.25 * q; const o = j * 60 * q; if (tr === 'barrido') g.drawImage(g.canvas, o, 0, W, H); else g.drawImage(g.canvas, 0, o, W, H); }
+      g.restore();
+    }
+    if (tr === 'zoom' && d > -0.03 && d < 0.12) { g.fillStyle = `rgba(255,255,255,${0.45 * (1 - Math.abs(d) / 0.12)})`; g.fillRect(0, 0, W, H); }
+  }
+};
+
+const FUERTES: [number, number][] = [[T.ate2 - 0.04, 34], [T.airplane5, 18], [T.real10, 30], [T.piece12, 10], [T.piece14, 10], [T.monsieur, 10], [T.possible, 22], [T.pica, 14],
+  [T.n18, 12], [T.n15, 10], [T.coffin, 12], [T.tiny111, 16], [T.years142, 22], [T.kill, 14], [T.thick, 12], [T.sick, 16], [T.ate194, 22], [T.too, 26], [T.never, 18], [T.tear, 14], [T.time, 12]];
+const GOLPES = [T.not, T.toy, T.piece12, T.lotito, T.entertainer, T.grenoble, T.mangetout, T.mr, T.how, T.condition, T.urge, T.metal57, T.glass, T.rubber, T.stage, T.show,
+  T.bicycles, T.shopping, T.tvs, T.n6, T.chandeliers, T.handles, T.n1978, T.cessna, T.wings, T.wheels, T.engine, T.picture, T.swallow, T.day, T.n2a, T.pills, T.mineral, T.water,
+  T.why, T.xray, T.stomach, T.armor, T.weird, T.bananas, T.eggs, T.guinness, T.brass, T.diet, T.doctors197, T.metal204, T.really, T.airplane217, T.n2c, T.piece222, T.follow, T.friend];
+
+type Sfx = [number, string, number];
+const tPlanos = PLANOS.slice(1).map((p) => p.t0);
+const WH = ['sfx:whisp1', 'sfx:whisp2', 'sfx:whisp3', 'sfx:whisp4'];
+const MORDISCOS = [T.piece12, T.piece14, T.piece14 + 0.45, T.ate194, T.too];
+const SONIDOS: Sfx[] = [
+  ...tPlanos.map((t, i) => [t - 0.1, i % 2 ? 'whoosh-short.mp3' : 'whoosh.mp3', 0.13] as Sfx),
+  ...tPlanos.map((t, i) => [t - 0.16, WH[(i + 1) % 4], 0.14] as Sfx),
+  ...GOLPES.map((t, i) => [t - 0.12, WH[i % 4], 0.08] as Sfx),
+  ...MORDISCOS.map((t) => [t, 'sfx:golpe', 0.16] as Sfx),
+  ...MORDISCOS.map((t) => [t + 0.03, 'sfx:cristal', 0.08] as Sfx),
+  // gancho
+  [0, 'whoosh-cinematic.mp3', 0.14], [0.05, 'riser.mp3', 0.06], [T.ate2 - 0.06, 'sfx:cristal', 0.26], [T.ate2 - 0.04, 'impact-bass-1.mp3', 0.15], [T.ate2 - 0.04, 'sfx:boom', 0.16],
+  [T.airplane5, 'sfx:patada', 0.14], [T.airplane5, 'sparkle.mp3', 0.1], [T.toy + 0.3, 'sfx:error', 0.1], [T.real10 - 0.03, 'sfx:cristal', 0.18], [T.real10, 'impact-bass-2.mp3', 0.15], [T.real10, 'sfx:boom', 0.12],
+  [T.his + 0.2, 'sfx:swoosh', 0.12], [T.michel18, 'chime.mp3', 0.08], [T.grenoble, 'pop.mp3', 0.1], [T.monsieur, 'sfx:subida', 0.1], [T.everything, 'sparkle.mp3', 0.1],
+  [T.how, 'sfx:marimba2', 0.1], [T.possible - 0.03, 'sfx:cristal', 0.14], [T.possible, 'impact-bass-1.mp3', 0.12], [T.pica - 0.04, 'sfx:patada', 0.18],
+  [T.metal57 + 0.2, 'sfx:toc', 0.2], [T.glass + 0.2, 'sfx:cristal', 0.12], [T.rubber + 0.2, 'sfx:pop', 0.14], [T.show, 'sparkle.mp3', 0.12], [T.show, 'chime.mp3', 0.08],
+  [T.coffin, 'sfx:golpe', 0.14], [T.handles + 0.05, 'sfx:brillo', 0.12], [T.n1978, 'pop.mp3', 0.12], [T.cessna, 'sfx:subida', 0.08], [T.engine, 'sfx:swoosh', 0.1],
+  [T.picture, 'riser.mp3', 0.06], [T.tiny111 - 0.03, 'sfx:cristal', 0.18], [T.tiny111, 'impact-bass-1.mp3', 0.12], [T.n2a, 'ping.mp3', 0.12], [T.mineral, 'sfx:chapuzon', 0.08], [T.water, 'sfx:burbujas', 0.1],
+  [T.years142 - 0.03, 'sfx:cristal', 0.16], [T.years142, 'impact-bass-2.mp3', 0.13], [T.so143, 'sfx:latido', 0.18], [T.kill, 'sfx:bajon', 0.1], [T.xray, 'sfx:zap', 0.12], [T.thick, 'sfx:subida', 0.1],
+  [T.armor, 'sfx:golpe', 0.12], [T.bananas + 0.2, 'sfx:pop', 0.12], [T.eggs + 0.2, 'sfx:pop', 0.12], [T.sick, 'sfx:error', 0.12], [T.sick, 'sfx:bajon', 0.08],
+  [T.guinness, 'chime.mp3', 0.12], [T.brass, 'sfx:brillo', 0.1], [T.diet, 'sparkle.mp3', 0.12], [T.ate194, 'impact-bass-1.mp3', 0.12], [T.too, 'impact-bass-2.mp3', 0.13],
+  [T.never - 0.03, 'sfx:error', 0.14], [T.never, 'impact-bass-1.mp3', 0.1], [T.tear, 'sfx:bajon', 0.1], [T.really, 'sfx:marimba1', 0.08], [T.time, 'sfx:golpe', 0.14], [T.time + 0.1, 'sparkle.mp3', 0.1],
+  [T.follow + 0.3, 'click.mp3', 0.2], [T.send, 'pop.mp3', 0.1], [T.friend, 'pop.mp3', 0.1], [T.eats, 'sfx:marimba3', 0.08],
+];
+const TICS: number[] = [];
+const tic = (t0: number, t1: number, paso = 0.07) => { for (let t = t0; t < t1; t += paso) TICS.push(t); };
+tic(T.n18, T.n18 + 0.9, 0.05); tic(T.n15, T.n15 + 0.9, 0.06); tic(T.day, T.metal123, 0.12); tic(T.it137, T.years142, 0.1);
+
+const id = 'avion-comido-en';
+const CLAVES = ['entire', 'toy', 'real#1', 'piece#1', 'lotito', 'grenoble', 'mangetout', 'everything', 'possible', 'pica', 'metal#1', 'glass', 'rubber', 'show',
+  '18', '15', 'chandeliers', 'coffin', 'handles', '1978', 'cessna', 'engine', 'tiny#1', 'pounds', 'pills', 'water', 'years#1', 'kill', 'x', 'thick', 'armor',
+  'bananas', 'sick', 'plaque', 'strangest', 'too', 'never', 'tear', 'airplane#3', 'time', 'friend'];
+const SPEC: VideoSpec = {titulo: id, estilo: 'estudio-oscuro', palabras: P, escenas: [], claves: CLAVES, emojis: {}};
+
+const Comp: React.FC = () => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const s = frame / fps;
+  const ref = useRef<HTMLCanvasElement>(null);
+  useLayoutEffect(() => { const g = contextoHD(ref.current!); g.setTransform(1, 0, 0, 1, 0, 0); dibujar(g, s); }, [s]);
+  let blur = 0, esc = 1, rot = Math.sin(s * 0.8) * 0.25, gx = 0, gy = 0;
+  for (const [i, p] of PLANOS.entries()) {
+    if (i === 0) continue;
+    const d = s - p.t0, D = 0.16;
+    if (Math.abs(d) >= D) continue;
+    const q = 1 - Math.abs(d) / D, sg = d < 0 ? -1 : 1, q2 = q * q, tr = TRANS[i];
+    if (tr === 'corte') continue;
+    if (tr === 'barrido') { gx += sg * q2 * 50; esc *= 1 + 0.1 * q; blur = Math.max(blur, q * 7); }
+    else if (tr === 'barridoV') { gy += sg * q2 * 80; esc *= 1 + 0.1 * q; blur = Math.max(blur, q * 7); }
+    else if (tr === 'zoom') { esc *= 1 + (d < 0 ? 0.4 : 0.22) * q2; blur = Math.max(blur, q * 14); }
+    else if (tr === 'giro') { rot += -sg * q2 * 6; esc *= 1 + 0.22 * q; blur = Math.max(blur, q * 10); }
+    else { blur = Math.max(blur, q * 22); esc *= 1 + 0.12 * q * (d < 0 ? 1 : 0.6); }
+  }
+  esc *= 1.015 + 0.012 * Math.sin(s * 1.3);
+  for (const t of GOLPES) { const d = s - t; if (d >= 0 && d < 0.3) { const q = Math.exp(-d * 12); esc *= 1 + 0.035 * q; gx += Math.sin(d * 70) * 4 * q; rot += Math.sin(d * 40) * 0.6 * q; } }
+  for (const [t, amp] of FUERTES) { const d = s - t; if (d >= 0 && d < 0.5) { const q = Math.exp(-d * 9); esc *= 1 + 0.06 * q; gx += Math.sin(d * 83) * amp * q; gy += Math.cos(d * 67) * amp * 0.7 * q; } }
+  const relojP = useMemo(() => crearReloj(P, fps), [fps]);
+  const palabras = useMemo(() => prepararPalabras(SPEC), []);
+  return (
+    <VideoCtx.Provider value={{spec: SPEC, reloj: relojP, estilo: 'estudio-oscuro', palabras}}>
+      <AbsoluteFill style={{background: '#08090c'}}>
+        <canvas ref={ref} width={W * HD} height={H * HD} style={{width: W, height: H, filter: blur > 0.2 ? `blur(${blur}px)` : undefined, scale: String(esc), translate: `${gx}px ${gy}px`, rotate: `${rot}deg`}} />
+        <Subtitulos palabras={palabras} />
+        <Audio src={staticFile(`voz/${id}.mp3`)} volume={0.85} />
+        <Audio src={staticFile(`voz/${id}-musica.mp3`)} volume={(f) => 0.13 * interpolate(f, [DUR * fps - 40, DUR * fps], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'})} />
+        {SONIDOS.filter(([, f, v]) => v > 0 && f !== '').map(([t, f, v], i) => (
+          <Sequence key={i} from={Math.max(0, Math.round(t * fps))} durationInFrames={Math.round(2.5 * fps)} layout="none">
+            <Audio src={staticFile(f.startsWith('sfx:') ? `sfx/${f.slice(4)}.wav` : `sfx-hf/${f}`)} volume={v * 0.7} />
+          </Sequence>
+        ))}
+        {TICS.map((t, i) => (
+          <Sequence key={`tic-${i}`} from={Math.round(t * fps)} durationInFrames={10} layout="none">
+            <Audio src={staticFile('sfx/tic.wav')} volume={0.1} />
+          </Sequence>
+        ))}
+      </AbsoluteFill>
+    </VideoCtx.Provider>
+  );
+};
+return {Comp, DUR};
+}
+const EN = crear(PEN as Pal[]);
+export const Comido = EN.Comp;
+export const DURACION_COMIDO = EN.DUR;

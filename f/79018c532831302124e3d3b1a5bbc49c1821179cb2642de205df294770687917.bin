@@ -1,0 +1,2818 @@
+{
+ "titulo": "propina-mesero",
+ "estilo": "interfaz-grid",
+ "audio": "voz/propina-mesero.mp3",
+ "duracion": 74.4,
+ "claves": [
+  "mesero#1",
+  "$2.13#1",
+  "bien",
+  "federal",
+  "$7.25",
+  "patrón",
+  "$2.13#2",
+  "$5.12",
+  "tú",
+  "congelado",
+  "1991#1",
+  "renta",
+  "comida",
+  "gasolina",
+  "centavo",
+  "1996",
+  "separaron",
+  "mitad#1",
+  "29%",
+  "inflación",
+  "$4.21",
+  "mitad#2",
+  "peor",
+  "86%",
+  "83%",
+  "76%",
+  "ojo",
+  "diferencia",
+  "manches",
+  "extra",
+  "sueldo#3",
+  "pantallita",
+  "10%"
+ ],
+ "emojis": {
+  "congelado": "🧊",
+  "renta": "🏠",
+  "comida": "🍔",
+  "gasolina": "⛽",
+  "inflación": "🎈",
+  "ojo": "👀"
+ },
+ "sonidos": [
+  {
+   "t": "@$2.13#1-0.6",
+   "sfx": "subida",
+   "vol": 0.3
+  },
+  {
+   "t": "@propinas#1",
+   "sfx": "papel",
+   "vol": 0.5
+  },
+  {
+   "t": "@separaron",
+   "sfx": "papel",
+   "vol": 0.5
+  },
+  {
+   "t": "@29%",
+   "sfx": "error",
+   "vol": 0.25
+  },
+  {
+   "t": "@inflación",
+   "sfx": "subida",
+   "vol": 0.3
+  },
+  {
+   "t": "@mitad#2",
+   "sfx": "error",
+   "vol": 0.3
+  },
+  {
+   "t": "@peor",
+   "sfx": "error",
+   "vol": 0.3
+  },
+  {
+   "t": "@Nebraska",
+   "sfx": "pop",
+   "vol": 0.35
+  },
+  {
+   "t": "@Virginia",
+   "sfx": "pop",
+   "vol": 0.35
+  },
+  {
+   "t": "@Rhode",
+   "sfx": "pop",
+   "vol": 0.35
+  }
+ ],
+ "escenas": [
+  {
+   "id": "gancho",
+   "desde": 0,
+   "transicion": "corte",
+   "empuje": 0,
+   "fondo": {
+    "brillo": "calido",
+    "brilloY": 1250,
+    "brilloRadio": 700
+   },
+   "camara": [
+    {
+     "t": 0,
+     "dur": 0,
+     "zoom": 1.35,
+     "y": 1200
+    },
+    {
+     "t": 0.05,
+     "dur": 2.3,
+     "zoom": 1.0,
+     "y": 1060,
+     "curva": "salida"
+    }
+   ],
+   "elementos": [
+    {
+     "tipo": "Rayos",
+     "id": "rayos-1",
+     "x": 540,
+     "y": 1250,
+     "ancho": 1400,
+     "alto": 1400,
+     "props": {
+      "intensidad": 0.7
+     }
+    },
+    {
+     "tipo": "Mesero",
+     "id": "mesero-1",
+     "x": 540,
+     "y": 1330,
+     "entrada": {
+      "tipo": "caer",
+      "dur": 16
+     },
+     "props": {
+      "expresion": "feliz"
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "plato",
+     "x": 200,
+     "y": 790,
+     "desde": "@restaurante",
+     "flotar": 12,
+     "props": {
+      "emoji": "🍽️",
+      "tamano": 100,
+      "fondo": "#EFA32D"
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "duda",
+     "x": 880,
+     "y": 800,
+     "desde": "@atiende",
+     "flotar": 10,
+     "oscilar": 6,
+     "props": {
+      "emoji": "❓",
+      "tamano": 100,
+      "fondo": "#3A77D5"
+     }
+    }
+   ],
+   "encima": [
+    {
+     "tipo": "Etiqueta",
+     "id": "et-mesero",
+     "x": 640,
+     "y": 1010,
+     "desde": "@mesero",
+     "props": {
+      "texto": "MESERO",
+      "dx": 150,
+      "dy": -90,
+      "tamano": 34,
+      "mayus": true
+     }
+    }
+   ]
+  },
+  {
+   "id": "dos-trece",
+   "desde": 2.53,
+   "transicion": "zoomGolpe",
+   "fondo": {
+    "brillo": "frio",
+    "brilloY": 1100
+   },
+   "elementos": [
+    {
+     "tipo": "Rayos",
+     "id": "rayos-2",
+     "x": 540,
+     "y": 1080,
+     "ancho": 1400,
+     "alto": 1400,
+     "props": {
+      "color": "rgba(207,93,96,0.28)",
+      "velocidad": 0.6
+     }
+    },
+    {
+     "tipo": "Contador",
+     "id": "sueldo",
+     "x": 540,
+     "y": 1060,
+     "props": {
+      "de": 0,
+      "a": 2.13,
+      "decimales": 2,
+      "prefijo": "$",
+      "locale": "en-US",
+      "cuentaDesde": "@$2.13",
+      "dur": 30,
+      "tamano": 260,
+      "color": "#CF5D60"
+     }
+    },
+    {
+     "tipo": "Texto",
+     "id": "por-hora",
+     "x": 540,
+     "y": 1270,
+     "desde": "@hora",
+     "entrada": "subir",
+     "props": {
+      "texto": "por hora",
+      "tamano": 64,
+      "peso": 700,
+      "color": "#9A9A9A"
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "reloj",
+     "x": 860,
+     "y": 1270,
+     "desde": "@hora",
+     "oscilar": 10,
+     "props": {
+      "emoji": "⏱️",
+      "tamano": 90
+     }
+    },
+    {
+     "tipo": "Particulas",
+     "id": "pocas-monedas",
+     "x": 540,
+     "y": 1060,
+     "desde": "@$2.13+1.0",
+     "props": {
+      "tipo": "monedas",
+      "cantidad": 5,
+      "tamano": 64,
+      "semilla": "pocas"
+     }
+    },
+    {
+     "tipo": "Mesero",
+     "id": "mesero-2",
+     "x": 210,
+     "y": 1560,
+     "escala": 0.5,
+     "desde": "@la",
+     "entrada": "volarIzq",
+     "props": {
+      "expresion": "triste",
+      "bandeja": false
+     }
+    }
+   ]
+  },
+  {
+   "id": "es-real",
+   "desde": 5.05,
+   "transicion": "barrido",
+   "empuje": 0.06,
+   "elementos": [
+    {
+     "tipo": "Ondas",
+     "id": "ondas-real",
+     "x": 540,
+     "y": 1180,
+     "ancho": 900,
+     "alto": 900,
+     "props": {
+      "color": "#CF5D60",
+      "cada": 20
+     }
+    },
+    {
+     "tipo": "Mesero",
+     "id": "mesero-3",
+     "x": 540,
+     "y": 1420,
+     "escala": 1.3,
+     "entrada": "escala",
+     "props": {
+      "expresion": "sorpresa",
+      "bandeja": false
+     }
+    },
+    {
+     "tipo": "TextoCinetico",
+     "id": "es-real-txt",
+     "x": 540,
+     "y": 720,
+     "desde": "@escuchaste",
+     "props": {
+      "texto": "¡ES| REAL!",
+      "tamano": 150,
+      "color": "#FFFFFF",
+      "color2": "#CF5D60"
+     }
+    }
+   ]
+  },
+  {
+   "id": "billete",
+   "desde": 6.25,
+   "empuje": 0,
+   "fondo": {
+    "brillo": "calido",
+    "brilloY": 1130,
+    "brilloRadio": 720
+   },
+   "camara": [
+    {
+     "t": "@Pero",
+     "dur": 0.4,
+     "zoom": 0.9,
+     "rotZ": -2
+    },
+    {
+     "t": "@patrón",
+     "dur": 0.45,
+     "x": 238,
+     "y": 1130,
+     "zoom": 1.7,
+     "rotZ": 0
+    },
+    {
+     "t": "@$5.12-0.1",
+     "dur": 0.3,
+     "x": 700,
+     "y": 1130,
+     "zoom": 1.35,
+     "curva": "salida"
+    },
+    {
+     "t": "@faltan",
+     "dur": 0.4,
+     "x": 540,
+     "y": 1100,
+     "zoom": 1.0
+    }
+   ],
+   "elementos": [
+    {
+     "tipo": "Rayos",
+     "id": "rayos-4",
+     "x": 540,
+     "y": 1130,
+     "ancho": 1400,
+     "alto": 1400,
+     "props": {
+      "intensidad": 0.45
+     }
+    },
+    {
+     "tipo": "Billete",
+     "id": "billete",
+     "x": 540,
+     "y": 1130,
+     "entrada": {
+      "tipo": "volarDer",
+      "dur": 12
+     },
+     "flotar": 6,
+     "props": {
+      "valor": "7.25",
+      "division": 1,
+      "separar": 0,
+      "tinteIzq": 0,
+      "tinteDer": 0,
+      "izquierda": {
+       "valor": "$2.13",
+       "etiqueta": "PATRÓN",
+       "color": "#CF5D60"
+      },
+      "derecha": {
+       "valor": "$5.12",
+       "etiqueta": "TÚ · PROPINA",
+       "color": "#EFA32D"
+      }
+     },
+     "anim": [
+      {
+       "t": "@propinas",
+       "dur": 0,
+       "division": 0.294
+      },
+      {
+       "t": "@propinas",
+       "dur": 0.5,
+       "separar": 1,
+       "curva": "suave"
+      },
+      {
+       "t": "@$2.13#2",
+       "dur": 0.3,
+       "tinteIzq": 1
+      },
+      {
+       "t": "@$5.12",
+       "dur": 0.3,
+       "tinteDer": 1
+      }
+     ]
+    },
+    {
+     "tipo": "Pastilla",
+     "id": "minimo-federal",
+     "x": 540,
+     "y": 860,
+     "desde": "@mínimo#1",
+     "hasta": "@propinas",
+     "props": {
+      "texto": "SALARIO MÍNIMO FEDERAL",
+      "color": "#FFFFFF",
+      "tamano": 38,
+      "peso": 700
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "eeuu",
+     "x": 900,
+     "y": 740,
+     "desde": "@Estados",
+     "hasta": "@propinas",
+     "flotar": 10,
+     "props": {
+      "emoji": "🗽",
+      "tamano": 100,
+      "fondo": "#3A77D5"
+     }
+    },
+    {
+     "tipo": "Particulas",
+     "id": "chispas-725",
+     "x": 540,
+     "y": 1130,
+     "desde": "@$7.25",
+     "props": {
+      "tipo": "chispas",
+      "cantidad": 26,
+      "tamano": 70,
+      "sonido": "ding"
+     }
+    },
+    {
+     "tipo": "Ondas",
+     "id": "ondas-725",
+     "x": 540,
+     "y": 1130,
+     "ancho": 700,
+     "alto": 700,
+     "desde": "@$7.25",
+     "hasta": "@Pero",
+     "props": {
+      "color": "#D8BD7C"
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "patron",
+     "x": 238,
+     "y": 930,
+     "desde": "@patrón",
+     "hasta": "@faltan",
+     "flotar": 8,
+     "props": {
+      "emoji": "👔",
+      "tamano": 80,
+      "fondo": "#CF5D60"
+     }
+    },
+    {
+     "tipo": "Sello",
+     "id": "solo-esto",
+     "x": 238,
+     "y": 1500,
+     "desde": "@$2.13#2+0.3",
+     "hasta": "@$5.12-0.1",
+     "props": {
+      "texto": "SOLO ESTO",
+      "tamano": 54,
+      "giro": -9
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "falta",
+     "x": 700,
+     "y": 860,
+     "desde": "@$5.12",
+     "hasta": "@faltan+0.4",
+     "oscilar": 8,
+     "props": {
+      "emoji": "❓",
+      "tamano": 80,
+      "fondo": "#EFA32D"
+     }
+    }
+   ]
+  },
+  {
+   "id": "adivina",
+   "desde": 18.73,
+   "transicion": "zoomGolpe",
+   "fondo": {
+    "brillo": "ambar",
+    "brilloY": 1150,
+    "brilloIntensidad": 0.7
+   },
+   "elementos": [
+    {
+     "tipo": "Rayos",
+     "id": "rayos-5",
+     "x": 540,
+     "y": 1150,
+     "ancho": 1500,
+     "alto": 1500,
+     "props": {
+      "velocidad": 0.8
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "piensa",
+     "x": 540,
+     "y": 1100,
+     "hasta": "@tú",
+     "oscilar": 10,
+     "props": {
+      "emoji": "🤔",
+      "tamano": 230
+     }
+    },
+    {
+     "tipo": "TextoCinetico",
+     "id": "tu-txt",
+     "x": 540,
+     "y": 960,
+     "desde": "@tú",
+     "props": {
+      "texto": "¡TÚ!",
+      "tamano": 300,
+      "color": "#EFA32D"
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "pagas",
+     "x": 540,
+     "y": 1380,
+     "desde": "@tú+0.15",
+     "flotar": 10,
+     "props": {
+      "emoji": "💸",
+      "tamano": 200
+     }
+    },
+    {
+     "tipo": "Particulas",
+     "id": "billetes-propina",
+     "x": 540,
+     "y": 1200,
+     "desde": "@propina",
+     "props": {
+      "tipo": "billetes",
+      "cantidad": 18,
+      "tamano": 60
+     }
+    }
+   ]
+  },
+  {
+   "id": "congelado",
+   "desde": 21.45,
+   "empuje": 0.04,
+   "fondo": {
+    "brillo": "frio",
+    "brilloY": 1100
+   },
+   "elementos": [
+    {
+     "tipo": "Particulas",
+     "id": "nieve",
+     "x": 540,
+     "y": 960,
+     "desde": "@congelado",
+     "props": {
+      "tipo": "chispas",
+      "modo": "lluvia",
+      "cantidad": 40,
+      "tamano": 50,
+      "color": "#BFE3FF"
+     }
+    },
+    {
+     "tipo": "PrecioCongelado",
+     "id": "precio",
+     "x": 560,
+     "y": 1060,
+     "rotZ": -6,
+     "flotar": 6,
+     "entrada": {
+      "tipo": "caer",
+      "dur": 14
+     },
+     "props": {
+      "texto": "$2.13",
+      "subtexto": "la hora",
+      "hielo": 0
+     },
+     "anim": [
+      {
+       "t": "@congelado",
+       "dur": 0.6,
+       "hielo": 1
+      }
+     ]
+    },
+    {
+     "tipo": "TextoCinetico",
+     "id": "anio-1991",
+     "x": 540,
+     "y": 1430,
+     "desde": "@1991#1",
+     "props": {
+      "texto": "1991",
+      "tamano": 190,
+      "color": "#BFE3FF"
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "frio",
+     "x": 880,
+     "y": 760,
+     "desde": "@congelado",
+     "flotar": 10,
+     "props": {
+      "emoji": "🥶",
+      "tamano": 110
+     }
+    }
+   ]
+  },
+  {
+   "id": "grafica",
+   "desde": 24.93,
+   "empuje": 0.01,
+   "camara": [
+    {
+     "t": "@esos#1",
+     "dur": 0.6,
+     "x": 540,
+     "y": 1180,
+     "zoom": 1.1
+    }
+   ],
+   "elementos": [
+    {
+     "tipo": "Contador",
+     "id": "anio",
+     "x": 540,
+     "y": 650,
+     "hasta": "@esos#1",
+     "salida": {
+      "tipo": "fundido",
+      "dur": 6
+     },
+     "props": {
+      "de": 1991,
+      "a": 2026,
+      "agrupar": false,
+      "cuentaDesde": "@Desde",
+      "dur": 90,
+      "tamano": 100,
+      "color": "#FFFFFF"
+     }
+    },
+    {
+     "tipo": "GraficaLineas",
+     "id": "precios",
+     "x": 540,
+     "y": 1150,
+     "props": {
+      "ejeX": [
+       "1991",
+       "2026"
+      ],
+      "series": [
+       {
+        "nombre": "Renta",
+        "color": "#CF5D60",
+        "en": "@renta",
+        "dur": 0.8,
+        "puntos": [
+         [
+          0,
+          0.14
+         ],
+         [
+          0.3,
+          0.32
+         ],
+         [
+          0.6,
+          0.58
+         ],
+         [
+          1,
+          0.95
+         ]
+        ]
+       },
+       {
+        "nombre": "Comida",
+        "color": "#EFA32D",
+        "en": "@comida",
+        "dur": 0.8,
+        "puntos": [
+         [
+          0,
+          0.12
+         ],
+         [
+          0.4,
+          0.3
+         ],
+         [
+          0.7,
+          0.5
+         ],
+         [
+          1,
+          0.77
+         ]
+        ]
+       },
+       {
+        "nombre": "Gasolina",
+        "color": "#8EEDE1",
+        "en": "@gasolina",
+        "dur": 0.8,
+        "puntos": [
+         [
+          0,
+          0.1
+         ],
+         [
+          0.3,
+          0.2
+         ],
+         [
+          0.5,
+          0.42
+         ],
+         [
+          0.75,
+          0.48
+         ],
+         [
+          1,
+          0.62
+         ]
+        ]
+       },
+       {
+        "nombre": "$2.13",
+        "color": "#FFFFFF",
+        "en": "@esos#1",
+        "dur": 1.4,
+        "grosor": 6,
+        "puntos": [
+         [
+          0,
+          0.06
+         ],
+         [
+          1,
+          0.06
+         ]
+        ]
+       }
+      ]
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "ic-renta",
+     "x": 750,
+     "y": 790,
+     "desde": "@renta+0.6",
+     "flotar": 8,
+     "props": {
+      "emoji": "🏠",
+      "tamano": 70,
+      "fondo": "#CF5D60"
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "ic-comida",
+     "x": 640,
+     "y": 900,
+     "desde": "@comida+0.6",
+     "flotar": 8,
+     "props": {
+      "emoji": "🍔",
+      "tamano": 70,
+      "fondo": "#EFA32D"
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "ic-gasolina",
+     "x": 530,
+     "y": 1010,
+     "desde": "@gasolina+0.6",
+     "flotar": 8,
+     "props": {
+      "emoji": "⛽",
+      "tamano": 70,
+      "fondo": "#3A9C93"
+     }
+    },
+    {
+     "tipo": "Mesero",
+     "id": "mesero-7",
+     "x": 220,
+     "y": 1560,
+     "escala": 0.55,
+     "desde": "@esos#1",
+     "entrada": "volarIzq",
+     "props": {
+      "expresion": "triste",
+      "bandeja": false
+     }
+    },
+    {
+     "tipo": "Pastilla",
+     "id": "cero",
+     "x": 830,
+     "y": 1330,
+     "desde": "@centavo",
+     "props": {
+      "texto": "+ $0.00",
+      "color": "#CF5D60",
+      "tamano": 48,
+      "peso": 800
+     }
+    }
+   ]
+  },
+  {
+   "id": "tijera-1996",
+   "desde": 32.15,
+   "transicion": "barrido",
+   "empuje": 0.03,
+   "fondo": {
+    "brillo": "calido",
+    "brilloY": 1150
+   },
+   "elementos": [
+    {
+     "tipo": "TextoCinetico",
+     "id": "anio-1996",
+     "x": 540,
+     "y": 720,
+     "desde": "@1996",
+     "props": {
+      "texto": "1996",
+      "tamano": 180
+     }
+    },
+    {
+     "tipo": "Billete",
+     "id": "billete-1996",
+     "x": 540,
+     "y": 1150,
+     "entrada": {
+      "tipo": "caer",
+      "dur": 14
+     },
+     "props": {
+      "valor": "4.25",
+      "division": 1,
+      "separar": 0,
+      "tinteIzq": 0,
+      "tinteDer": 0,
+      "izquierda": {
+       "valor": "$2.13",
+       "etiqueta": "CON PROPINA",
+       "color": "#CF5D60"
+      },
+      "derecha": {
+       "valor": "50%",
+       "etiqueta": "",
+       "color": "#6B6B6B"
+      }
+     },
+     "anim": [
+      {
+       "t": "@separaron+0.35",
+       "dur": 0,
+       "division": 0.5
+      },
+      {
+       "t": "@separaron+0.35",
+       "dur": 0.4,
+       "separar": 1
+      },
+      {
+       "t": "@normal",
+       "dur": 0.3,
+       "tinteIzq": 1,
+       "tinteDer": 0.6
+      }
+     ]
+    },
+    {
+     "tipo": "Pastilla",
+     "id": "min-1996",
+     "x": 540,
+     "y": 1450,
+     "desde": 32.5,
+     "hasta": "@separaron",
+     "props": {
+      "texto": "MÍNIMO EN 1996",
+      "color": "#FFFFFF",
+      "tamano": 38,
+      "peso": 700
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "tijera",
+     "x": 540,
+     "y": 880,
+     "rotZ": 90,
+     "desde": "@separaron-0.1",
+     "hasta": "@normal+0.3",
+     "props": {
+      "emoji": "✂️",
+      "tamano": 120
+     },
+     "anim": [
+      {
+       "t": "@separaron",
+       "dur": 0.45,
+       "y": 1420,
+       "curva": "entrada"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "barras",
+   "desde": 35.47,
+   "transicion": "barrido",
+   "empuje": 0.015,
+   "elementos": [
+    {
+     "tipo": "Texto",
+     "id": "anio-barras",
+     "x": 540,
+     "y": 760,
+     "entrada": "pop",
+     "props": {
+      "texto": "1996",
+      "tamano": 140,
+      "peso": 800,
+      "color": "#FFFFFF"
+     },
+     "anim": [
+      {
+       "t": "@Hoy",
+       "dur": 0,
+       "texto": "HOY"
+      }
+     ]
+    },
+    {
+     "tipo": "BarraPorcentaje",
+     "id": "barra-minimo",
+     "x": 540,
+     "y": 1040,
+     "entrada": "volarIzq",
+     "props": {
+      "valor": 100,
+      "etiqueta": "Salario mínimo",
+      "color": "#6B6B6B",
+      "texto": "$4.25"
+     },
+     "anim": [
+      {
+       "t": "@Hoy",
+       "dur": 0,
+       "texto": "$7.25"
+      }
+     ]
+    },
+    {
+     "tipo": "BarraPorcentaje",
+     "id": "barra-propina",
+     "x": 540,
+     "y": 1290,
+     "entrada": "volarIzq",
+     "props": {
+      "valor": 0,
+      "etiqueta": "Sueldo base del mesero",
+      "color": "#CF5D60"
+     },
+     "anim": [
+      {
+       "t": "@mitad#1",
+       "dur": 0.6,
+       "valor": 50,
+       "curva": "salida"
+      },
+      {
+       "t": "@29%",
+       "dur": 0.8,
+       "valor": 29.4,
+       "curva": "suave"
+      }
+     ]
+    },
+    {
+     "tipo": "Icono",
+     "id": "baja",
+     "x": 880,
+     "y": 1520,
+     "desde": "@29%",
+     "flotar": 8,
+     "props": {
+      "emoji": "📉",
+      "tamano": 100,
+      "fondo": "#CF5D60"
+     }
+    }
+   ]
+  },
+  {
+   "id": "inflacion",
+   "desde": 39.67,
+   "empuje": 0,
+   "fondo": {
+    "brillo": "calido",
+    "brilloY": 1050
+   },
+   "camara": [
+    {
+     "t": "@$2.13#4",
+     "dur": 0.4,
+     "x": 290,
+     "y": 1050,
+     "zoom": 1.4
+    },
+    {
+     "t": "@equivalían",
+     "dur": 0.4,
+     "x": 540,
+     "y": 1050,
+     "zoom": 1.0
+    },
+    {
+     "t": "@$4.21",
+     "dur": 0.3,
+     "x": 790,
+     "y": 1050,
+     "zoom": 1.4,
+     "curva": "salida"
+    },
+    {
+     "t": "@2021",
+     "dur": 0.4,
+     "x": 540,
+     "y": 1050,
+     "zoom": 1.0
+    }
+   ],
+   "elementos": [
+    {
+     "tipo": "Icono",
+     "id": "globo",
+     "x": 540,
+     "y": 1050,
+     "hasta": "@$2.13#4",
+     "salida": {
+      "tipo": "escala",
+      "dur": 4
+     },
+     "oscilar": 6,
+     "props": {
+      "emoji": "🎈",
+      "tamano": 130
+     },
+     "anim": [
+      {
+       "t": "@inflación",
+       "dur": 0.6,
+       "escala": 2.4,
+       "curva": "salida"
+      }
+     ]
+    },
+    {
+     "tipo": "Billete",
+     "id": "b-1991",
+     "x": 290,
+     "y": 1050,
+     "escala": 0.5,
+     "desde": "@$2.13#4",
+     "entrada": "rebote",
+     "props": {
+      "valor": "2.13"
+     }
+    },
+    {
+     "tipo": "Texto",
+     "id": "t-1991",
+     "x": 290,
+     "y": 1200,
+     "desde": "@1991#2",
+     "entrada": "subir",
+     "props": {
+      "texto": "en 1991",
+      "tamano": 44,
+      "peso": 700,
+      "color": "#9A9A9A"
+     }
+    },
+    {
+     "tipo": "Texto",
+     "id": "igual",
+     "x": 540,
+     "y": 1050,
+     "desde": "@equivalían",
+     "entrada": "pop",
+     "props": {
+      "texto": "=",
+      "tamano": 110,
+      "peso": 800
+     }
+    },
+    {
+     "tipo": "Billete",
+     "id": "b-2021",
+     "x": 790,
+     "y": 1050,
+     "escala": 0.5,
+     "desde": "@$4.21",
+     "entrada": "rebote",
+     "props": {
+      "valor": "4.21"
+     }
+    },
+    {
+     "tipo": "Texto",
+     "id": "t-2021",
+     "x": 790,
+     "y": 1200,
+     "desde": "@2021",
+     "entrada": "subir",
+     "props": {
+      "texto": "en 2021",
+      "tamano": 44,
+      "peso": 700,
+      "color": "#9A9A9A"
+     }
+    },
+    {
+     "tipo": "Particulas",
+     "id": "chispas-421",
+     "x": 790,
+     "y": 1050,
+     "desde": "@$4.21",
+     "props": {
+      "tipo": "chispas",
+      "cantidad": 18,
+      "tamano": 60,
+      "sonido": "ding"
+     }
+    }
+   ]
+  },
+  {
+   "id": "mitad",
+   "desde": 46.41,
+   "transicion": "zoomGolpe",
+   "empuje": 0.05,
+   "elementos": [
+    {
+     "tipo": "Particulas",
+     "id": "lluvia-triste",
+     "x": 540,
+     "y": 960,
+     "props": {
+      "tipo": "emoji",
+      "emoji": "💸",
+      "modo": "lluvia",
+      "cantidad": 9,
+      "tamano": 60
+     }
+    },
+    {
+     "tipo": "TextoCinetico",
+     "id": "menos-49",
+     "x": 540,
+     "y": 760,
+     "desde": "@mitad#2",
+     "props": {
+      "texto": "-49%",
+      "tamano": 220,
+      "color": "#CF5D60"
+     }
+    },
+    {
+     "tipo": "Mesero",
+     "id": "mesero-11",
+     "x": 540,
+     "y": 1420,
+     "entrada": "escala",
+     "props": {
+      "expresion": "triste",
+      "lagrima": true,
+      "bandeja": false
+     }
+    }
+   ]
+  },
+  {
+   "id": "mapa",
+   "desde": 48.35,
+   "empuje": 0,
+   "camara": [
+    {
+     "t": "@Nebraska",
+     "dur": 0.5,
+     "x": 414,
+     "y": 1242,
+     "zoom": 1.8
+    },
+    {
+     "t": "@Virginia",
+     "dur": 0.45,
+     "x": 750,
+     "y": 1242,
+     "zoom": 1.8
+    },
+    {
+     "t": "@Rhode",
+     "dur": 0.45,
+     "x": 918,
+     "y": 1074,
+     "zoom": 1.8
+    }
+   ],
+   "elementos": [
+    {
+     "tipo": "MapaEEUU",
+     "id": "mapa",
+     "x": 540,
+     "y": 1200,
+     "props": {
+      "marcas": [
+       {
+        "estado": "NE",
+        "en": "@Nebraska",
+        "color": "#CF5D60",
+        "valor": "86%"
+       },
+       {
+        "estado": "VA",
+        "en": "@Virginia",
+        "color": "#CF5D60",
+        "valor": "83%"
+       },
+       {
+        "estado": "RI",
+        "en": "@Rhode",
+        "color": "#CF5D60",
+        "valor": "76%"
+       }
+      ]
+     }
+    },
+    {
+     "tipo": "TextoCinetico",
+     "id": "peor",
+     "x": 540,
+     "y": 720,
+     "desde": "@peor",
+     "hasta": "@Nebraska",
+     "props": {
+      "texto": "PEOR",
+      "tamano": 150,
+      "color": "#CF5D60"
+     }
+    }
+   ],
+   "encima": [
+    {
+     "tipo": "Ondas",
+     "id": "o-ne",
+     "x": 540,
+     "y": 960,
+     "ancho": 440,
+     "alto": 440,
+     "desde": "@Nebraska+0.3",
+     "hasta": "@Virginia",
+     "props": {
+      "color": "#CF5D60"
+     }
+    },
+    {
+     "tipo": "Ondas",
+     "id": "o-va",
+     "x": 540,
+     "y": 960,
+     "ancho": 440,
+     "alto": 440,
+     "desde": "@Virginia+0.3",
+     "hasta": "@Rhode",
+     "props": {
+      "color": "#CF5D60"
+     }
+    },
+    {
+     "tipo": "Ondas",
+     "id": "o-ri",
+     "x": 540,
+     "y": 960,
+     "ancho": 440,
+     "alto": 440,
+     "desde": "@Rhode+0.3",
+     "props": {
+      "color": "#CF5D60"
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "cuenta",
+     "x": 860,
+     "y": 1520,
+     "desde": "@cliente",
+     "hasta": "@Virginia",
+     "flotar": 8,
+     "props": {
+      "emoji": "🧾",
+      "tamano": 90,
+      "fondo": "#EFA32D"
+     }
+    }
+   ]
+  },
+  {
+   "id": "diferencia",
+   "desde": 58.97,
+   "transicion": "barrido",
+   "empuje": 0.02,
+   "elementos": [
+    {
+     "tipo": "Icono",
+     "id": "ojo",
+     "x": 540,
+     "y": 760,
+     "hasta": "@propinas#2+0.3",
+     "salida": "escala",
+     "props": {
+      "emoji": "👀",
+      "tamano": 150
+     }
+    },
+    {
+     "tipo": "Texto",
+     "id": "meta",
+     "x": 905,
+     "y": 990,
+     "desde": "@mínimo#4",
+     "entrada": "fundido",
+     "props": {
+      "texto": "MÍNIMO\n$7.25",
+      "tamano": 34,
+      "peso": 700,
+      "color": "#FFFFFF"
+     }
+    },
+    {
+     "tipo": "BarraPorcentaje",
+     "id": "b-restaurante",
+     "x": 540,
+     "y": 1150,
+     "alto": 110,
+     "opacidad": 0,
+     "props": {
+      "valor": 100,
+      "texto": "",
+      "color": "#8EEDE1",
+      "fondo": "rgba(255,255,255,0.06)"
+     },
+     "anim": [
+      {
+       "t": "@restaurante#2",
+       "dur": 0.4,
+       "opacidad": 1
+      }
+     ]
+    },
+    {
+     "tipo": "BarraPorcentaje",
+     "id": "b-propinas",
+     "x": 540,
+     "y": 1150,
+     "alto": 110,
+     "entrada": "volarIzq",
+     "props": {
+      "valor": 29.4,
+      "texto": "",
+      "color": "#EFA32D",
+      "fondo": "rgba(255,255,255,0.06)",
+      "etiqueta": "Para llegar al mínimo"
+     },
+     "anim": [
+      {
+       "t": "@propinas#2",
+       "dur": 0.7,
+       "valor": 85,
+       "curva": "salida"
+      }
+     ]
+    },
+    {
+     "tipo": "BarraPorcentaje",
+     "id": "b-patron",
+     "x": 540,
+     "y": 1150,
+     "alto": 110,
+     "entrada": "volarIzq",
+     "props": {
+      "valor": 29.4,
+      "texto": "",
+      "color": "#CF5D60",
+      "fondo": "transparent"
+     }
+    },
+    {
+     "tipo": "Texto",
+     "id": "l-patron",
+     "x": 236,
+     "y": 1270,
+     "props": {
+      "texto": "PATRÓN",
+      "tamano": 32,
+      "peso": 700,
+      "color": "#CF5D60",
+      "tracking": 0.12
+     }
+    },
+    {
+     "tipo": "Texto",
+     "id": "l-propinas",
+     "x": 602,
+     "y": 1270,
+     "desde": "@propinas#2",
+     "entrada": "subir",
+     "props": {
+      "texto": "PROPINAS",
+      "tamano": 32,
+      "peso": 700,
+      "color": "#EFA32D",
+      "tracking": 0.12
+     }
+    },
+    {
+     "tipo": "Texto",
+     "id": "l-restaurante",
+     "x": 900,
+     "y": 1270,
+     "desde": "@restaurante#2",
+     "entrada": "subir",
+     "props": {
+      "texto": "RESTAURANTE",
+      "tamano": 26,
+      "peso": 700,
+      "color": "#8EEDE1",
+      "tracking": 0.1
+     }
+    },
+    {
+     "tipo": "Icono",
+     "id": "tienda",
+     "x": 905,
+     "y": 1450,
+     "desde": "@restaurante#2",
+     "flotar": 8,
+     "props": {
+      "emoji": "🏪",
+      "tamano": 90,
+      "fondo": "#3A9C93"
+     }
+    }
+   ]
+  },
+  {
+   "id": "no-manches",
+   "desde": 62.77,
+   "transicion": "zoomGolpe",
+   "empuje": 0.08,
+   "fondo": {
+    "brillo": "ambar",
+    "brilloY": 1100,
+    "brilloIntensidad": 0.8
+   },
+   "elementos": [
+    {
+     "tipo": "Rayos",
+     "id": "rayos-14",
+     "x": 540,
+     "y": 1100,
+     "ancho": 1500,
+     "alto": 1500,
+     "props": {
+      "velocidad": 1.2
+     }
+    },
+    {
+     "tipo": "TextoCinetico",
+     "id": "no-manches-txt",
+     "x": 540,
+     "y": 900,
+     "desde": 62.95,
+     "props": {
+      "texto": "¡NO| MANCHES!",
+      "tamano": 140,
+      "escalon": 1,
+      "color": "#FFFFFF",
+      "color2": "#EFA32D"
+     }
+    },
+    {
+     "tipo": "Mesero",
+     "id": "mesero-14",
+     "x": 540,
+     "y": 1500,
+     "escala": 0.85,
+     "entrada": "subir",
+     "props": {
+      "expresion": "enojado",
+      "bandeja": false
+     }
+    }
+   ]
+  },
+  {
+   "id": "ticket-giro",
+   "desde": 63.93,
+   "transicion": "barrido",
+   "empuje": 0.02,
+   "fondo": {
+    "brillo": "calido",
+    "brilloY": 1150,
+    "brilloRadio": 620
+   },
+   "elementos": [
+    {
+     "tipo": "Ondas",
+     "id": "ondas-extra",
+     "x": 540,
+     "y": 1260,
+     "ancho": 520,
+     "alto": 520,
+     "desde": "@extra",
+     "hasta": "@sueldo#3",
+     "props": {
+      "color": "#CF5D60",
+      "cada": 18
+     }
+    },
+    {
+     "tipo": "Ticket",
+     "id": "ticket-2",
+     "x": 540,
+     "y": 1180,
+     "entrada": {
+      "tipo": "subir",
+      "dur": 8
+     },
+     "props": {
+      "titulo": "TACO LOCO",
+      "subtitulo": "Mesa 7 · 2 personas",
+      "impresion": 1,
+      "lineas": [
+       {
+        "texto": "2 Tacos al pastor",
+        "valor": "$12.00"
+       },
+       {
+        "texto": "1 Enchiladas",
+        "valor": "$14.50"
+       },
+       {
+        "texto": "2 Horchatas",
+        "valor": "$7.00"
+       },
+       {
+        "texto": "Subtotal",
+        "valor": "$33.50"
+       },
+       {
+        "texto": "PROPINA (extra)",
+        "valor": "$6.70",
+        "destacar": true,
+        "cambiaEn": "@extra+0.25",
+        "nuevo": "SUELDO DEL MESERO",
+        "colorNuevo": "#CF5D60"
+       }
+      ],
+      "total": "$40.20"
+     }
+    },
+    {
+     "tipo": "Particulas",
+     "id": "billetes-sueldo",
+     "x": 540,
+     "y": 1260,
+     "desde": "@sueldo#3",
+     "props": {
+      "tipo": "billetes",
+      "cantidad": 14,
+      "tamano": 56,
+      "semilla": "sueldo"
+     }
+    },
+    {
+     "tipo": "Sello",
+     "id": "lo-pagas-tu",
+     "x": 540,
+     "y": 1640,
+     "desde": "@restaurante#3",
+     "props": {
+      "texto": "LO PAGAS TÚ",
+      "tamano": 72,
+      "giro": -7
+     }
+    }
+   ]
+  },
+  {
+   "id": "pantallita",
+   "desde": 68.79,
+   "transicion": "zoomGolpe",
+   "empuje": 0.03,
+   "fondo": {
+    "brillo": "ambar",
+    "brilloY": 1150,
+    "brilloIntensidad": 0.6
+   },
+   "elementos": [
+    {
+     "tipo": "Rayos",
+     "id": "rayos-16",
+     "x": 540,
+     "y": 1150,
+     "ancho": 1500,
+     "alto": 1500,
+     "props": {
+      "intensidad": 0.5
+     }
+    },
+    {
+     "tipo": "PantallaPropina",
+     "id": "pos",
+     "x": 540,
+     "y": 1150,
+     "entrada": {
+      "tipo": "volarDer",
+      "dur": 10
+     },
+     "props": {
+      "total": "$33.50",
+      "botones": [
+       "15%",
+       "18%",
+       "20%",
+       "25%"
+      ],
+      "seleccion": "20%",
+      "seleccionEn": "@20%"
+     }
+    },
+    {
+     "tipo": "Dedo",
+     "id": "dedo-20",
+     "x": 523,
+     "y": 1608,
+     "rotZ": -20,
+     "desde": "@pantallita",
+     "entrada": {
+      "tipo": "subir",
+      "dur": 10
+     },
+     "props": {
+      "toques": [
+       "@20%"
+      ]
+     }
+    },
+    {
+     "tipo": "Particulas",
+     "id": "monedas-20",
+     "x": 383,
+     "y": 1223,
+     "desde": "@20%",
+     "props": {
+      "tipo": "monedas",
+      "cantidad": 20,
+      "tamano": 60,
+      "sonido": "moneda",
+      "semilla": "veinte"
+     }
+    }
+   ]
+  },
+  {
+   "id": "cta",
+   "desde": 71.63,
+   "transicion": "barrido",
+   "empuje": 0,
+   "elementos": [
+    {
+     "tipo": "CTACompartir",
+     "id": "cta",
+     "x": 540,
+     "y": 1150,
+     "entrada": "escala",
+     "props": {
+      "tSeguir": 71.85,
+      "tCompartir": "@Mándaselo+0.15",
+      "tAmigo": "@siempre",
+      "tEnviar": "@10%+0.3",
+      "usuario": "resultaaquee",
+      "descripcion": "¿Por qué te piden 20% de propina? 🧾"
+     },
+     "hijos": [
+      {
+       "tipo": "Caja",
+       "id": "pantalla-fondo",
+       "x": 286,
+       "y": 606,
+       "ancho": 572,
+       "alto": 1212,
+       "props": {
+        "fondo": "#101010"
+       }
+      },
+      {
+       "tipo": "Mesero",
+       "id": "mesero-cta",
+       "x": 286,
+       "y": 520,
+       "escala": 0.75,
+       "props": {
+        "expresion": "feliz",
+        "brazo": "saludo"
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "palabras": [
+  {
+   "word": "¿Sabes",
+   "start": 0.0,
+   "end": 0.22
+  },
+  {
+   "word": "cuánto",
+   "start": 0.22,
+   "end": 0.6
+  },
+  {
+   "word": "le",
+   "start": 0.6,
+   "end": 0.7
+  },
+  {
+   "word": "paga",
+   "start": 0.7,
+   "end": 0.88
+  },
+  {
+   "word": "el",
+   "start": 0.88,
+   "end": 0.98
+  },
+  {
+   "word": "restaurante",
+   "start": 0.98,
+   "end": 1.46
+  },
+  {
+   "word": "al",
+   "start": 1.46,
+   "end": 1.6
+  },
+  {
+   "word": "mesero",
+   "start": 1.6,
+   "end": 1.88
+  },
+  {
+   "word": "que",
+   "start": 1.88,
+   "end": 2.0
+  },
+  {
+   "word": "te",
+   "start": 2.0,
+   "end": 2.1
+  },
+  {
+   "word": "atiende?",
+   "start": 2.1,
+   "end": 2.42
+  },
+  {
+   "word": "$2.13",
+   "start": 2.66,
+   "end": 4.48
+  },
+  {
+   "word": "la",
+   "start": 4.48,
+   "end": 4.64
+  },
+  {
+   "word": "hora.",
+   "start": 4.64,
+   "end": 4.84
+  },
+  {
+   "word": "Sí,",
+   "start": 5.18,
+   "end": 5.4
+  },
+  {
+   "word": "escuchaste",
+   "start": 5.56,
+   "end": 6.04
+  },
+  {
+   "word": "bien.",
+   "start": 6.04,
+   "end": 6.2
+  },
+  {
+   "word": "El",
+   "start": 6.38,
+   "end": 6.72
+  },
+  {
+   "word": "salario",
+   "start": 6.72,
+   "end": 7.06
+  },
+  {
+   "word": "mínimo",
+   "start": 7.06,
+   "end": 7.3
+  },
+  {
+   "word": "federal",
+   "start": 7.3,
+   "end": 7.64
+  },
+  {
+   "word": "en",
+   "start": 7.64,
+   "end": 7.86
+  },
+  {
+   "word": "Estados",
+   "start": 7.86,
+   "end": 8.1
+  },
+  {
+   "word": "Unidos",
+   "start": 8.1,
+   "end": 8.46
+  },
+  {
+   "word": "es",
+   "start": 8.46,
+   "end": 8.74
+  },
+  {
+   "word": "de",
+   "start": 8.74,
+   "end": 8.88
+  },
+  {
+   "word": "$7.25.",
+   "start": 8.88,
+   "end": 10.96
+  },
+  {
+   "word": "Pero",
+   "start": 11.16,
+   "end": 11.5
+  },
+  {
+   "word": "si",
+   "start": 11.5,
+   "end": 11.6
+  },
+  {
+   "word": "el",
+   "start": 11.6,
+   "end": 11.7
+  },
+  {
+   "word": "trabajador",
+   "start": 11.7,
+   "end": 12.08
+  },
+  {
+   "word": "recibe",
+   "start": 12.08,
+   "end": 12.38
+  },
+  {
+   "word": "propinas,",
+   "start": 12.38,
+   "end": 12.88
+  },
+  {
+   "word": "el",
+   "start": 13.06,
+   "end": 13.2
+  },
+  {
+   "word": "patrón",
+   "start": 13.2,
+   "end": 13.44
+  },
+  {
+   "word": "solo",
+   "start": 13.44,
+   "end": 13.6
+  },
+  {
+   "word": "está",
+   "start": 13.6,
+   "end": 13.76
+  },
+  {
+   "word": "obligado",
+   "start": 13.76,
+   "end": 14.08
+  },
+  {
+   "word": "a",
+   "start": 14.08,
+   "end": 14.18
+  },
+  {
+   "word": "pagarle",
+   "start": 14.18,
+   "end": 14.62
+  },
+  {
+   "word": "$2.13.",
+   "start": 14.62,
+   "end": 16.2
+  },
+  {
+   "word": "¿Y",
+   "start": 16.62,
+   "end": 16.9
+  },
+  {
+   "word": "los",
+   "start": 16.9,
+   "end": 17.04
+  },
+  {
+   "word": "$5.12",
+   "start": 17.04,
+   "end": 18.28
+  },
+  {
+   "word": "que",
+   "start": 18.28,
+   "end": 18.4
+  },
+  {
+   "word": "faltan?",
+   "start": 18.4,
+   "end": 18.72
+  },
+  {
+   "word": "Adivina",
+   "start": 18.86,
+   "end": 19.26
+  },
+  {
+   "word": "quién",
+   "start": 19.26,
+   "end": 19.4
+  },
+  {
+   "word": "los",
+   "start": 19.4,
+   "end": 19.54
+  },
+  {
+   "word": "pone.",
+   "start": 19.54,
+   "end": 19.78
+  },
+  {
+   "word": "Tú,",
+   "start": 19.92,
+   "end": 20.4
+  },
+  {
+   "word": "con",
+   "start": 20.56,
+   "end": 20.76
+  },
+  {
+   "word": "la",
+   "start": 20.76,
+   "end": 20.86
+  },
+  {
+   "word": "propina.",
+   "start": 20.86,
+   "end": 21.28
+  },
+  {
+   "word": "Y",
+   "start": 21.58,
+   "end": 21.92
+  },
+  {
+   "word": "ese",
+   "start": 21.92,
+   "end": 22.06
+  },
+  {
+   "word": "sueldo",
+   "start": 22.06,
+   "end": 22.32
+  },
+  {
+   "word": "está",
+   "start": 22.32,
+   "end": 22.44
+  },
+  {
+   "word": "congelado",
+   "start": 22.44,
+   "end": 22.9
+  },
+  {
+   "word": "desde",
+   "start": 22.9,
+   "end": 23.16
+  },
+  {
+   "word": "1991.",
+   "start": 23.16,
+   "end": 24.82
+  },
+  {
+   "word": "Desde",
+   "start": 25.06,
+   "end": 25.4
+  },
+  {
+   "word": "entonces",
+   "start": 25.4,
+   "end": 25.76
+  },
+  {
+   "word": "subió",
+   "start": 25.76,
+   "end": 26.28
+  },
+  {
+   "word": "la",
+   "start": 26.28,
+   "end": 26.42
+  },
+  {
+   "word": "renta,",
+   "start": 26.42,
+   "end": 26.82
+  },
+  {
+   "word": "subió",
+   "start": 26.96,
+   "end": 27.14
+  },
+  {
+   "word": "la",
+   "start": 27.14,
+   "end": 27.22
+  },
+  {
+   "word": "comida,",
+   "start": 27.22,
+   "end": 27.52
+  },
+  {
+   "word": "subió",
+   "start": 27.74,
+   "end": 27.92
+  },
+  {
+   "word": "la",
+   "start": 27.92,
+   "end": 28.0
+  },
+  {
+   "word": "gasolina.",
+   "start": 28.0,
+   "end": 28.48
+  },
+  {
+   "word": "Y",
+   "start": 28.48,
+   "end": 28.9
+  },
+  {
+   "word": "esos",
+   "start": 28.9,
+   "end": 29.12
+  },
+  {
+   "word": "$2.13",
+   "start": 29.12,
+   "end": 30.58
+  },
+  {
+   "word": "no",
+   "start": 30.58,
+   "end": 30.74
+  },
+  {
+   "word": "se",
+   "start": 30.74,
+   "end": 30.86
+  },
+  {
+   "word": "movieron",
+   "start": 30.86,
+   "end": 31.22
+  },
+  {
+   "word": "ni",
+   "start": 31.22,
+   "end": 31.5
+  },
+  {
+   "word": "un",
+   "start": 31.5,
+   "end": 31.66
+  },
+  {
+   "word": "centavo.",
+   "start": 31.66,
+   "end": 32.1
+  },
+  {
+   "word": "En",
+   "start": 32.28,
+   "end": 32.72
+  },
+  {
+   "word": "1996",
+   "start": 32.72,
+   "end": 33.64
+  },
+  {
+   "word": "lo",
+   "start": 33.64,
+   "end": 33.78
+  },
+  {
+   "word": "separaron",
+   "start": 33.78,
+   "end": 34.2
+  },
+  {
+   "word": "del",
+   "start": 34.2,
+   "end": 34.32
+  },
+  {
+   "word": "salario",
+   "start": 34.32,
+   "end": 34.68
+  },
+  {
+   "word": "mínimo",
+   "start": 34.68,
+   "end": 34.9
+  },
+  {
+   "word": "normal.",
+   "start": 34.9,
+   "end": 35.3
+  },
+  {
+   "word": "Entonces",
+   "start": 35.6,
+   "end": 36.02
+  },
+  {
+   "word": "era",
+   "start": 36.02,
+   "end": 36.34
+  },
+  {
+   "word": "la",
+   "start": 36.34,
+   "end": 36.56
+  },
+  {
+   "word": "mitad",
+   "start": 36.56,
+   "end": 36.78
+  },
+  {
+   "word": "del",
+   "start": 36.78,
+   "end": 36.96
+  },
+  {
+   "word": "mínimo.",
+   "start": 36.96,
+   "end": 37.2
+  },
+  {
+   "word": "Hoy",
+   "start": 37.4,
+   "end": 37.56
+  },
+  {
+   "word": "es",
+   "start": 37.56,
+   "end": 37.68
+  },
+  {
+   "word": "apenas",
+   "start": 37.68,
+   "end": 37.92
+  },
+  {
+   "word": "el",
+   "start": 37.92,
+   "end": 38.18
+  },
+  {
+   "word": "29%.",
+   "start": 38.18,
+   "end": 39.44
+  },
+  {
+   "word": "Con",
+   "start": 39.8,
+   "end": 40.24
+  },
+  {
+   "word": "inflación,",
+   "start": 40.24,
+   "end": 40.66
+  },
+  {
+   "word": "esos",
+   "start": 40.86,
+   "end": 40.96
+  },
+  {
+   "word": "$2.13",
+   "start": 40.96,
+   "end": 42.26
+  },
+  {
+   "word": "de",
+   "start": 42.26,
+   "end": 42.36
+  },
+  {
+   "word": "1991",
+   "start": 42.36,
+   "end": 43.34
+  },
+  {
+   "word": "ya",
+   "start": 43.34,
+   "end": 43.54
+  },
+  {
+   "word": "equivalían",
+   "start": 43.54,
+   "end": 43.92
+  },
+  {
+   "word": "a",
+   "start": 43.92,
+   "end": 44.1
+  },
+  {
+   "word": "$4.21",
+   "start": 44.1,
+   "end": 45.46
+  },
+  {
+   "word": "en",
+   "start": 45.46,
+   "end": 45.56
+  },
+  {
+   "word": "2021.",
+   "start": 45.56,
+   "end": 46.18
+  },
+  {
+   "word": "Perdió",
+   "start": 46.54,
+   "end": 46.82
+  },
+  {
+   "word": "casi",
+   "start": 46.82,
+   "end": 47.06
+  },
+  {
+   "word": "la",
+   "start": 47.06,
+   "end": 47.22
+  },
+  {
+   "word": "mitad",
+   "start": 47.22,
+   "end": 47.56
+  },
+  {
+   "word": "de",
+   "start": 47.56,
+   "end": 47.72
+  },
+  {
+   "word": "su",
+   "start": 47.72,
+   "end": 47.84
+  },
+  {
+   "word": "valor.",
+   "start": 47.84,
+   "end": 48.08
+  },
+  {
+   "word": "Y",
+   "start": 48.48,
+   "end": 48.68
+  },
+  {
+   "word": "en",
+   "start": 48.68,
+   "end": 48.78
+  },
+  {
+   "word": "algunos",
+   "start": 48.78,
+   "end": 49.0
+  },
+  {
+   "word": "estados",
+   "start": 49.0,
+   "end": 49.32
+  },
+  {
+   "word": "es",
+   "start": 49.32,
+   "end": 49.5
+  },
+  {
+   "word": "peor.",
+   "start": 49.5,
+   "end": 49.84
+  },
+  {
+   "word": "En",
+   "start": 50.08,
+   "end": 50.36
+  },
+  {
+   "word": "Nebraska,",
+   "start": 50.36,
+   "end": 50.68
+  },
+  {
+   "word": "el",
+   "start": 50.9,
+   "end": 51.06
+  },
+  {
+   "word": "cliente",
+   "start": 51.06,
+   "end": 51.42
+  },
+  {
+   "word": "termina",
+   "start": 51.42,
+   "end": 51.72
+  },
+  {
+   "word": "pagando",
+   "start": 51.72,
+   "end": 52.02
+  },
+  {
+   "word": "el",
+   "start": 52.02,
+   "end": 52.14
+  },
+  {
+   "word": "86%",
+   "start": 52.14,
+   "end": 53.22
+  },
+  {
+   "word": "del",
+   "start": 53.22,
+   "end": 53.42
+  },
+  {
+   "word": "sueldo",
+   "start": 53.42,
+   "end": 53.64
+  },
+  {
+   "word": "por",
+   "start": 53.64,
+   "end": 53.8
+  },
+  {
+   "word": "hora",
+   "start": 53.8,
+   "end": 53.96
+  },
+  {
+   "word": "del",
+   "start": 53.96,
+   "end": 54.1
+  },
+  {
+   "word": "mesero.",
+   "start": 54.1,
+   "end": 54.42
+  },
+  {
+   "word": "En",
+   "start": 54.76,
+   "end": 54.92
+  },
+  {
+   "word": "Virginia,",
+   "start": 54.92,
+   "end": 55.24
+  },
+  {
+   "word": "el",
+   "start": 55.4,
+   "end": 55.44
+  },
+  {
+   "word": "83%.",
+   "start": 55.44,
+   "end": 56.54
+  },
+  {
+   "word": "En",
+   "start": 56.54,
+   "end": 56.96
+  },
+  {
+   "word": "Rhode",
+   "start": 56.96,
+   "end": 57.1
+  },
+  {
+   "word": "Island,",
+   "start": 57.1,
+   "end": 57.36
+  },
+  {
+   "word": "el",
+   "start": 57.56,
+   "end": 57.58
+  },
+  {
+   "word": "76%.",
+   "start": 57.58,
+   "end": 58.62
+  },
+  {
+   "word": "Ojo,",
+   "start": 59.1,
+   "end": 59.34
+  },
+  {
+   "word": "si",
+   "start": 59.6,
+   "end": 59.72
+  },
+  {
+   "word": "las",
+   "start": 59.72,
+   "end": 59.84
+  },
+  {
+   "word": "propinas",
+   "start": 59.84,
+   "end": 60.18
+  },
+  {
+   "word": "no",
+   "start": 60.18,
+   "end": 60.3
+  },
+  {
+   "word": "alcanzan",
+   "start": 60.3,
+   "end": 60.64
+  },
+  {
+   "word": "el",
+   "start": 60.64,
+   "end": 60.76
+  },
+  {
+   "word": "mínimo,",
+   "start": 60.76,
+   "end": 61.0
+  },
+  {
+   "word": "el",
+   "start": 61.18,
+   "end": 61.26
+  },
+  {
+   "word": "restaurante",
+   "start": 61.26,
+   "end": 61.64
+  },
+  {
+   "word": "tiene",
+   "start": 61.64,
+   "end": 61.82
+  },
+  {
+   "word": "que",
+   "start": 61.82,
+   "end": 61.94
+  },
+  {
+   "word": "poner",
+   "start": 61.94,
+   "end": 62.14
+  },
+  {
+   "word": "la",
+   "start": 62.14,
+   "end": 62.3
+  },
+  {
+   "word": "diferencia.",
+   "start": 62.3,
+   "end": 62.64
+  },
+  {
+   "word": "Pero",
+   "start": 62.9,
+   "end": 63.22
+  },
+  {
+   "word": "no",
+   "start": 63.22,
+   "end": 63.4
+  },
+  {
+   "word": "manches,",
+   "start": 63.4,
+   "end": 63.82
+  },
+  {
+   "word": "no",
+   "start": 64.06,
+   "end": 64.2
+  },
+  {
+   "word": "le",
+   "start": 64.2,
+   "end": 64.34
+  },
+  {
+   "word": "estás",
+   "start": 64.34,
+   "end": 64.52
+  },
+  {
+   "word": "dando",
+   "start": 64.52,
+   "end": 64.72
+  },
+  {
+   "word": "un",
+   "start": 64.72,
+   "end": 64.84
+  },
+  {
+   "word": "extra",
+   "start": 64.84,
+   "end": 65.18
+  },
+  {
+   "word": "al",
+   "start": 65.18,
+   "end": 65.28
+  },
+  {
+   "word": "mesero.",
+   "start": 65.28,
+   "end": 65.6
+  },
+  {
+   "word": "Le",
+   "start": 65.76,
+   "end": 65.92
+  },
+  {
+   "word": "estás",
+   "start": 65.92,
+   "end": 66.08
+  },
+  {
+   "word": "pagando",
+   "start": 66.08,
+   "end": 66.5
+  },
+  {
+   "word": "el",
+   "start": 66.5,
+   "end": 66.64
+  },
+  {
+   "word": "sueldo",
+   "start": 66.64,
+   "end": 66.98
+  },
+  {
+   "word": "que",
+   "start": 66.98,
+   "end": 67.12
+  },
+  {
+   "word": "el",
+   "start": 67.12,
+   "end": 67.22
+  },
+  {
+   "word": "restaurante",
+   "start": 67.22,
+   "end": 67.92
+  },
+  {
+   "word": "no",
+   "start": 67.92,
+   "end": 68.04
+  },
+  {
+   "word": "le",
+   "start": 68.04,
+   "end": 68.16
+  },
+  {
+   "word": "paga.",
+   "start": 68.16,
+   "end": 68.44
+  },
+  {
+   "word": "Ahora",
+   "start": 68.92,
+   "end": 69.16
+  },
+  {
+   "word": "ya",
+   "start": 69.16,
+   "end": 69.28
+  },
+  {
+   "word": "sabes",
+   "start": 69.28,
+   "end": 69.48
+  },
+  {
+   "word": "por",
+   "start": 69.48,
+   "end": 69.66
+  },
+  {
+   "word": "qué",
+   "start": 69.66,
+   "end": 69.7
+  },
+  {
+   "word": "te",
+   "start": 69.7,
+   "end": 69.8
+  },
+  {
+   "word": "pone",
+   "start": 69.8,
+   "end": 69.96
+  },
+  {
+   "word": "la",
+   "start": 69.96,
+   "end": 70.08
+  },
+  {
+   "word": "pantallita",
+   "start": 70.08,
+   "end": 70.5
+  },
+  {
+   "word": "del",
+   "start": 70.5,
+   "end": 70.66
+  },
+  {
+   "word": "20%.",
+   "start": 70.66,
+   "end": 71.22
+  },
+  {
+   "word": "Mándaselo",
+   "start": 71.76,
+   "end": 72.12
+  },
+  {
+   "word": "a",
+   "start": 72.12,
+   "end": 72.2
+  },
+  {
+   "word": "quien",
+   "start": 72.2,
+   "end": 72.28
+  },
+  {
+   "word": "siempre",
+   "start": 72.28,
+   "end": 72.48
+  },
+  {
+   "word": "deja",
+   "start": 72.48,
+   "end": 72.7
+  },
+  {
+   "word": "10%.",
+   "start": 72.7,
+   "end": 73.16
+  }
+ ]
+}

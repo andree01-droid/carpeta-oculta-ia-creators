@@ -1,0 +1,144 @@
+// Una escena: fondo + cámara (empuje lento, movimientos con desenfoque) + elementos + transición.
+import React, {useMemo} from 'react';
+import {AbsoluteFill, Easing, interpolate, useCurrentFrame} from 'remotion';
+import {resolver, tramosPorPropiedad} from './animar';
+import {EscenaCtx, useVideo} from './contexto';
+import {Elemento} from './Elemento';
+import {FONDOS} from './estilos';
+import {Fondo} from '../componentes/Fondo';
+import type {ClaveCamara, EscenaSpec} from './tipos';
+
+const TRANS = 4; // cuadros a cada lado del corte en "empujeDesenfoque"
+const BLUR_TRANS = 22;
+
+type EstadoCam = {x: number; y: number; zoom: number; rotX: number; rotY: number; rotZ: number};
+
+export const Escena: React.FC<{
+  e: EscenaSpec;
+  f0: number;
+  f1: number;
+  /** transición de entrada de la escena siguiente (para animar la salida) */
+  transicionSalida?: EscenaSpec['transicion'];
+  esPrimera: boolean;
+}> = ({e, f0, f1, transicionSalida, esPrimera}) => {
+  const frame = useCurrentFrame();
+  const {reloj, estilo, spec, palabras} = useVideo();
+  // cuadros de las palabras clave dentro de la escena (para los golpes de cámara)
+  const golpesActivos = e.golpes ?? spec.golpes ?? true;
+  const claves = useMemo(
+    () => (golpesActivos ? palabras.filter((p) => p.clave).map((p) => Math.round(p.start * reloj.fps)).filter((f) => f >= f0 && f < f1) : []),
+    [golpesActivos, palabras, reloj.fps, f0, f1],
+  );
+  const tramosCam = useMemo(() => tramosPorPropiedad(e.camara as ClaveCamara[] | undefined, reloj), [e.camara, reloj]);
+  const transEntrada = e.transicion ?? (esPrimera ? 'corte' : 'empujeDesenfoque');
+  const visibleDesde = f0;
+  const visibleHasta = f1;
+  if (frame < visibleDesde || frame >= visibleHasta) return null;
+
+  const base: EstadoCam = {x: 540, y: 960, zoom: 1, rotX: 0, rotY: 0, rotZ: 0};
+  const cam = (f: number) => resolver(base as unknown as Record<string, unknown>, tramosCam, f) as unknown as EstadoCam;
+  const c = cam(frame);
+  const prev = cam(frame - 1);
+  const empuje = e.empuje ?? 0.02;
+  const zoomEmpuje = 1 + empuje * ((frame - f0) / reloj.fps);
+  // golpe: sube en 3 cuadros y se asienta en ~14 (muelle), con una leve sacudida
+  let golpe = 0;
+  let sacudida = 0;
+  claves.forEach((fk, i) => {
+    const d = frame - fk;
+    if (d < 0 || d > 30) return;
+    const env = d < 3 ? d / 3 : Math.exp(-(d - 3) / 6) * Math.cos((d - 3) / 3.2);
+    golpe += env;
+    sacudida += (i % 2 ? 1 : -1) * env;
+  });
+  const zoom = c.zoom * zoomEmpuje * (1 + 0.05 * golpe);
+  // deriva suave: la cámara nunca queda quieta
+  const deriva = e.deriva ?? 6;
+  const derivaX = deriva * Math.sin(frame / 47);
+  const derivaY = deriva * 0.7 * Math.cos(frame / 61);
+
+  // desenfoque de movimiento según la velocidad de cámara (px de pantalla por cuadro)
+  const vel =
+    Math.hypot((c.x - prev.x) * zoom, (c.y - prev.y) * zoom) +
+    Math.abs(c.zoom - prev.zoom) * 900 +
+    (Math.abs(c.rotX - prev.rotX) + Math.abs(c.rotY - prev.rotY) + Math.abs(c.rotZ - prev.rotZ)) * 12;
+  let blur = Math.min(16, vel * 0.25);
+  let escalaTrans = 1;
+  let opTrans = 1;
+  let dxTrans = 0;
+  const CLp = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+
+  // transición de entrada
+  if (!esPrimera) {
+    const p = interpolate(frame, [f0, f0 + TRANS + 2], [0, 1], {...CLp, easing: Easing.out(Easing.cubic)});
+    if (transEntrada === 'empujeDesenfoque') {
+      blur += (1 - p) * BLUR_TRANS;
+      escalaTrans *= 0.92 + 0.08 * p;
+    } else if (transEntrada === 'barrido') {
+      blur += (1 - p) * 30;
+      dxTrans += (1 - p) * 420;
+    } else if (transEntrada === 'zoomGolpe') {
+      blur += (1 - p) * 20;
+      escalaTrans *= 1.45 - 0.45 * p;
+    } else if (transEntrada === 'fundido') {
+      opTrans *= interpolate(frame, [f0, f0 + 8], [0, 1], CLp);
+    }
+  }
+  // transición de salida (según cómo entra la escena siguiente)
+  const q = interpolate(frame, [f1 - TRANS, f1], [0, 1], {...CLp, easing: Easing.in(Easing.cubic)});
+  if (transicionSalida === 'empujeDesenfoque') {
+    blur += q * BLUR_TRANS;
+    escalaTrans *= 1 + 0.15 * q;
+  } else if (transicionSalida === 'barrido') {
+    blur += q * 30;
+    dxTrans -= q * 420;
+  } else if (transicionSalida === 'zoomGolpe') {
+    blur += q * 20;
+    escalaTrans *= 1 + 0.6 * q;
+  }
+
+  const fondo = {...FONDOS[estilo], ...(e.fondo ?? {})};
+  const persp = e.perspectiva ?? 2200;
+
+  return (
+    <EscenaCtx.Provider value={{f0, f1}}>
+      <AbsoluteFill style={{opacity: opTrans}}>
+        <Fondo f={fondo} semilla={e.id ?? `esc-${f0}`} />
+        <AbsoluteFill
+          style={{
+            filter: blur > 0.1 ? `blur(${blur}px)` : undefined,
+            scale: String(escalaTrans),
+            translate: `${dxTrans}px 0px`,
+            perspective: persp,
+            perspectiveOrigin: '540px 960px',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              width: 1080,
+              height: 1920,
+              transformOrigin: '0 0',
+              transformStyle: 'preserve-3d',
+              transform: `translate(${540 + derivaX}px, ${960 + derivaY}px) rotateX(${c.rotX}deg) rotateY(${c.rotY}deg) rotateZ(${c.rotZ + sacudida * 0.8}deg) scale(${zoom}) translate(${-c.x}px, ${-c.y}px)`,
+            }}
+          >
+            {e.elementos.map((el, i) => (
+              <Elemento key={el.id ?? i} e={el} />
+            ))}
+          </div>
+        </AbsoluteFill>
+        {e.encima?.length ? (
+          <AbsoluteFill style={{filter: blur > 0.1 ? `blur(${blur}px)` : undefined, scale: String(escalaTrans), perspective: persp, perspectiveOrigin: '540px 960px'}}>
+            {e.encima.map((el, i) => (
+              <Elemento key={el.id ?? `enc-${i}`} e={el} />
+            ))}
+          </AbsoluteFill>
+        ) : null}
+      </AbsoluteFill>
+    </EscenaCtx.Provider>
+  );
+};

@@ -1,0 +1,31 @@
+"""Agrega data-duration (largo real del archivo) a cada <audio id="sfx-…"> de un index.html de HyperFrames.
+
+Uso: hf_sfx_duraciones.py <proyecto>
+"""
+import os, re, subprocess, sys
+
+p = sys.argv[1]
+f = os.path.join(p, "index.html")
+s = open(f, encoding="utf-8").read()
+cache = {}
+
+
+def dur(rel):
+    if rel not in cache:
+        out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0",
+                              os.path.join(p, rel)], capture_output=True, text=True).stdout.strip()
+        cache[rel] = round(float(out), 2)
+    return cache[rel]
+
+
+def cambiar(m):
+    tag = m.group(0)
+    if "data-duration" in tag:
+        return tag
+    rel = re.search(r'src="([^"]+)"', tag).group(1)
+    return tag.replace("data-track-index=", f'data-duration="{dur(rel)}" data-track-index=')
+
+
+s2 = re.sub(r'<audio id="sfx-[^>]+>', cambiar, s)
+open(f, "w", encoding="utf-8").write(s2)
+print(f"{len(re.findall(r'<audio id=\"sfx-', s2))} efectos con duración")

@@ -1,0 +1,22 @@
+"""Mide cuánto se mueve la imagen de un video (para comparar contra las referencias).
+
+Uso: movimiento.py <video> [<video> ...]
+Por cada video: % de cuadros "quietos" (casi sin cambio), cambio medio entre cuadros y
+cuántos segundos seguidos llega a estar la imagen quieta. Se ignora la franja de subtítulos (y < 30 %).
+"""
+import subprocess, sys
+import numpy as np
+
+W, H = 180, 320
+for v in sys.argv[1:]:
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", v, "-vf", f"fps=30,scale={W}:{H},format=gray", "-f", "rawvideo", "-"],
+                         capture_output=True).stdout
+    f = np.frombuffer(raw, np.uint8).reshape(-1, H, W).astype(np.float32)[:, int(H * 0.3):, :]
+    d = np.abs(np.diff(f, axis=0)).mean(axis=(1, 2))
+    quieto = d < 0.35
+    rachas, r = [], 0
+    for q in quieto:
+        r = r + 1 if q else 0
+        rachas.append(r)
+    print(f"{v.split(chr(92))[-1]:28s} cambio medio {d.mean():5.2f} | mediana {np.median(d):5.2f} | "
+          f"cuadros quietos {quieto.mean()*100:4.1f}% | quietud más larga {max(rachas)/30:4.1f}s")

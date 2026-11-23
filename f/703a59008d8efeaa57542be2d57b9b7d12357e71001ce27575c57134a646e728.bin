@@ -1,0 +1,368 @@
+// Elementos animados reutilizables (CLAUDE.md §6).
+import React from 'react';
+import {Easing, Img, interpolate, staticFile} from 'remotion';
+import {COLORES} from '../motor/estilos';
+import {FUENTE} from '../motor/fuentes';
+import {useVideo} from '../motor/contexto';
+import {bool, num, str, type PropsElemento} from './tipos';
+
+const CL = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+
+/** Grupo: contenedor (también 3D) para hijos con coordenadas propias. */
+export const Grupo: React.FC<PropsElemento> = ({ancho, alto, children}) => (
+  <div style={{position: 'absolute', inset: 0, width: ancho, height: alto, transformStyle: 'preserve-3d'}}>
+    {children}
+  </div>
+);
+
+/** Texto libre. */
+export const Texto: React.FC<PropsElemento> = ({p}) => (
+  <div
+    style={{
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      translate: '-50% -50%',
+      whiteSpace: 'pre',
+      fontFamily: FUENTE,
+      fontSize: num(p.tamano, 48),
+      fontWeight: num(p.peso, 600),
+      color: str(p.color, COLORES.blanco),
+      letterSpacing: `${num(p.tracking, 0)}em`,
+      textTransform: bool(p.mayus, false) ? 'uppercase' : 'none',
+      textAlign: 'center',
+      lineHeight: 1.15,
+      textShadow: str(p.sombra, ''),
+    }}
+  >
+    {str(p.texto, '')}
+  </div>
+);
+
+/**
+ * Etiqueta con línea guía en codo: un punto sobre el objeto (x, y del elemento),
+ * línea que sale (dx, dy) y texto al final. La línea se dibuja en 6 cuadros, el texto entra en 4.
+ */
+export const Etiqueta: React.FC<PropsElemento> = ({p, frame, f0}) => {
+  const dx = num(p.dx, -320);
+  const dy = num(p.dy, 0);
+  const tamano = num(p.tamano, 34);
+  const mayus = bool(p.mayus, false);
+  const color = str(p.color, COLORES.blanco);
+  const lado = dx < 0 ? 'izq' : 'der';
+  const prog = interpolate(frame, [f0, f0 + 6], [0, 1], {...CL, easing: Easing.out(Easing.cubic)});
+  const opTexto = interpolate(frame, [f0 + 3, f0 + 7], [0, 1], CL);
+  // camino: punto -> vertical hasta dy -> horizontal hasta dx
+  const lv = Math.abs(dy);
+  const lh = Math.abs(dx);
+  const total = lv + lh;
+  const largo = total * prog;
+  const vert = Math.min(lv, largo);
+  const hor = Math.max(0, largo - lv);
+  const sy = dy < 0 ? -1 : 1;
+  const sx = dx < 0 ? -1 : 1;
+  const d = `M 0 0 L 0 ${sy * vert} ${hor > 0 ? `L ${sx * hor} ${sy * lv}` : ''}`;
+  return (
+    <div style={{position: 'absolute', left: 0, top: 0}}>
+      <svg
+        width={2}
+        height={2}
+        style={{position: 'absolute', overflow: 'visible', left: 0, top: 0}}
+      >
+        <path d={d} stroke={color} strokeOpacity={0.85} strokeWidth={2} fill="none" />
+        {bool(p.punto, true) ? <circle cx={0} cy={0} r={6} fill={color} /> : null}
+      </svg>
+      <div
+        style={{
+          position: 'absolute',
+          left: dx + (lado === 'izq' ? -14 : 14),
+          top: dy,
+          translate: lado === 'izq' ? '-100% -50%' : '0 -50%',
+          whiteSpace: 'nowrap',
+          fontFamily: FUENTE,
+          fontSize: tamano,
+          fontWeight: num(p.peso, 700),
+          letterSpacing: mayus ? '0.22em' : '0em',
+          textTransform: mayus ? 'uppercase' : 'none',
+          color,
+          opacity: opTexto,
+        }}
+      >
+        {str(p.texto, '')}
+      </div>
+    </div>
+  );
+};
+
+/** Contador animado con ease-out. */
+export const Contador: React.FC<PropsElemento> = ({p, frame, f0}) => {
+  const {reloj} = useVideo();
+  const inicio = p.cuentaDesde !== undefined ? reloj.cuadro(p.cuentaDesde as string | number) : f0;
+  const dur = num(p.dur, 20);
+  const valor = interpolate(frame, [inicio, inicio + dur], [num(p.de, 0), num(p.a, 100)], {
+    ...CL,
+    easing: Easing.out(Easing.cubic),
+  });
+  const dec = num(p.decimales, 0);
+  // agrupar=false para años (1991, no 1.991); locale "en-US" para dólares ($2.13)
+  const texto = valor.toLocaleString(str(p.locale, 'es-ES'), {minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: bool(p.agrupar, true)});
+  const tamano = num(p.tamano, 90);
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: '50%',
+        top: '50%',
+        translate: '-50% -50%',
+        whiteSpace: 'nowrap',
+        fontFamily: FUENTE,
+        fontWeight: 700,
+        fontSize: tamano,
+        fontVariantNumeric: 'tabular-nums',
+        color: str(p.color, COLORES.blanco),
+        display: 'flex',
+        alignItems: 'baseline',
+        gap: tamano * 0.15,
+      }}
+    >
+      {str(p.prefijo, '')}
+      {texto}
+      {p.unidad ? (
+        <span style={{fontSize: tamano * 0.5, fontWeight: 500, color: str(p.colorUnidad, COLORES.grisEtiqueta)}}>
+          {str(p.unidad, '')}
+        </span>
+      ) : null}
+    </div>
+  );
+};
+
+/** Pastilla de valor / etiqueta de ciudad. */
+export const Pastilla: React.FC<PropsElemento> = ({p}) => (
+  <div
+    style={{
+      position: 'absolute',
+      left: '50%',
+      top: '50%',
+      translate: '-50% -50%',
+      whiteSpace: 'nowrap',
+      padding: `${num(p.padY, 12)}px ${num(p.padX, 22)}px`,
+      borderRadius: num(p.radio, 14),
+      background: str(p.fondo, 'rgba(20,20,20,0.85)'),
+      border: `1.5px solid ${str(p.borde, '#3A3A3A')}`,
+      fontFamily: FUENTE,
+      fontSize: num(p.tamano, 44),
+      fontWeight: num(p.peso, 500),
+      color: str(p.color, COLORES.coral),
+    }}
+  >
+    {str(p.texto, '')}
+  </div>
+);
+
+/** Ruta SVG que se dibuja. d en coordenadas del elemento (0..ancho, 0..alto). */
+export const Ruta: React.FC<PropsElemento> = ({p, ancho, alto, frame, f0}) => {
+  const dur = num(p.dur, 30);
+  const progreso =
+    p.progreso !== undefined
+      ? num(p.progreso, 1)
+      : interpolate(frame, [f0, f0 + dur], [0, 1], {...CL, easing: Easing.bezier(0.65, 0, 0.35, 1)});
+  const color = str(p.color, COLORES.doradoBrillo);
+  const grosor = num(p.grosor, 5);
+  const punteado = bool(p.punteado, false);
+  const d = str(p.d, 'M 0 0 L 100 0');
+  // pathLength=1 permite dibujar por fracción
+  const dash = punteado ? undefined : `${progreso} 1`;
+  return (
+    <svg width={ancho} height={alto} style={{position: 'absolute', inset: 0, overflow: 'visible'}}>
+      {!punteado && bool(p.brillo, true) ? (
+        <path
+          d={d}
+          pathLength={1}
+          stroke={color}
+          strokeWidth={grosor * 2.5}
+          strokeOpacity={0.45}
+          fill="none"
+          strokeLinecap="round"
+          strokeDasharray={dash}
+          style={{filter: 'blur(10px)'}}
+        />
+      ) : null}
+      <path
+        d={d}
+        pathLength={punteado ? undefined : 1}
+        stroke={color}
+        strokeWidth={grosor}
+        fill="none"
+        strokeLinecap="round"
+        strokeDasharray={punteado ? '10 8' : dash}
+        opacity={punteado ? progreso : 1}
+      />
+    </svg>
+  );
+};
+
+/** Flecha de dirección que se desliza (se repite cada 20 cuadros). */
+export const Flecha: React.FC<PropsElemento> = ({p, frame, f0}) => {
+  const largo = num(p.largo, 70);
+  const ciclo = (frame - f0) % 20;
+  const desliz = interpolate(ciclo, [0, 12], [0, 30], {...CL, easing: Easing.out(Easing.cubic)});
+  const op = interpolate(ciclo, [0, 4, 14, 20], [0, 1, 1, 0], CL);
+  return (
+    <svg
+      width={largo + 40}
+      height={60}
+      style={{position: 'absolute', left: '50%', top: '50%', translate: '-50% -50%', overflow: 'visible', rotate: `${num(p.dir, 0)}deg`}}
+    >
+      <g transform={`translate(${desliz}, 30)`} opacity={op}>
+        <line x1={0} y1={0} x2={largo} y2={0} stroke={str(p.color, '#fff')} strokeWidth={4} strokeLinecap="round" />
+        <path d={`M ${largo - 18} -14 L ${largo} 0 L ${largo - 18} 14`} stroke={str(p.color, '#fff')} strokeWidth={4} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+};
+
+/** Plano translúcido de referencia con rótulo (el "0" del metro). */
+export const PlanoReferencia: React.FC<PropsElemento> = ({p, ancho, alto, frame, f0}) => {
+  const c = str(p.color, COLORES.turquesa);
+  const s = interpolate(frame, [f0, f0 + 8], [0, 1], {...CL, easing: Easing.out(Easing.cubic)});
+  return (
+    <div style={{position: 'absolute', inset: 0, width: ancho, height: alto}}>
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: c,
+          opacity: 0.22,
+          border: `3px solid ${c}`,
+          boxShadow: `0 0 12px ${c}`,
+          scale: `1 ${s}`,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: -70,
+          translate: '-50% 0',
+          fontFamily: FUENTE,
+          fontSize: 54,
+          fontWeight: 600,
+          color: c,
+          textShadow: `0 0 12px ${c}`,
+          opacity: s,
+        }}
+      >
+        {str(p.rotulo, '0')}
+      </div>
+    </div>
+  );
+};
+
+/** Corchete de medida que se dibuja en 6 cuadros. */
+export const Corchete: React.FC<PropsElemento> = ({p, ancho, alto, frame, f0}) => {
+  const prog = interpolate(frame, [f0, f0 + 6], [0, 1], CL);
+  const c = str(p.color, COLORES.ambar);
+  const pata = num(p.pata, 14);
+  const vertical = bool(p.vertical, false);
+  const d = vertical
+    ? `M ${pata} 0 L 0 0 L 0 ${alto} L ${pata} ${alto}`
+    : `M 0 ${pata} L 0 0 L ${ancho} 0 L ${ancho} ${pata}`;
+  return (
+    <svg width={ancho} height={alto} style={{position: 'absolute', inset: 0, overflow: 'visible'}}>
+      <path d={d} pathLength={1} strokeDasharray={`${prog} 1`} stroke={c} strokeWidth={2.5} fill="none" />
+    </svg>
+  );
+};
+
+/** Anillo de foco que se dibuja girando y luego late. */
+export const AnilloFoco: React.FC<PropsElemento> = ({p, ancho, frame, f0}) => {
+  const r = ancho / 2 - 4;
+  const prog = interpolate(frame, [f0, f0 + 10], [0, 1], {...CL, easing: Easing.out(Easing.cubic)});
+  const late = 1 + 0.03 * Math.sin(((frame - f0) / 30) * Math.PI * 2);
+  const c = str(p.color, COLORES.dorado);
+  return (
+    <svg width={ancho} height={ancho} style={{position: 'absolute', inset: 0, overflow: 'visible', scale: String(late)}}>
+      <circle cx={ancho / 2} cy={ancho / 2} r={r} stroke={c} strokeWidth={6} strokeOpacity={0.35} fill="none" style={{filter: 'blur(6px)'}} pathLength={1} strokeDasharray={`${prog} 1`} transform={`rotate(-90 ${ancho / 2} ${ancho / 2})`} />
+      <circle cx={ancho / 2} cy={ancho / 2} r={r} stroke={c} strokeWidth={3} fill="none" pathLength={1} strokeDasharray={`${prog} 1`} transform={`rotate(-90 ${ancho / 2} ${ancho / 2})`} />
+    </svg>
+  );
+};
+
+/** Zona resaltada con color de acento y brillo. */
+export const Resaltado: React.FC<PropsElemento> = ({p, ancho, alto}) => {
+  const c = str(p.color, COLORES.ambar);
+  const elipse = str(p.forma, 'rect') === 'elipse';
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: ancho,
+        height: alto,
+        background: c,
+        opacity: num(p.intensidad, 0.85),
+        borderRadius: elipse ? '50%' : num(p.radio, 14),
+        boxShadow: `0 0 ${num(p.brillo, 16)}px ${c}`,
+        border: p.borde ? `2px solid ${str(p.borde, '#fff')}` : undefined,
+      }}
+    />
+  );
+};
+
+/** Retícula de toque (círculo + cruz) que aparece en cada toque. */
+export const Reticula: React.FC<PropsElemento> = ({p, frame, ancho}) => {
+  const {reloj} = useVideo();
+  const toques = ((p.toques as (string | number)[]) ?? []).map((t) => reloj.cuadro(t));
+  const ultimo = toques.filter((t) => t <= frame).pop();
+  if (ultimo === undefined) return null;
+  const d = frame - ultimo;
+  const s = interpolate(d, [0, 6], [0.6, 1], {...CL, easing: Easing.out(Easing.cubic)});
+  const op = interpolate(d, [0, 3, num(p.dura, 24), num(p.dura, 24) + 6], [0, 1, 1, 0], CL);
+  const r = ancho / 2;
+  return (
+    <svg width={ancho} height={ancho} style={{position: 'absolute', inset: 0, overflow: 'visible', scale: String(s), opacity: op}}>
+      <circle cx={r} cy={r} r={r - 2} fill="rgba(255,255,255,0.10)" stroke="rgba(255,255,255,0.55)" strokeWidth={2} />
+      <circle cx={r} cy={r} r={r * 0.55} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={1.5} />
+      <line x1={r - r * 0.45} y1={r} x2={r + r * 0.45} y2={r} stroke="#fff" strokeWidth={3} />
+      <line x1={r} y1={r - r * 0.45} x2={r} y2={r + r * 0.45} stroke="#fff" strokeWidth={3} />
+    </svg>
+  );
+};
+
+/** Mancha de luz (resplandor) para dar volumen. */
+export const Brillo: React.FC<PropsElemento> = ({p, ancho, alto}) => (
+  <div
+    style={{
+      position: 'absolute',
+      inset: 0,
+      width: ancho,
+      height: alto,
+      borderRadius: '50%',
+      background: `radial-gradient(closest-side, ${str(p.color, 'rgba(239,163,45,0.55)')}, transparent)`,
+    }}
+  />
+);
+
+/** Imagen desde public/. */
+export const Imagen: React.FC<PropsElemento> = ({p, ancho, alto}) => (
+  <Img
+    src={staticFile(str(p.src, ''))}
+    style={{position: 'absolute', inset: 0, width: ancho, height: alto, objectFit: (str(p.ajuste, 'cover') as 'cover'), borderRadius: num(p.radio, 0)}}
+  />
+);
+
+/** Rectángulo / forma simple (paneles, fondos degradados, máscaras). */
+export const Caja: React.FC<PropsElemento> = ({p, ancho, alto}) => (
+  <div
+    style={{
+      position: 'absolute',
+      inset: 0,
+      width: ancho,
+      height: alto,
+      background: str(p.fondo, '#222'),
+      borderRadius: num(p.radio, 0),
+      border: p.borde ? str(p.borde, '') : undefined,
+      boxShadow: p.sombra ? str(p.sombra, '') : undefined,
+    }}
+  />
+);

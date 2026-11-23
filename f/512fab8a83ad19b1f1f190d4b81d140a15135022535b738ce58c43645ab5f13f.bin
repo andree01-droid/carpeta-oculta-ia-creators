@@ -1,0 +1,17 @@
+"""Lista los modelos de Gemini con salida de audio (TTS) disponibles para la clave de .env"""
+import json, os, urllib.request
+
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+clave = [l.split("=", 1)[1].strip() for l in open(os.path.join(RAIZ, ".env")) if l.startswith("GEMINI_API_KEY")][0]
+req = urllib.request.Request("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200",
+                             headers={"x-goog-api-key": clave})
+try:
+    data = json.load(urllib.request.urlopen(req, timeout=30))
+except urllib.error.HTTPError as e:
+    print("HTTP", e.code, e.read().decode()[:500])
+    raise SystemExit(1)
+for m in data.get("models", []):
+    n = m["name"]
+    if "tts" in n.lower() or "audio" in n.lower():
+        print(n, "|", m.get("displayName"), "|", m.get("supportedGenerationMethods"))
+print("total modelos:", len(data.get("models", [])))

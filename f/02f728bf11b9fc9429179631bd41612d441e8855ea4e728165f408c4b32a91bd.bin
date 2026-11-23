@@ -1,0 +1,73 @@
+// Agrupa las palabras de la voz en bloques de subtítulos (CLAUDE.md §3).
+// Regla medida en los originales: líneas cortas (2–4 palabras, ≤ 21 caracteres),
+// se corta antes de palabras "de enlace"; máximo 2 líneas por bloque;
+// el bloque termina al final de cada oración o en una pausa larga.
+import {normalizar} from './reloj';
+import type {Palabra} from './tipos';
+
+export type PalabraSub = Palabra & {indice: number};
+export type Linea = PalabraSub[];
+export type Bloque = {lineas: Linea[]; inicio: number; fin: number};
+
+const ENLACE = new Set(
+  'de del que y e o es son la las el los lo no a al en con para por se su sus tu tus mi un una unos unas pero porque mientras casi cuando donde como si ni ya hay'.split(
+    ' ',
+  ),
+);
+
+const FIN_ORACION = /[.?!…]["»”]?$/;
+const PAUSA = /[,;:]["»”]?$/;
+
+export const MAX_CARACTERES = 21;
+export const MIN_ANTES_DE_ENLACE = 11;
+
+/** cortes: tiempos (s) de palabras donde se fuerza un bloque nuevo */
+export const armarBloques = (palabras: Palabra[], maxPalabras = 7, cortes: number[] = []): Bloque[] => {
+  const ws: PalabraSub[] = palabras.map((p, i) => ({...p, indice: i}));
+  const forzado = (p?: PalabraSub) => !!p && cortes.some((c) => Math.abs(c - p.start) < 0.005);
+  // 1) líneas
+  const lineas: {linea: Linea; cierraBloque: boolean}[] = [];
+  let actual: Linea = [];
+  const largo = (l: Linea) => l.map((p) => p.word).join(' ').length;
+  ws.forEach((p, i) => {
+    const siguiente = ws[i + 1];
+    actual.push(p);
+    const fin = !siguiente;
+    const finOracion = FIN_ORACION.test(p.word);
+    const pausaLarga = siguiente ? siguiente.start - p.end > 0.35 : false;
+    let cortar = fin || finOracion || pausaLarga || forzado(siguiente);
+    const cierra = cortar;
+    if (!cortar && siguiente) {
+      const conSiguiente = largo(actual) + 1 + siguiente.word.length;
+      if (conSiguiente > MAX_CARACTERES) cortar = true;
+      else if (largo(actual) >= MIN_ANTES_DE_ENLACE && ENLACE.has(normalizar(siguiente.word))) cortar = true;
+      else if (largo(actual) >= 12 && PAUSA.test(p.word)) cortar = true;
+    }
+    if (cortar) {
+      lineas.push({linea: actual, cierraBloque: cierra});
+      actual = [];
+    }
+  });
+  // 2) bloques de hasta 2 líneas
+  const bloques: Bloque[] = [];
+  let lineasBloque: Linea[] = [];
+  lineas.forEach(({linea, cierraBloque}) => {
+    const n = lineasBloque.reduce((s, l) => s + l.length, 0);
+    if (lineasBloque.length === 2 || n + linea.length > maxPalabras) {
+      bloques.push(cerrar(lineasBloque));
+      lineasBloque = [];
+    }
+    lineasBloque.push(linea);
+    if (cierraBloque) {
+      bloques.push(cerrar(lineasBloque));
+      lineasBloque = [];
+    }
+  });
+  if (lineasBloque.length) bloques.push(cerrar(lineasBloque));
+  return bloques;
+};
+
+const cerrar = (lineas: Linea[]): Bloque => {
+  const todas = lineas.flat();
+  return {lineas, inicio: todas[0].start, fin: todas[todas.length - 1].end};
+};

@@ -1,0 +1,270 @@
+// Teclado iOS oscuro (español) medido sobre el video "teclado" (ver ANALISIS.md §9).
+// Caja del elemento = panel del teclado: 924 × 612 px. El campo de texto se dibuja encima (y = -100).
+import React from 'react';
+import {Easing, interpolate, random} from 'remotion';
+import {COLORES} from '../motor/estilos';
+import {FUENTE_UI} from '../motor/fuentes';
+import {bool, num, str, type PropsElemento} from './tipos';
+
+export const PANEL_W = 924;
+export const PANEL_H = 612;
+const KW = 75;
+const KH = 94.5;
+const PITCH = 90;
+const ROWS_Y = [124.5, 249, 373.5, 496.5];
+
+export type Tecla = {id: string; label: string; x: number; y: number; w: number; h: number; letra: boolean; especial: boolean};
+
+export const TECLAS: Tecla[] = (() => {
+  const t: Tecla[] = [];
+  'qwertyuiop'.split('').forEach((c, i) => t.push({id: c, label: c, x: 19.5 + i * PITCH, y: ROWS_Y[0], w: KW, h: KH, letra: true, especial: false}));
+  'asdfghjklñ'.split('').forEach((c, i) => t.push({id: c, label: c, x: 19.5 + i * PITCH, y: ROWS_Y[1], w: KW, h: KH, letra: true, especial: false}));
+  t.push({id: 'shift', label: '⇧', x: 19.5, y: ROWS_Y[2], w: 97.5, h: KH, letra: false, especial: true});
+  'zxcvbnm'.split('').forEach((c, i) => t.push({id: c, label: c, x: 154.5 + i * PITCH, y: ROWS_Y[2], w: KW, h: KH, letra: true, especial: false}));
+  t.push({id: 'borrar', label: '⌫', x: 807, y: ROWS_Y[2], w: 97.5, h: KH, letra: false, especial: true});
+  t.push({id: '123', label: '123', x: 19.5, y: ROWS_Y[3], w: 210, h: KH, letra: false, especial: true});
+  t.push({id: 'espacio', label: 'espacio', x: 241.5, y: ROWS_Y[3], w: 438, h: KH, letra: false, especial: false});
+  t.push({id: 'intro', label: 'intro', x: 694.5, y: ROWS_Y[3], w: 210, h: KH, letra: false, especial: true});
+  return t;
+})();
+
+/** Centro de una tecla en coordenadas del panel (útil para colocar dedos/retículas). */
+export const centroTecla = (id: string) => {
+  const k = TECLAS.find((t) => t.id === id);
+  return k ? {x: k.x + k.w / 2, y: k.y + k.h / 2} : {x: PANEL_W / 2, y: PANEL_H / 2};
+};
+
+type Modo = 'teclas' | 'zonas' | 'ranuras' | 'contornos';
+
+export const TecladoIOS: React.FC<PropsElemento> = ({p, frame}) => {
+  const modo = str(p.modo, 'teclas') as Modo;
+  const mayus = bool(p.mayusculas, true);
+  const deformar = num(p.deformar, 0);
+  const prof = num(p.profundidad, 0);
+  const pulsada = str(p.pulsada, '');
+  const popup = str(p.popup, '');
+  const zonaGrande = str(p.zonaGrande, '');
+  const zonaFactor = num(p.zonaFactor, 1);
+  const fondoZonas = bool(p.fondoZonas, false);
+  const campoVisible = bool(p.campoVisible, true);
+  const campoDentro = bool(p.campoDentro, false);
+  const sugerencias = (p.sugerencias as string[] | null | undefined) === null ? null : ((p.sugerencias as string[]) ?? ['Hola', 'Vale', 'Sí']);
+  const texto = str(p.campo, '');
+  const hilos = num(p.hilos, 0);
+  const letraTam = num(p.letraTamano, 45);
+  const panelColor = modo === 'ranuras' || modo === 'contornos' ? '#2A2A2A' : str(p.panelColor, COLORES.panelTeclado);
+  const brilloZonas = bool(p.brilloZonas, modo === 'zonas');
+  const cursorVisible = Math.floor(frame / 15) % 2 === 0;
+  // vista macro desde el borde superior: todos los textos se ven girados 180°
+  const giro: React.CSSProperties = bool(p.invertirTexto, false) ? {rotate: '180deg'} : {};
+  const colorZonas = str(p.colorZonas, COLORES.ambar);
+  const burbuja = str(p.burbuja, '');
+
+  // forma de cada zona táctil (con deformación pseudoaleatoria estable)
+  const zona = (k: Tecla) => {
+    const j = (s: string) => (random(`${k.id}-${s}-${Math.round(num(p.semilla, 1))}`) - 0.5) * 2 * deformar * 16;
+    let x = k.x - 7.5 + j('l');
+    let y = k.y - 15 + j('t');
+    let w = k.w + 15 + j('r') - j('l');
+    let h = k.h + 30 + j('b') - j('t');
+    if (k.id === zonaGrande && zonaFactor !== 1) {
+      const cx = x + w / 2;
+      const cy = y + h / 2;
+      w *= zonaFactor;
+      h *= zonaFactor;
+      x = cx - w / 2;
+      y = cy - h / 2;
+    }
+    return {x, y, w, h};
+  };
+
+  const letra = (l: string) => (mayus ? l.toUpperCase() : l);
+  const top = campoDentro ? -112 : 0;
+
+  return (
+    <div style={{position: 'absolute', inset: 0, width: PANEL_W, height: PANEL_H, fontFamily: FUENTE_UI, transformStyle: 'preserve-3d'}}>
+      {/* panel */}
+      <div
+        style={{
+          position: 'absolute',
+          left: 0,
+          top,
+          width: PANEL_W,
+          height: PANEL_H - top,
+          borderRadius: 26,
+          background: panelColor,
+          boxShadow:
+            modo === 'zonas' && brilloZonas
+              ? '0 0 60px 10px rgba(239,163,45,0.45), 0 0 140px 30px rgba(239,163,45,0.18)'
+              : prof > 0
+                ? `0 ${prof}px 0 #1d1d1d`
+                : '0 1px 0 rgba(255,255,255,0.06) inset',
+          border: modo === 'ranuras' || modo === 'contornos' || modo === 'zonas' ? '2px solid #3A3A3A' : '1.5px solid rgba(255,255,255,0.08)',
+          boxSizing: 'border-box',
+        }}
+      />
+      {/* campo de texto */}
+      {campoVisible && modo === 'teclas' ? (
+        <div style={{position: 'absolute', left: 0, top: num(p.campoY, 0), width: PANEL_W, height: 0}}>
+          {burbuja ? (
+            <div style={{position: 'absolute', left: 102, top: -190, padding: '10px 26px', borderRadius: 30, background: '#2C2C2E', color: '#fff', fontSize: 36, whiteSpace: 'nowrap', ...giro}}>
+              {burbuja}
+            </div>
+          ) : null}
+          <div style={{position: 'absolute', left: 21, top: -96, width: 60, height: 60, borderRadius: 30, background: '#3A3A3C', color: '#BDBDBD', fontSize: 52, lineHeight: '58px', textAlign: 'center', fontWeight: 300}}>
+            +
+          </div>
+          <div
+            style={{
+              position: 'absolute',
+              left: 102,
+              top: -100,
+              width: 798,
+              height: 68,
+              borderRadius: 34,
+              border: '1.5px solid #3A3A3C',
+              background: '#1C1C1E',
+              boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              paddingLeft: 30,
+              fontSize: 39,
+              color: texto ? str(p.campoColor, '#FFFFFF') : '#8E8E93',
+              whiteSpace: 'pre',
+            }}
+          >
+            <span style={{display: 'inline-flex', alignItems: 'center', ...giro}}>
+              {texto ? texto : null}
+              <span style={{display: 'inline-block', width: 3.5, height: 44, background: COLORES.azulIOS, marginLeft: texto ? 2 : 0, marginRight: 2, opacity: cursorVisible ? 1 : 0}} />
+              {texto ? null : 'iMessage'}
+            </span>
+          </div>
+        </div>
+      ) : null}
+      {/* barra de sugerencias */}
+      {sugerencias && modo === 'teclas' ? (
+        <div style={{position: 'absolute', left: 0, top: 0, width: PANEL_W, height: 124, display: 'flex', alignItems: 'center'}}>
+          {sugerencias.map((s, i) => (
+            <React.Fragment key={i}>
+              {i > 0 ? <div style={{width: 1.5, height: 52, background: 'rgba(255,255,255,0.12)'}} /> : null}
+              <div style={{flex: 1, textAlign: 'center', color: '#fff', fontSize: 39, ...giro}}>{s}</div>
+            </React.Fragment>
+          ))}
+        </div>
+      ) : null}
+      {/* base ámbar bajo las filas de teclas (solo cuando se ven las zonas detrás de las teclas) */}
+      {fondoZonas ? (
+        <div style={{position: 'absolute', left: 0, top: 109.5, width: PANEL_W, height: PANEL_H - 109.5, background: '#6B4410', borderBottomLeftRadius: 26, borderBottomRightRadius: 26}} />
+      ) : null}
+      {/* zonas táctiles detrás de las teclas (vista "lo que tocas") */}
+      {fondoZonas || modo === 'zonas' || modo === 'contornos'
+        ? TECLAS.filter((k) => k.letra).map((k) => {
+            const z = zona(k);
+            const grande = k.id === zonaGrande && zonaFactor !== 1;
+            const contorno = modo === 'contornos';
+            return (
+              <div
+                key={`z-${k.id}`}
+                style={{
+                  position: 'absolute',
+                  left: z.x,
+                  top: z.y,
+                  width: z.w,
+                  height: z.h,
+                  borderRadius: grande ? 34 : 8 + deformar * 10,
+                  background: contorno
+                    ? 'transparent'
+                    : grande
+                      ? 'radial-gradient(circle at 50% 45%, #FFC04D 0%, #F5A623 55%, #E0921A 100%)'
+                      : colorZonas,
+                  border: contorno ? '2.5px solid #D9A441' : `2.5px solid ${grande ? '#6B4410' : '#5B3A0B'}`,
+                  boxShadow: contorno ? '0 0 8px rgba(217,164,65,0.7)' : grande ? '0 0 30px rgba(245,166,35,0.8)' : undefined,
+                  boxSizing: 'border-box',
+                  zIndex: grande ? 2 : 1,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: '#8A5A14',
+                  fontSize: 30,
+                  fontWeight: 600,
+                }}
+              >
+                {modo === 'zonas' ? letra(k.label) : null}
+              </div>
+            );
+          })
+        : null}
+      {/* teclas */}
+      {TECLAS.map((k) => {
+        if (modo === 'zonas' && k.letra) return null;
+        const ranura = modo === 'ranuras' || modo === 'contornos' || (modo === 'zonas' && !k.letra);
+        const esPulsada = pulsada !== '' && pulsada.toLowerCase().split(',').map((s) => s.trim()).includes(k.id);
+        const fondo = ranura ? '#1A1A1A' : esPulsada ? '#F2F2F2' : k.especial ? COLORES.teclaOscura : COLORES.tecla;
+        return (
+          <div
+            key={k.id}
+            style={{
+              position: 'absolute',
+              left: k.x,
+              top: k.y,
+              width: k.w,
+              height: k.h,
+              borderRadius: 12,
+              background: fondo,
+              boxShadow: ranura ? 'inset 0 2px 4px rgba(0,0,0,0.5)' : prof > 0 ? `0 ${prof}px 0 #3B3B3B, 0 ${prof + 8}px 18px rgba(0,0,0,0.55)` : '0 3px 0 #3A3A3A',
+              color: esPulsada ? '#111' : '#FFFFFF',
+              display: 'grid',
+              placeItems: 'center',
+              fontSize: k.letra ? letraTam : 34,
+              fontWeight: 400,
+              zIndex: 3,
+            }}
+          >
+            {ranura ? null : <span style={giro}>{k.letra ? letra(k.label) : k.label}</span>}
+          </div>
+        );
+      })}
+      {/* globo de la tecla pulsada */}
+      {popup ? <Globo k={TECLAS.find((t) => t.id === popup.toLowerCase())} letra={letra(popup)} /> : null}
+      {/* hilos verticales hacia la capa de abajo (3D) */}
+      {hilos > 0
+        ? TECLAS.filter((k) => k.letra).map((k, i) => {
+            const prog = interpolate(num(p.hilosProgreso, 1), [0, 1], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic)});
+            const desf = (random(`hilo-${i}`) - 0.5) * 30;
+            return (
+              <div
+                key={`h-${k.id}`}
+                style={{
+                  position: 'absolute',
+                  left: k.x + k.w / 2 + desf,
+                  top: k.y + k.h / 2,
+                  width: 2,
+                  height: hilos * prog,
+                  background: 'linear-gradient(rgba(255,255,255,0.55), rgba(255,255,255,0.25))',
+                  transformOrigin: '50% 0',
+                  transform: 'rotateX(-90deg)',
+                }}
+              />
+            );
+          })
+        : null}
+    </div>
+  );
+};
+
+const Globo: React.FC<{k?: Tecla; letra: string}> = ({k, letra}) => {
+  if (!k) return null;
+  const w = k.w * 1.55;
+  const h = k.h * 2.35;
+  const x = k.x + k.w / 2 - w / 2;
+  const y = k.y + k.h - h;
+  const cuello = (w - k.w) / 2;
+  const d = `M ${cuello} ${h} L ${cuello} ${h * 0.62} Q ${cuello} ${h * 0.55} 0 ${h * 0.47} L 0 18 Q 0 0 18 0 L ${w - 18} 0 Q ${w} 0 ${w} 18 L ${w} ${h * 0.47} Q ${w - cuello} ${h * 0.55} ${w - cuello} ${h * 0.62} L ${w - cuello} ${h} Z`;
+  return (
+    <svg width={w} height={h} style={{position: 'absolute', left: x, top: y, overflow: 'visible', zIndex: 5, filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.45))'}}>
+      <path d={d} fill="#6E6E70" />
+      <text x={w / 2} y={h * 0.32} textAnchor="middle" dominantBaseline="middle" fill="#fff" fontSize={86} fontFamily={FUENTE_UI}>
+        {letra}
+      </text>
+    </svg>
+  );
+};

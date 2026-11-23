@@ -1,0 +1,81 @@
+# Instala "Carpeta Oculta IA Creators" en Windows DENTRO de esta carpeta (Node portatil, Python con uv, ffmpeg,
+# motor de video y modelo de voz). Lo ejecuta Claude con:  powershell -ExecutionPolicy Bypass -File instalar/instalar.ps1
+# Si se repite, solo completa lo que falte.
+$ErrorActionPreference = "Stop"
+$ProgressPreference = "SilentlyContinue"
+$Raiz = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+Set-Location $Raiz
+$NodeV = "v24.22.1"
+Write-Host "== Carpeta Oculta IA Creators: instalacion (Windows) =="
+$cache = Join-Path $Raiz ".cache"
+New-Item -ItemType Directory -Force -Path $cache | Out-Null
+$env:npm_config_cache = Join-Path $cache "npm"
+$env:UV_CACHE_DIR = Join-Path $cache "uv"
+$env:UV_PYTHON_INSTALL_DIR = Join-Path $Raiz "python"
+$env:HF_HOME = Join-Path $cache "huggingface"
+$env:HF_HUB_DISABLE_SYMLINKS_WARNING = "1"
+$env:PYTHONWARNINGS = "ignore"
+
+# 1) Node portatil
+$nodeDir = Join-Path $Raiz "node"
+if (-not (Test-Path (Join-Path $nodeDir "node.exe"))) {
+  Write-Host "Descargo Node $NodeV ..."
+  $zip = Join-Path $Raiz "node.zip"
+  Invoke-WebRequest -Uri "https://nodejs.org/dist/$NodeV/node-$NodeV-win-x64.zip" -OutFile $zip -UseBasicParsing
+  Expand-Archive $zip -DestinationPath (Join-Path $Raiz "node-tmp") -Force
+  Move-Item (Join-Path $Raiz "node-tmp\node-$NodeV-win-x64") $nodeDir
+  Remove-Item $zip, (Join-Path $Raiz "node-tmp") -Recurse -Force
+}
+$env:Path = "$nodeDir;" + $env:Path
+
+# 2) ffmpeg portatil
+$ffDir = Join-Path $Raiz "ffmpeg"
+if (-not (Test-Path (Join-Path $ffDir "bin\ffmpeg.exe"))) {
+  Write-Host "Descargo ffmpeg (el programa que corta y mide audio y video)..."
+  $zipFf = Join-Path $Raiz "ffmpeg.zip"
+  Invoke-WebRequest -Uri "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip" -OutFile $zipFf -UseBasicParsing
+  Expand-Archive $zipFf -DestinationPath (Join-Path $Raiz "ffmpeg-tmp") -Force
+  Move-Item (Join-Path $Raiz "ffmpeg-tmp\ffmpeg-master-latest-win64-gpl") $ffDir
+  Remove-Item $zipFf, (Join-Path $Raiz "ffmpeg-tmp") -Recurse -Force
+}
+
+# 3) Motor de video (Remotion) y HyperFrames
+Write-Host "Instalo el motor de video (unos minutos la primera vez)..."
+& (Join-Path $nodeDir "npm.cmd") ci --prefix fabrica --no-audit --no-fund --loglevel=error
+if ($LASTEXITCODE -ne 0) { throw "no se pudo instalar el motor de video" }
+Push-Location fabrica
+& (Join-Path $nodeDir "npx.cmd") remotion browser ensure | Out-Null
+Pop-Location
+if (Test-Path "hyperframes\package-lock.json") {
+  & (Join-Path $nodeDir "npm.cmd") ci --prefix hyperframes --no-audit --no-fund --loglevel=error
+  if ($LASTEXITCODE -ne 0) { Write-Host "  (HyperFrames no se pudo instalar; es opcional)" }
+}
+
+# 4) Python con uv portatil
+$uvDir = Join-Path $Raiz "uv"
+$uv = Join-Path $uvDir "uv.exe"
+if (-not (Test-Path $uv)) {
+  Write-Host "Descargo uv (gestor de Python)..."
+  $zipUv = Join-Path $Raiz "uv.zip"
+  Invoke-WebRequest -Uri "https://github.com/astral-sh/uv/releases/latest/download/uv-x86_64-pc-windows-msvc.zip" -OutFile $zipUv -UseBasicParsing
+  Expand-Archive $zipUv -DestinationPath $uvDir -Force
+  Remove-Item $zipUv -Force
+}
+Write-Host "Preparo Python y las librerias..."
+if (-not (Test-Path ".venv\Scripts\python.exe")) { & $uv venv .venv --python 3.12 --quiet }
+if ($LASTEXITCODE -ne 0) { throw "no se pudo preparar Python" }
+& $uv pip install --quiet --python .venv\Scripts\python.exe -r instalar\requirements.txt
+if ($LASTEXITCODE -ne 0) { throw "no se pudieron instalar las librerias de Python" }
+
+# 5) Carpetas y el atajo "mg.cmd"
+foreach ($d in @("videos_referencia\originales", "videos_referencia\transcripciones", "comparaciones", "fabrica\out", "fabrica\public\voz", "fabrica\videos\fuentes")) { New-Item -ItemType Directory -Force -Path (Join-Path $Raiz $d) | Out-Null }
+Set-Content -Path (Join-Path $Raiz "mg.cmd") -Encoding ASCII -Value "@echo off`r`nset `"R=%~dp0`"`r`nset `"PATH=%R%node;%R%ffmpeg\bin;%R%.venv\Scripts;%PATH%`"`r`nset `"HF_HOME=%R%.cache\huggingface`"`r`nset `"npm_config_cache=%R%.cache\npm`"`r`nset HF_HUB_DISABLE_SYMLINKS_WARNING=1`r`nset PYTHONUTF8=1`r`nchcp 65001 >nul`r`n%*"
+
+Write-Host "Descargo el modelo que escucha la voz (~1,6 GB, solo la primera vez)..."
+try { & .venv\Scripts\python.exe -c "from faster_whisper import WhisperModel; WhisperModel('large-v3-turbo', device='cpu', compute_type='int8')" | Out-Null } catch { Write-Host "  (se descargara con la primera voz)" }
+
+Write-Host ""
+& (Join-Path $Raiz "mg.cmd") node --version
+& (Join-Path $Raiz "mg.cmd") ffmpeg -version | Select-Object -First 1
+& (Join-Path $Raiz "mg.cmd") python -c "import numpy, cv2, PIL, faster_whisper, edge_tts, yt_dlp; print('Python OK')"
+Write-Host "== Listo =="

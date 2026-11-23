@@ -1,0 +1,42 @@
+// Prepara los contornos del mundo para el video avion-curva (Natural Earth vía world-atlas, dominio público).
+// Salida: src/v3d/avion/mundo.json  { land: [[lon,lat,...]], groenlandia: [...], africa: [...] }  (anillos planos)
+import {createRequire} from 'module';
+import fs from 'fs';
+const require = createRequire(import.meta.url);
+const topo = require('topojson-client');
+const land = require('world-atlas/land-50m.json');
+const paises = require('world-atlas/countries-50m.json');
+
+const AFRICA = new Set(['012', '024', '072', '108', '120', '132', '140', '148', '174', '178', '180', '204', '226', '231', '232', '262', '266', '270', '288', '324', '384', '404', '426', '430', '434', '450', '454', '466', '478', '480', '504', '508', '516', '562', '566', '624', '646', '678', '686', '694', '706', '710', '716', '728', '729', '732', '748', '768', '788', '800', '818', '834', '854', '894']);
+
+function anillos(geo, tol) {
+  const out = [];
+  const polys = geo.type === 'Polygon' ? [geo.coordinates] : geo.type === 'MultiPolygon' ? geo.coordinates : [];
+  for (const poly of polys) {
+    // desenrolla la longitud (sin saltos de 360°); los anillos que dan la vuelta al mundo (Antártida) se descartan
+    const r = [];
+    let prev = null;
+    for (const [x0, y] of poly[0]) {
+      let x = x0;
+      if (prev !== null) { while (x - prev > 180) x -= 360; while (x - prev < -180) x += 360; }
+      r.push([x, y]); prev = x;
+    }
+    if (Math.abs(r[r.length - 1][0] - r[0][0]) > 180) continue;
+    const k = [];
+    let lx = 1e9, ly = 1e9;
+    for (const [x, y] of r) {
+      if (Math.hypot(x - lx, y - ly) >= tol) { k.push(Math.round(x * 100) / 100, Math.round(y * 100) / 100); lx = x; ly = y; }
+    }
+    if (k.length >= 8) out.push(k);
+  }
+  return out;
+}
+const tierra = topo.feature(land, land.objects.land);
+const geos = tierra.type === 'FeatureCollection' ? tierra.features.map((f) => f.geometry) : [tierra.geometry];
+const L = geos.flatMap((g) => anillos(g, 0.3));
+const geomP = paises.objects.countries.geometries;
+const gro = anillos(topo.feature(paises, geomP.find((g) => g.id === '304')).geometry, 0.15);
+const afr = anillos(topo.merge(paises, geomP.filter((g) => AFRICA.has(g.id) || g.properties?.name === 'Somaliland')), 0.15);
+fs.mkdirSync('src/v3d/avion', {recursive: true});
+fs.writeFileSync('src/v3d/avion/mundo.json', JSON.stringify({land: L, groenlandia: gro, africa: afr}));
+console.log('anillos', L.length, 'puntos', L.reduce((a, r) => a + r.length / 2, 0), 'gro', gro.length, 'afr', afr.length, afr.reduce((a, r) => a + r.length / 2, 0));

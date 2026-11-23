@@ -1,0 +1,19 @@
+"""Une las escenas y las palabras de un video en fabrica/videos/<id>.json.
+
+Uso: armar_video.py <id>
+Lee  fabrica/videos/fuentes/<id>.escenas.json  (todo el video menos "palabras")
+     fabrica/videos/fuentes/<id>.palabras.json (salida de palabras_json.py)
+Escribe fabrica/videos/<id>.json
+"""
+import json, os, sys
+
+RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+vid = sys.argv[1]
+fuentes = os.path.join(RAIZ, "fabrica", "videos", "fuentes")
+spec = json.load(open(os.path.join(fuentes, f"{vid}.escenas.json"), encoding="utf-8-sig"))
+palabras = json.load(open(os.path.join(fuentes, f"{vid}.palabras.json"), encoding="utf-8-sig"))
+spec["palabras"] = palabras
+salida = os.path.join(RAIZ, "fabrica", "videos", f"{vid}.json")
+with open(salida, "w", encoding="utf-8") as f:
+    json.dump(spec, f, ensure_ascii=False, indent=1)
+print(f"{salida}: {len(spec['escenas'])} escenas, {len(palabras)} palabras")

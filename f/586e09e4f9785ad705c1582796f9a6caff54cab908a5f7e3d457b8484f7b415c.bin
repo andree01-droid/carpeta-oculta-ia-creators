@@ -1,0 +1,144 @@
+// Personaje: mesero de cuerpo entero, estilo plano con sombreado suave.
+// Caja 420×760. Respira y parpadea solo. props: expresion (feliz | triste | sorpresa | enojado | neutral),
+// bandeja (true/false), brazo ("bandeja" | "saludo" | "abajo"), piel, pelo, lagrima (true/false)
+import React from 'react';
+import {Easing, interpolate} from 'remotion';
+import {bool, num, str, type PropsElemento} from './tipos';
+
+export const Mesero: React.FC<PropsElemento> = ({p, frame, f0}) => {
+  const expr = str(p.expresion, 'feliz');
+  const piel = str(p.piel, '#C68A5E');
+  const pielS = str(p.pielSombra, '#A86F48');
+  const pelo = str(p.pelo, '#1E140F');
+  const brazo = str(p.brazo, bool(p.bandeja, true) ? 'bandeja' : 'abajo');
+  const d = frame - f0;
+  // respiración y parpadeo
+  const resp = Math.sin((d / 55) * Math.PI * 2);
+  const parp = d % 96 > 90 ? 0.1 : 1;
+  const saludo = brazo === 'saludo' ? Math.sin((d / 9) * Math.PI) * 14 : 0;
+  // gesto al cambiar de expresión: pequeño salto
+  const salto = num(p.salto, 0);
+  const lag = bool(p.lagrima, false) ? interpolate(d % 40, [0, 40], [0, 60], {easing: Easing.in(Easing.quad)}) : -1;
+
+  const ojos = () => {
+    if (expr === 'sorpresa')
+      return (
+        <>
+          <circle cx="172" cy="178" r="11" fill="#fff" /><circle cx="248" cy="178" r="11" fill="#fff" />
+          <circle cx="172" cy="179" r="6" fill="#1A1A1A" /><circle cx="248" cy="179" r="6" fill="#1A1A1A" />
+        </>
+      );
+    return (
+      <>
+        <ellipse cx="172" cy="180" rx="7" ry={8 * parp} fill="#1A1A1A" />
+        <ellipse cx="248" cy="180" rx="7" ry={8 * parp} fill="#1A1A1A" />
+        <circle cx="174.5" cy="177" r="2.2" fill="#fff" opacity={parp} />
+        <circle cx="250.5" cy="177" r="2.2" fill="#fff" opacity={parp} />
+      </>
+    );
+  };
+  const cejas = () => {
+    const y = expr === 'sorpresa' ? 148 : 158;
+    if (expr === 'enojado')
+      return (
+        <>
+          <path d="M 156 154 L 188 164" stroke={pelo} strokeWidth="7" strokeLinecap="round" />
+          <path d="M 264 154 L 232 164" stroke={pelo} strokeWidth="7" strokeLinecap="round" />
+        </>
+      );
+    if (expr === 'triste')
+      return (
+        <>
+          <path d="M 156 164 L 188 154" stroke={pelo} strokeWidth="7" strokeLinecap="round" />
+          <path d="M 264 164 L 232 154" stroke={pelo} strokeWidth="7" strokeLinecap="round" />
+        </>
+      );
+    return (
+      <>
+        <path d={`M 156 ${y} Q 172 ${y - 8} 188 ${y}`} stroke={pelo} strokeWidth="7" fill="none" strokeLinecap="round" />
+        <path d={`M 232 ${y} Q 248 ${y - 8} 264 ${y}`} stroke={pelo} strokeWidth="7" fill="none" strokeLinecap="round" />
+      </>
+    );
+  };
+  const boca = () => {
+    switch (expr) {
+      case 'triste':
+        return <path d="M 186 238 Q 210 222 234 238" stroke="#5A2A1A" strokeWidth="7" fill="none" strokeLinecap="round" />;
+      case 'sorpresa':
+        return <ellipse cx="210" cy="234" rx="14" ry="18" fill="#5A2A1A" />;
+      case 'enojado':
+        return <path d="M 188 234 L 232 234" stroke="#5A2A1A" strokeWidth="7" strokeLinecap="round" />;
+      case 'neutral':
+        return <path d="M 192 232 Q 210 236 228 232" stroke="#5A2A1A" strokeWidth="6" fill="none" strokeLinecap="round" />;
+      default:
+        return <path d="M 182 222 Q 210 254 238 222 Z" fill="#5A2A1A" stroke="#5A2A1A" strokeWidth="4" strokeLinejoin="round" />;
+    }
+  };
+
+  return (
+    <svg width={420} height={760} viewBox="0 0 420 760" style={{position: 'absolute', inset: 0, overflow: 'visible', translate: `0 ${-salto}px`}}>
+      {/* sombra en el piso */}
+      <ellipse cx="210" cy="748" rx="130" ry="14" fill="rgba(0,0,0,0.45)" />
+      {/* piernas */}
+      <rect x="150" y="540" width="52" height="200" rx="20" fill="#1C1C1E" />
+      <rect x="218" y="540" width="52" height="200" rx="20" fill="#1C1C1E" />
+      <ellipse cx="170" cy="738" rx="40" ry="16" fill="#0E0E0E" />
+      <ellipse cx="250" cy="738" rx="40" ry="16" fill="#0E0E0E" />
+      <g style={{transformOrigin: '210px 540px', scale: `1 ${1 + resp * 0.012}`}}>
+        {/* torso: camisa + chaleco */}
+        <path d="M 120 330 Q 120 290 170 285 L 250 285 Q 300 290 300 330 L 296 560 L 124 560 Z" fill="#F4F4F2" />
+        <path d="M 120 330 Q 120 290 170 285 L 200 285 L 210 420 L 196 560 L 124 560 Z" fill="#232325" />
+        <path d="M 300 330 Q 300 290 250 285 L 220 285 L 210 420 L 224 560 L 296 560 Z" fill="#232325" />
+        <circle cx="210" cy="455" r="4.5" fill="#B9B9B9" />
+        <circle cx="210" cy="495" r="4.5" fill="#B9B9B9" />
+        {/* moño */}
+        <path d="M 186 292 L 210 304 L 186 316 Z" fill="#CF5D60" />
+        <path d="M 234 292 L 210 304 L 234 316 Z" fill="#CF5D60" />
+        <circle cx="210" cy="304" r="6" fill="#A8474A" />
+        {/* delantal */}
+        <path d="M 140 500 L 280 500 L 288 600 Q 210 616 132 600 Z" fill="#F4F4F2" opacity="0.95" />
+        {/* brazo izquierdo (abajo) */}
+        <path d="M 124 320 Q 86 400 98 500" stroke="#F4F4F2" strokeWidth="44" fill="none" strokeLinecap="round" />
+        <circle cx="100" cy="512" r="24" fill={piel} />
+        {/* brazo derecho */}
+        {brazo === 'bandeja' ? (
+          <g>
+            <path d="M 296 320 Q 350 360 352 250" stroke="#F4F4F2" strokeWidth="44" fill="none" strokeLinecap="round" />
+            <circle cx="352" cy="236" r="24" fill={piel} />
+            {/* bandeja con plato y vaso */}
+            <ellipse cx="352" cy="214" rx="96" ry="14" fill="#B9B9B9" />
+            <ellipse cx="352" cy="208" rx="96" ry="12" fill="#D9D9D9" />
+            <ellipse cx="330" cy="198" rx="44" ry="10" fill="#FFFFFF" />
+            <path d="M 304 196 Q 330 160 356 196 Z" fill="#E8A33C" />
+            <rect x="380" y="150" width="28" height="52" rx="6" fill="rgba(200,230,255,0.75)" />
+            <rect x="380" y="168" width="28" height="34" rx="5" fill="#E9D6A8" />
+          </g>
+        ) : brazo === 'saludo' ? (
+          <g style={{transformOrigin: '296px 320px', rotate: `${saludo}deg`}}>
+            <path d="M 296 320 Q 360 300 360 200" stroke="#F4F4F2" strokeWidth="44" fill="none" strokeLinecap="round" />
+            <circle cx="360" cy="186" r="26" fill={piel} />
+          </g>
+        ) : (
+          <g>
+            <path d="M 296 320 Q 334 400 322 500" stroke="#F4F4F2" strokeWidth="44" fill="none" strokeLinecap="round" />
+            <circle cx="320" cy="512" r="24" fill={piel} />
+          </g>
+        )}
+        {/* cuello y cabeza */}
+        <rect x="186" y="250" width="48" height="46" rx="14" fill={pielS} />
+        <ellipse cx="210" cy="190" rx="92" ry="98" fill={piel} />
+        <ellipse cx="120" cy="196" rx="14" ry="22" fill={pielS} />
+        <ellipse cx="300" cy="196" rx="14" ry="22" fill={pielS} />
+        {/* pelo */}
+        <path d="M 118 176 Q 112 92 210 88 Q 308 92 302 176 Q 290 128 248 124 Q 210 112 170 126 Q 128 134 118 176 Z" fill={pelo} />
+        {cejas()}
+        {ojos()}
+        <path d="M 206 196 Q 200 214 212 216" stroke={pielS} strokeWidth="5" fill="none" strokeLinecap="round" />
+        <ellipse cx="150" cy="214" rx="16" ry="9" fill="#E07A6A" opacity={expr === 'feliz' ? 0.35 : 0} />
+        <ellipse cx="270" cy="214" rx="16" ry="9" fill="#E07A6A" opacity={expr === 'feliz' ? 0.35 : 0} />
+        {boca()}
+        {lag >= 0 ? <path d={`M 252 ${196 + lag} q -7 12 0 18 q 7 -6 0 -18 Z`} fill="#8EC9FF" opacity={1 - lag / 60} /> : null}
+      </g>
+    </svg>
+  );
+};

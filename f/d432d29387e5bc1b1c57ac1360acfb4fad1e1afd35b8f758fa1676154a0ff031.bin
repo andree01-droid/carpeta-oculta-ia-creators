@@ -1,0 +1,15 @@
+"""Estadísticas de voz por video: palabras por minuto, pausas, frases y texto completo."""
+import json, sys
+
+for n in sys.argv[1:] or ["metros", "ia_aprender", "teclado", "electrocutarte"]:
+    d = json.load(open(f"videos_referencia/transcripciones/{n}.json", encoding="utf-8"))
+    w = d["words"]
+    t0, t1 = w[0]["start"], w[-1]["end"]
+    wpm = len(w) / ((t1 - t0) / 60)
+    gaps = [b["start"] - a["end"] for a, b in zip(w, w[1:])]
+    pauses = [g for g in gaps if g > 0.3]
+    dur = [x["end"] - x["start"] for x in w]
+    print(f"== {n}: {len(w)} palabras | voz {t0:.2f}-{t1:.2f}s (video {d['duration']}s) | {wpm:.0f} ppm | "
+          f"pausas>0.3s: {len(pauses)} (media {sum(pauses)/max(1,len(pauses)):.2f}s) | palabra media {sum(dur)/len(dur):.2f}s")
+    for s in d["segments"]:
+        print(f"  [{s['start']:6.2f}-{s['end']:6.2f}] {s['text']}")

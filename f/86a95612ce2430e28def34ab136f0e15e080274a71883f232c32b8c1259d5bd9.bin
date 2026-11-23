@@ -1,0 +1,165 @@
+// Formato del archivo JSON que describe un video completo.
+// Ver ../../videos/*.json y la sección "CÓMO HACER UN VIDEO NUEVO" de ../../../CLAUDE.md
+
+/**
+ * Un momento del video. Puede ser:
+ * - número: segundos absolutos (ej. 3.5)
+ * - "@palabra": cuando empieza esa palabra en la voz (primera aparición)
+ * - "@palabra#2": segunda aparición
+ * - "@palabra:fin": cuando termina
+ * - cualquiera de los anteriores + desfase: "@tocas+0.2", "@tocas-0.1", "3.5+0.2"
+ */
+export type Tiempo = number | string;
+
+export type NombreEstilo = 'estudio-oscuro' | 'interfaz-grid' | 'mapa-satelite';
+
+export type Curva =
+  | 'lineal'
+  | 'entrada' // ease-in
+  | 'salida' // ease-out
+  | 'suave' // ease-in-out fuerte (0.65,0,0.35,1) — la de las cámaras
+  | 'rebote' // back-out
+  | 'muelle'; // spring sin rebote
+
+export type Palabra = {
+  word: string;
+  start: number;
+  end: number;
+  /** marcar como palabra clave (caja azul) */
+  clave?: boolean;
+  /** emoji a la izquierda de la palabra clave */
+  emoji?: string;
+};
+
+/** Un fotograma clave: en el tiempo t, estas propiedades valen esto. */
+export type Clave = {t: Tiempo; curva?: Curva} & Record<string, unknown>;
+
+export type Entrada = {
+  tipo: 'ninguna' | 'fundido' | 'escala' | 'subir' | 'bajar' | 'desenfoque' | 'pop' | 'rebote' | 'volarIzq' | 'volarDer' | 'caer' | 'girar';
+  /** duración en cuadros (por defecto 8) */
+  dur?: number;
+};
+
+export type ElementoSpec = {
+  tipo: string;
+  id?: string;
+  /** cuándo aparece (por defecto: inicio de la escena) */
+  desde?: Tiempo;
+  /** cuándo desaparece (por defecto: fin de la escena) */
+  hasta?: Tiempo;
+  /** centro del elemento en px del lienzo 1080×1920 (o del grupo padre) */
+  x?: number;
+  y?: number;
+  ancho?: number;
+  alto?: number;
+  /** profundidad 3D en px (translateZ) */
+  z?: number;
+  escala?: number;
+  rotX?: number;
+  rotY?: number;
+  rotZ?: number;
+  opacidad?: number;
+  blur?: number;
+  /** movimiento continuo "vivo": px de flotación vertical (p. ej. 12) */
+  flotar?: number;
+  /** balanceo continuo en grados (p. ej. 3) */
+  oscilar?: number;
+  entrada?: Entrada | Entrada['tipo'];
+  salida?: Entrada | Entrada['tipo'];
+  /** animación por fotogramas clave de cualquier propiedad (base o de props) */
+  anim?: Clave[];
+  /** propiedades propias del componente */
+  props?: Record<string, unknown>;
+  /** elementos hijos (para Grupo, Telefono…) */
+  hijos?: ElementoSpec[];
+};
+
+export type ClaveCamara = {
+  t: Tiempo;
+  curva?: Curva;
+  /** punto del lienzo que queda en el centro de la pantalla */
+  x?: number;
+  y?: number;
+  zoom?: number;
+  rotX?: number;
+  rotY?: number;
+  rotZ?: number;
+};
+
+export type FondoSpec = {
+  /** color base */
+  color?: string;
+  /** cuadrícula (interfaz-grid) */
+  cuadricula?: boolean;
+  celda?: number;
+  /** resplandor */
+  brillo?: 'calido' | 'frio' | 'ambar' | 'ninguno';
+  brilloX?: number;
+  brilloY?: number;
+  brilloRadio?: number;
+  brilloIntensidad?: number;
+  /** polvo */
+  polvo?: number;
+  /** viñeta 0..1 */
+  vineta?: number;
+  /** estrellas (mapa-satelite) */
+  estrellas?: number;
+};
+
+export type EscenaSpec = {
+  id?: string;
+  desde: Tiempo;
+  /** por defecto: inicio de la escena siguiente o fin del video */
+  hasta?: Tiempo;
+  /** transición de ENTRADA a esta escena */
+  transicion?: 'empujeDesenfoque' | 'corte' | 'fundido' | 'barrido' | 'zoomGolpe';
+  /** golpes de cámara en palabras clave dentro de esta escena (por defecto: lo que diga el video) */
+  golpes?: boolean;
+  fondo?: FondoSpec;
+  /** empuje lento de cámara: zoom extra por segundo (por defecto 0.02) */
+  empuje?: number;
+  /** deriva continua de cámara en px (por defecto 6; 0 = quieta) */
+  deriva?: number;
+  /** perspectiva CSS en px (por defecto 2200) */
+  perspectiva?: number;
+  camara?: ClaveCamara[];
+  elementos: ElementoSpec[];
+  /** elementos fijos en pantalla, por encima de todo y sin cámara (etiquetas, fundidos) */
+  encima?: ElementoSpec[];
+};
+
+export type SubtitulosSpec = {
+  /** línea base de la primera línea (px) */
+  y?: number;
+  tamano?: number;
+  interlineado?: number;
+  anchoMax?: number;
+  maxPalabras?: number;
+  ocultar?: boolean;
+  /** forzar que un bloque nuevo empiece en estas palabras ("@hay", "@que#2") */
+  cortes?: Tiempo[];
+};
+
+export type VideoSpec = {
+  titulo: string;
+  estilo: NombreEstilo;
+  /** archivo de voz dentro de public/ (ej. "voz/teclado.mp3") */
+  audio?: string | null;
+  /** segundo del audio donde arranca el video */
+  audioDesde?: number;
+  /** duración total en segundos (por defecto: fin de la última palabra + 0.5) */
+  duracion?: number;
+  palabras: Palabra[];
+  /** palabras clave por texto: "tocas", "cero#2" (2.ª aparición) */
+  claves?: string[];
+  /** emoji por palabra clave: {"pulgar": "👍"} */
+  emojis?: Record<string, string>;
+  subtitulos?: SubtitulosSpec;
+  escenas: EscenaSpec[];
+  /** efectos de sonido extra: {t, sfx, vol} — sfx = nombre del catálogo (src/motor/sonidos.ts) */
+  sonidos?: {t: Tiempo; sfx: string; vol?: number}[];
+  /** desactiva los efectos automáticos */
+  sinSonidosAuto?: boolean;
+  /** golpes de cámara en las palabras clave (por defecto true) */
+  golpes?: boolean;
+};

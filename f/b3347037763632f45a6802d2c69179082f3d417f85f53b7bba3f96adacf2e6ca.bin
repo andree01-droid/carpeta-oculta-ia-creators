@@ -1,0 +1,32 @@
+{
+  "name": "fabrica-videos",
+  "version": "1.0.0",
+  "description": "Plantilla Remotion para videos verticales explicativos (ver ../CLAUDE.md)",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/registrar.mjs && remotion studio",
+    "render": "node scripts/render.mjs",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
+    "@react-three/postprocessing": "^3.2.2",
+    "@remotion/cli": "4.0.538",
+    "@remotion/google-fonts": "4.0.538",
+    "@remotion/layout-utils": "4.0.538",
+    "@remotion/media": "4.0.538",
+    "@remotion/paths": "4.0.538",
+    "@remotion/three": "4.0.538",
+    "postprocessing": "^6.39.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.538",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/three": "^0.186.0",
+    "typescript": "^5.6.0"
+  }
+}

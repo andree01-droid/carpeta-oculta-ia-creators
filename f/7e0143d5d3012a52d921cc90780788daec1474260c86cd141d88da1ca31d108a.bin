@@ -1,0 +1,83 @@
+"""Mide cuadro a cuadro cómo se mueve la cámara en un video de referencia.
+
+Uso: camara_ref.py <video> <salida_prefijo>
+Por cada cuadro (30 fps, se ignora la franja de subtítulos y < 30 %):
+  - dx, dy  : desplazamiento de la imagen en px (a 1080 de ancho) respecto del cuadro anterior
+  - zoom    : factor de escala respecto del anterior (1.01 = acercándose 1 %)
+  - rot     : giro en grados
+  - nitidez : varianza del Laplaciano (baja = desenfocado: transición o profundidad de campo)
+  - corte   : diferencia de histograma con el anterior (alta = cambio de plano)
+Escribe <prefijo>.csv y <prefijo>.png (gráfico de las curvas).
+"""
+import csv, subprocess, sys
+import numpy as np
+import cv2
+from PIL import Image, ImageDraw, ImageFont
+
+src, pref = sys.argv[1], sys.argv[2]
+W, H = 270, 480
+raw = subprocess.run(["ffmpeg", "-v", "error", "-i", src, "-vf", f"fps=30,scale={W}:{H},format=gray", "-f", "rawvideo", "-"],
+                     capture_output=True).stdout
+fr = np.frombuffer(raw, np.uint8).reshape(-1, H, W)
+y0 = int(H * 0.3)
+filas = []
+prev = None
+for i, f in enumerate(fr):
+    g = f[y0:]
+    nit = cv2.Laplacian(g, cv2.CV_64F).var()
+    hist = cv2.calcHist([g], [0], None, [32], [0, 256]).ravel()
+    hist /= hist.sum() + 1e-9
+    dx = dy = rot = 0.0
+    zoom = 1.0
+    corte = 0.0
+    if prev is not None:
+        pg, ph = prev
+        corte = float(np.abs(hist - ph).sum())
+        pts = cv2.goodFeaturesToTrack(pg, 300, 0.01, 6)
+        if pts is not None and len(pts) > 12:
+            nxt, st, _ = cv2.calcOpticalFlowPyrLK(pg, g, pts, None)
+            ok = st.ravel() == 1
+            if ok.sum() > 10:
+                M, _ = cv2.estimateAffinePartial2D(pts[ok], nxt[ok])
+                if M is not None:
+                    zoom = float(np.hypot(M[0, 0], M[1, 0]))
+                    rot = float(np.degrees(np.arctan2(M[1, 0], M[0, 0])))
+                    dx, dy = float(M[0, 2]) * 1080 / W, float(M[1, 2]) * 1080 / W
+    filas.append([round(i / 30, 3), round(dx, 2), round(dy, 2), round(zoom, 4), round(rot, 3), round(nit, 1), round(corte, 3)])
+    prev = (g, hist)
+
+with open(pref + ".csv", "w", newline="") as fh:
+    w = csv.writer(fh)
+    w.writerow(["t", "dx", "dy", "zoom", "rot", "nitidez", "corte"])
+    w.writerows(filas)
+
+# gráfico
+a = np.array([r[1:] for r in filas], float)
+n = len(a)
+GW, GH, M = 2400, 1200, 60
+img = Image.new("RGB", (GW, GH), (18, 18, 20))
+d = ImageDraw.Draw(img)
+try:
+    fnt = ImageFont.truetype("arial.ttf", 18)
+except OSError:
+    fnt = ImageFont.load_default()
+series = [("velocidad px/cuadro", np.hypot(a[:, 0], a[:, 1]), (239, 163, 45), 40),
+          ("zoom %/cuadro", (a[:, 2] - 1) * 100, (46, 211, 192), 3),
+          ("nitidez", a[:, 4], (200, 200, 210), None),
+          ("corte", a[:, 5], (229, 72, 77), 1.2)]
+for k, (nom, s, col, top) in enumerate(series):
+    top = top or (np.percentile(s, 98) + 1e-6)
+    bh = (GH - 2 * M) / len(series)
+    yb = M + bh * (k + 1) - 10
+    d.text((10, yb - bh + 14), nom, fill=col, font=fnt)
+    pts = [(M + (GW - 2 * M) * i / n, yb - (bh - 30) * np.clip(abs(v) / top, 0, 1)) for i, v in enumerate(s)]
+    d.line(pts, fill=col, width=2)
+    d.line([(M, yb), (GW - M, yb)], fill=(60, 60, 64))
+for sgs in range(0, int(n / 30) + 1, 5):
+    x = M + (GW - 2 * M) * sgs * 30 / n
+    d.line([(x, M), (x, GH - M)], fill=(45, 45, 50))
+    d.text((x + 3, GH - M + 6), f"{sgs}s", fill=(160, 160, 160), font=fnt)
+img.save(pref + ".png")
+v = np.hypot(a[:, 0], a[:, 1])
+print(f"cuadros {n} | velocidad media {v.mean():.1f} px/c | mediana {np.median(v):.1f} | p90 {np.percentile(v,90):.1f} | "
+      f"zoom medio {((a[:,2]-1)*100).mean():+.3f} %/c | cuadros con |zoom|>0.2%: {(np.abs(a[:,2]-1)>0.002).mean()*100:.0f}%")

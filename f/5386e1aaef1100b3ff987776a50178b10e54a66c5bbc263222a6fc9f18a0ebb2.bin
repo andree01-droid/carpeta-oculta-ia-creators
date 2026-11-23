@@ -1,0 +1,74 @@
+<template>
+  <style>
+#root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; background: #0E0E10; }
+.fondo { position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.035) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,0.035) 1.5px, transparent 1.5px);
+  background-size: 120px 120px; background-position: -60px -60px; }
+.halo { position: absolute; left: -300px; top: 300px; width: 1680px; height: 1680px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(239,163,45,0.22) 0%, rgba(239,163,45,0.06) 40%, transparent 70%); }
+.vineta { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 62% at 50% 55%, transparent 55%, rgba(0,0,0,0.75) 100%); pointer-events: none; }
+.cam { position: absolute; inset: 0; }
+.persp { position: absolute; inset: 0; perspective: 1800px; perspective-origin: 540px 1000px; }
+.tablero { position: absolute; width: 1000px; height: 392px; transform-style: preserve-3d; }
+.base { position: absolute; left: -36px; top: -36px; right: -36px; bottom: -36px; border-radius: 42px;
+  background: linear-gradient(180deg, #1d1d20, #141416); box-shadow: 0 30px 0 #0a0a0b, 0 50px 90px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06); }
+.k { position: absolute; width: 88px; height: 88px; border-radius: 16px;
+  background: linear-gradient(180deg, #3b3b3f 0%, #2c2c30 100%);
+  box-shadow: 0 10px 0 #17171a, 0 16px 24px rgba(0,0,0,0.55), inset 0 2px 0 rgba(255,255,255,0.09);
+  color: #d7d7da; font-weight: 600; font-size: 40px; display: grid; place-items: center; }
+.k.esp { width: 520px; }
+.k .g { position: absolute; inset: 0; border-radius: 16px; opacity: 0; display: grid; place-items: center; color: #1a1206; font-weight: 800; }
+.k .b { position: absolute; left: 30px; width: 28px; bottom: 14px; height: 6px; border-radius: 3px; background: #6a6a70;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+.fila { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+.chip { padding: 14px 38px; border-radius: 999px; font-weight: 800; font-size: 50px; white-space: nowrap; }
+.etq { position: absolute; font-weight: 800; font-size: 40px; color: #fff; white-space: nowrap; }
+.dedo { position: absolute; width: 74px; height: 104px; border-radius: 37px 37px 30px 30px;
+  background: linear-gradient(180deg, #E8B496 0%, #C98B6B 100%); box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
+.dedo::after { content: ""; position: absolute; left: 14px; right: 14px; top: 8px; height: 40px; border-radius: 20px 20px 12px 12px;
+  background: linear-gradient(180deg, #F6D9CF, #E7C1B3); opacity: 0.9; }
+.anillo { position: absolute; border-radius: 50%; border: 4px solid #EFA32D; }
+</style>
+  <div data-hf-id="hf-tvo7" id="root" data-composition-id="s06-dedos" data-width="1080" data-height="1920" data-layout-allow-overlap data-layout-allow-overflow>
+
+    <div data-hf-id="hf-anbe" class="fondo"></div><div data-hf-id="hf-d1uq" class="halo"></div>
+    <div data-hf-id="hf-o7se" class="cam" id="s6-cam"><div data-hf-id="hf-aqwk" class="persp"><div data-hf-id="hf-5vui" class="tablero" id="s6-tab" style="left:40px;top:1000px"><div data-hf-id="hf-9327" class="base"></div><div data-hf-id="hf-9f9u" class="k" id="s6-k-Q" style="left:0px;top:0px">Q<div data-hf-id="hf-2pcl" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Q</div></div><div data-hf-id="hf-vajp" class="k" id="s6-k-W" style="left:98px;top:0px">W<div data-hf-id="hf-536r" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">W</div></div><div data-hf-id="hf-uipy" class="k" id="s6-k-E" style="left:196px;top:0px">E<div data-hf-id="hf-anh5" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">E</div></div><div data-hf-id="hf-b0bz" class="k" id="s6-k-R" style="left:294px;top:0px">R<div data-hf-id="hf-3w9o" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">R</div></div><div data-hf-id="hf-69oe" class="k" id="s6-k-T" style="left:392px;top:0px">T<div data-hf-id="hf-4ovq" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">T</div></div><div data-hf-id="hf-876b" class="k" id="s6-k-Y" style="left:490px;top:0px">Y<div data-hf-id="hf-ziwd" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Y</div></div><div data-hf-id="hf-o9m5" class="k" id="s6-k-U" style="left:588px;top:0px">U<div data-hf-id="hf-4akp" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">U</div></div><div data-hf-id="hf-dcsy" class="k" id="s6-k-I" style="left:686px;top:0px">I<div data-hf-id="hf-5vst" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">I</div></div><div data-hf-id="hf-52ab" class="k" id="s6-k-O" style="left:784px;top:0px">O<div data-hf-id="hf-89mz" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">O</div></div><div data-hf-id="hf-v8ma" class="k" id="s6-k-P" style="left:882px;top:0px">P<div data-hf-id="hf-33nm" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">P</div></div><div data-hf-id="hf-otii" class="k" id="s6-k-A" style="left:30px;top:98px">A<div data-hf-id="hf-9291" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">A</div></div><div data-hf-id="hf-ngsy" class="k" id="s6-k-S" style="left:128px;top:98px">S<div data-hf-id="hf-3hyn" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">S</div></div><div data-hf-id="hf-gzfj" class="k" id="s6-k-D" style="left:226px;top:98px">D<div data-hf-id="hf-b1s6" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">D</div></div><div data-hf-id="hf-ngas" class="k" id="s6-k-F" style="left:324px;top:98px">F<div data-hf-id="hf-bue8" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">F</div><div data-hf-id="hf-goiq" class="b"></div></div><div data-hf-id="hf-qj0h" class="k" id="s6-k-G" style="left:422px;top:98px">G<div data-hf-id="hf-bg37" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">G</div></div><div data-hf-id="hf-qm9i" class="k" id="s6-k-H" style="left:520px;top:98px">H<div data-hf-id="hf-6a3u" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">H</div></div><div data-hf-id="hf-0jds" class="k" id="s6-k-J" style="left:618px;top:98px">J<div data-hf-id="hf-rbag" class="g" style="background:#2ED3C0;box-shadow:0 0 34px #2ED3C0, 0 10px 0 rgba(0,0,0,0.25)">J</div><div data-hf-id="hf-ys5i" class="b"></div></div><div data-hf-id="hf-h97n" class="k" id="s6-k-K" style="left:716px;top:98px">K<div data-hf-id="hf-qwzf" class="g" style="background:#2ED3C0;box-shadow:0 0 34px #2ED3C0, 0 10px 0 rgba(0,0,0,0.25)">K</div></div><div data-hf-id="hf-jp2y" class="k" id="s6-k-L" style="left:814px;top:98px">L<div data-hf-id="hf-oxga" class="g" style="background:#2ED3C0;box-shadow:0 0 34px #2ED3C0, 0 10px 0 rgba(0,0,0,0.25)">L</div></div><div data-hf-id="hf-i21o" class="k" id="s6-k-NN" style="left:912px;top:98px">Ñ<div data-hf-id="hf-ksih" class="g" style="background:#2ED3C0;box-shadow:0 0 34px #2ED3C0, 0 10px 0 rgba(0,0,0,0.25)">Ñ</div></div><div data-hf-id="hf-q0b8" class="k" id="s6-k-Z" style="left:75px;top:196px">Z<div data-hf-id="hf-0ptg" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Z</div></div><div data-hf-id="hf-1k2p" class="k" id="s6-k-X" style="left:173px;top:196px">X<div data-hf-id="hf-zx7e" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">X</div></div><div data-hf-id="hf-e6s0" class="k" id="s6-k-C" style="left:271px;top:196px">C<div data-hf-id="hf-9uv3" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">C</div></div><div data-hf-id="hf-8dsg" class="k" id="s6-k-V" style="left:369px;top:196px">V<div data-hf-id="hf-5hhs" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">V</div></div><div data-hf-id="hf-6x9z" class="k" id="s6-k-B" style="left:467px;top:196px">B<div data-hf-id="hf-a964" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">B</div></div><div data-hf-id="hf-k1my" class="k" id="s6-k-N" style="left:565px;top:196px">N<div data-hf-id="hf-8ny0" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">N</div></div><div data-hf-id="hf-pddf" class="k" id="s6-k-M" style="left:663px;top:196px">M<div data-hf-id="hf-7h0x" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">M</div></div><div data-hf-id="hf-bddf" class="k esp" id="s6-k-ESP" style="left:240px;top:294px"><div data-hf-id="hf-tz3h" class="g" style="background:#FF5C8A;box-shadow:0 0 34px #FF5C8A"></div></div></div></div>
+      <div data-hf-id="hf-8j81" class="dedo" id="s6-d0" style="left:77px;top:1072px"></div><div data-hf-id="hf-wdg7" class="dedo" id="s6-d1" style="left:175px;top:1072px"></div><div data-hf-id="hf-bpdf" class="dedo" id="s6-d2" style="left:273px;top:1072px"></div><div data-hf-id="hf-v83b" class="dedo" id="s6-d3" style="left:371px;top:1072px"></div><div data-hf-id="hf-pdky" class="dedo" id="s6-d4" style="left:665px;top:1072px"></div><div data-hf-id="hf-jzy2" class="dedo" id="s6-d5" style="left:763px;top:1072px"></div><div data-hf-id="hf-6vqq" class="dedo" id="s6-d6" style="left:861px;top:1072px"></div><div data-hf-id="hf-faqb" class="dedo" id="s6-d7" style="left:959px;top:1072px"></div>
+      <div data-hf-id="hf-o5vx" class="dedo" id="s6-p1" style="left:420px;top:1290px;width:110px;height:90px;border-radius:45px"></div>
+      <div data-hf-id="hf-75rh" class="dedo" id="s6-p2" style="left:560px;top:1290px;width:110px;height:90px;border-radius:45px"></div>
+    </div>
+    <div data-hf-id="hf-w1x2" class="fila" style="top:560px"><div data-hf-id="hf-g2rs" id="s6-ocho" style="font-weight:900;font-size:200px;color:#fff;line-height:1">8 <span data-hf-id="hf-pgl8" style="font-size:80px;color:#EFA32D">dedos</span></div></div>
+    <div data-hf-id="hf-0875" class="fila" style="top:790px"><div data-hf-id="hf-vyr8" class="chip" id="s6-pul" style="background:#FF5C8A;color:#fff">+ 2 pulgares 👍</div></div>
+    <div data-hf-id="hf-3ox1" class="vineta"></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    const T0 = 22.1;
+    const at = (s) => Math.max(0, s - T0);
+
+    tl.fromTo("#s6-cam", {scale: 1.15, filter: "blur(14px)"}, {scale: 1.0, filter: "blur(0px)", duration: 0.35, ease: "power3.out"}, 0);
+    tl.fromTo("#s6-tab", {rotationX: 0}, {rotationX: 0, duration: 0.1}, 0);
+    tl.fromTo("#s6-k-A .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(22.76));
+tl.fromTo("#s6-k-A", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(22.76));tl.fromTo("#s6-k-S .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(22.810000000000002));
+tl.fromTo("#s6-k-S", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(22.810000000000002));tl.fromTo("#s6-k-D .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(22.860000000000003));
+tl.fromTo("#s6-k-D", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(22.860000000000003));tl.fromTo("#s6-k-F .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(22.91));
+tl.fromTo("#s6-k-F", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(22.91));
+    tl.fromTo("#s6-k-J .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(22.96));
+tl.fromTo("#s6-k-J", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(22.96));tl.fromTo("#s6-k-K .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(23.01));
+tl.fromTo("#s6-k-K", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(23.01));tl.fromTo("#s6-k-L .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(23.060000000000002));
+tl.fromTo("#s6-k-L", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(23.060000000000002));tl.fromTo("#s6-k-NN .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(23.110000000000003));
+tl.fromTo("#s6-k-NN", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(23.110000000000003));
+    tl.fromTo("#s6-ocho", {scale: 0}, {scale: 1, duration: 0.35, ease: "back.out(2.4)"}, at(23.36));
+    [0,1,2,3,4,5,6,7].forEach((i) => {
+      tl.fromTo("#s6-d" + i, {y: -420, opacity: 0}, {y: 0, opacity: 1, duration: 0.35, ease: "back.out(1.8)"}, at(23.36) + i * 0.06);
+    });
+    tl.fromTo("#s6-k-ESP .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(24.68));
+tl.fromTo("#s6-k-ESP", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(24.68));
+    tl.fromTo(["#s6-p1", "#s6-p2"], {y: 300, opacity: 0}, {y: 0, opacity: 1, duration: 0.4, ease: "back.out(1.8)", stagger: 0.08}, at(24.68));
+    tl.fromTo("#s6-pul", {scale: 0}, {scale: 1, duration: 0.35, ease: "back.out(2.4)"}, at(24.68));
+    tl.to("#s6-cam", {scale: 1.05, duration: 4, ease: "none"}, 0.4);
+
+    window.__timelines["s06-dedos"] = tl;
+  </script>
+</template>

@@ -1,0 +1,28 @@
+import type React from 'react';
+import type {Entrada} from '../motor/tipos';
+
+/** Props que recibe cada componente visual registrado. */
+export type PropsElemento = {
+  /** propiedades propias ya animadas para este cuadro */
+  p: Record<string, unknown>;
+  ancho: number;
+  alto: number;
+  /** cuadro absoluto actual */
+  frame: number;
+  /** cuadro en que aparece / desaparece el elemento */
+  f0: number;
+  f1: number;
+  children?: React.ReactNode;
+};
+
+export type Registro = {
+  comp: React.FC<PropsElemento>;
+  ancho?: number;
+  alto?: number;
+  defecto?: Record<string, unknown>;
+  entrada?: Entrada['tipo'];
+};
+
+export const str = (v: unknown, d: string) => (typeof v === 'string' ? v : d);
+export const num = (v: unknown, d: number) => (typeof v === 'number' ? v : d);
+export const bool = (v: unknown, d: boolean) => (typeof v === 'boolean' ? v : d);

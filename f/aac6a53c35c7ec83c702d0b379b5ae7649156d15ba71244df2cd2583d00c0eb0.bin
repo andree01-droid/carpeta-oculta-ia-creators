@@ -1,0 +1,37 @@
+"""Revisa la mezcla: separa los efectos (render - voz) y compara su volumen con la voz.
+
+Uso: mezcla.py <render.mp4> <voz.mp3>
+"""
+import subprocess, sys
+import numpy as np
+
+SR = 16000
+
+
+def leer(p):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", p, "-ac", "1", "-ar", str(SR), "-f", "f32le", "-"], capture_output=True).stdout
+    return np.frombuffer(raw, dtype=np.float32)
+
+
+mix, voz = leer(sys.argv[1]), leer(sys.argv[2])
+# alinear (el AAC agrega retardo) con correlación en los primeros 10 s
+seg = SR * 10
+c = np.correlate(mix[: seg + 2000], voz[:seg], mode="valid")
+off = int(np.argmax(c))
+mix = mix[off:]
+n = min(len(mix), len(voz))
+g = float(np.dot(mix[:n], voz[:n]) / np.dot(voz[:n], voz[:n]))
+print(f"desfase {off/SR*1000:.1f} ms · ganancia de la voz en el render {20*np.log10(g):.1f} dB")
+sfx = mix[:n] - g * voz[:n]
+win = SR // 10
+k = n // win
+db = lambda x: 20 * np.log10(np.sqrt((x[: k * win].reshape(k, win) ** 2).mean(1)) + 1e-9)
+dv, ds = db(voz[:n]), db(sfx)
+hablando = dv > -40
+print(f"voz (al hablar): mediana {np.median(dv[hablando]):.1f} dB")
+print(f"efectos: pico {ds.max():.1f} dB · ventanas con efecto audible (> -40 dB): {(ds > -40).sum()} de {k}")
+fuertes = [(i / 10, ds[i] - dv[i]) for i in range(k) if ds[i] > -40 and hablando[i] and ds[i] - dv[i] > -3]
+print(f"momentos en que un efecto queda a menos de 3 dB de la voz: {len(fuertes)}")
+for t, d in fuertes[:15]:
+    print(f"  {t:6.1f}s  efecto {d:+.1f} dB respecto de la voz")
+print(f"pico total del render: {20*np.log10(np.abs(mix).max()+1e-9):.1f} dBFS")

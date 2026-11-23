@@ -1,0 +1,8 @@
+"""Calcula el centro (en px de pantalla) de cada país del coords.json que escribe bake-basemap."""
+import json, re, sys
+
+d = json.load(open(sys.argv[1], encoding="utf-8"))
+for c in d["countries"]:
+    pts = [(float(x), float(y)) for x, y in re.findall(r"(-?[\d.]+) (-?[\d.]+)", c["d"])]
+    xs, ys = [p[0] for p in pts], [p[1] for p in pts]
+    print(f"{c['name']}: centro=({sum(xs)/len(xs):.0f}, {sum(ys)/len(ys):.0f}) caja x {min(xs):.0f}-{max(xs):.0f} y {min(ys):.0f}-{max(ys):.0f}")

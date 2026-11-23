@@ -1,0 +1,22 @@
+import React from 'react';
+import type {Reloj} from './reloj';
+import type {NombreEstilo, Palabra, VideoSpec} from './tipos';
+
+export type CtxVideo = {
+  spec: VideoSpec;
+  reloj: Reloj;
+  estilo: NombreEstilo;
+  /** palabras con las claves ya marcadas */
+  palabras: Palabra[];
+};
+
+export const VideoCtx = React.createContext<CtxVideo | null>(null);
+
+export const useVideo = () => {
+  const c = React.useContext(VideoCtx);
+  if (!c) throw new Error('Falta VideoCtx');
+  return c;
+};
+
+/** Ventana de tiempo (en cuadros) de la escena actual. */
+export const EscenaCtx = React.createContext<{f0: number; f1: number}>({f0: 0, f1: 1e9});

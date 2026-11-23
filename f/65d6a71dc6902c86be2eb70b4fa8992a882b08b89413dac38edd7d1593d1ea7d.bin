@@ -1,0 +1,33 @@
+// Canvas en alta resolución: el lienzo lógico sigue siendo 1080×1920, pero el mapa de bits es R veces más grande.
+// Se envuelve setTransform (todos los dibujos lo usan para volver a "pantalla") y las sombras (que van en píxeles reales),
+// así ninguna función de dibujo necesita cambios.
+export const HD = 2;
+
+type Ctx = CanvasRenderingContext2D & {__hd?: number};
+
+export function contextoHD(c: HTMLCanvasElement, R = HD): CanvasRenderingContext2D {
+  const g = c.getContext('2d')! as Ctx;
+  if (g.__hd === R) return g;
+  const proto = CanvasRenderingContext2D.prototype;
+  const st = proto.setTransform as (this: CanvasRenderingContext2D, ...m: number[]) => void;
+  Object.defineProperty(g, 'setTransform', {
+    configurable: true,
+    value(this: CanvasRenderingContext2D, a: number | DOMMatrix2DInit = 1, b = 0, cc = 0, d = 1, e = 0, f = 0) {
+      if (typeof a === 'object') {
+        const m = new DOMMatrix([a.a ?? 1, a.b ?? 0, a.c ?? 0, a.d ?? 1, a.e ?? 0, a.f ?? 0]);
+        return st.call(this, m.a * R, m.b * R, m.c * R, m.d * R, m.e * R, m.f * R);
+      }
+      return st.call(this, a * R, b * R, cc * R, d * R, e * R, f * R);
+    },
+  });
+  for (const p of ['shadowBlur', 'shadowOffsetX', 'shadowOffsetY'] as const) {
+    const desc = Object.getOwnPropertyDescriptor(proto, p)!;
+    Object.defineProperty(g, p, {
+      configurable: true,
+      get() { return (desc.get!.call(this) as number) / R; },
+      set(v: number) { desc.set!.call(this, v * R); },
+    });
+  }
+  g.__hd = R;
+  return g;
+}

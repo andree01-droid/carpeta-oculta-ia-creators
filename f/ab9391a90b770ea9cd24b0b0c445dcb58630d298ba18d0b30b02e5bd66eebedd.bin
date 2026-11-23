@@ -1,0 +1,70 @@
+<template>
+  <style>
+#root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; background: #0E0E10; }
+.fondo { position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.035) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,0.035) 1.5px, transparent 1.5px);
+  background-size: 120px 120px; background-position: -60px -60px; }
+.halo { position: absolute; left: -300px; top: 300px; width: 1680px; height: 1680px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(239,163,45,0.22) 0%, rgba(239,163,45,0.06) 40%, transparent 70%); }
+.vineta { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 62% at 50% 55%, transparent 55%, rgba(0,0,0,0.75) 100%); pointer-events: none; }
+.cam { position: absolute; inset: 0; }
+.persp { position: absolute; inset: 0; perspective: 1800px; perspective-origin: 540px 1000px; }
+.tablero { position: absolute; width: 1000px; height: 392px; transform-style: preserve-3d; }
+.base { position: absolute; left: -36px; top: -36px; right: -36px; bottom: -36px; border-radius: 42px;
+  background: linear-gradient(180deg, #1d1d20, #141416); box-shadow: 0 30px 0 #0a0a0b, 0 50px 90px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06); }
+.k { position: absolute; width: 88px; height: 88px; border-radius: 16px;
+  background: linear-gradient(180deg, #3b3b3f 0%, #2c2c30 100%);
+  box-shadow: 0 10px 0 #17171a, 0 16px 24px rgba(0,0,0,0.55), inset 0 2px 0 rgba(255,255,255,0.09);
+  color: #d7d7da; font-weight: 600; font-size: 40px; display: grid; place-items: center; }
+.k.esp { width: 520px; }
+.k .g { position: absolute; inset: 0; border-radius: 16px; opacity: 0; display: grid; place-items: center; color: #1a1206; font-weight: 800; }
+.k .b { position: absolute; left: 30px; width: 28px; bottom: 14px; height: 6px; border-radius: 3px; background: #6a6a70;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+.fila { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+.chip { padding: 14px 38px; border-radius: 999px; font-weight: 800; font-size: 50px; white-space: nowrap; }
+.etq { position: absolute; font-weight: 800; font-size: 40px; color: #fff; white-space: nowrap; }
+.dedo { position: absolute; width: 74px; height: 104px; border-radius: 37px 37px 30px 30px;
+  background: linear-gradient(180deg, #E8B496 0%, #C98B6B 100%); box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
+.dedo::after { content: ""; position: absolute; left: 14px; right: 14px; top: 8px; height: 40px; border-radius: 20px 20px 12px 12px;
+  background: linear-gradient(180deg, #F6D9CF, #E7C1B3); opacity: 0.9; }
+.anillo { position: absolute; border-radius: 50%; border: 4px solid #EFA32D; }
+</style>
+  <div data-hf-id="hf-24w5" id="root" data-composition-id="s01-fj" data-width="1080" data-height="1920" data-layout-allow-overlap data-layout-allow-overflow>
+
+    <div data-hf-id="hf-anbe" class="fondo"></div><div data-hf-id="hf-4lrj" class="halo" id="s1-halo"></div>
+    <div data-hf-id="hf-q35l" class="cam" id="s1-cam"><div data-hf-id="hf-aqwk" class="persp"><div data-hf-id="hf-i99x" class="tablero" id="s1-tab" style="left:40px;top:980px"><div data-hf-id="hf-9327" class="base"></div><div data-hf-id="hf-7c4d" class="k" id="s1-k-Q" style="left:0px;top:0px">Q<div data-hf-id="hf-2pcl" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Q</div></div><div data-hf-id="hf-08xw" class="k" id="s1-k-W" style="left:98px;top:0px">W<div data-hf-id="hf-536r" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">W</div></div><div data-hf-id="hf-jjzp" class="k" id="s1-k-E" style="left:196px;top:0px">E<div data-hf-id="hf-anh5" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">E</div></div><div data-hf-id="hf-4qa0" class="k" id="s1-k-R" style="left:294px;top:0px">R<div data-hf-id="hf-3w9o" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">R</div></div><div data-hf-id="hf-n2k9" class="k" id="s1-k-T" style="left:392px;top:0px">T<div data-hf-id="hf-4ovq" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">T</div></div><div data-hf-id="hf-zq7w" class="k" id="s1-k-Y" style="left:490px;top:0px">Y<div data-hf-id="hf-ziwd" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Y</div></div><div data-hf-id="hf-wgfm" class="k" id="s1-k-U" style="left:588px;top:0px">U<div data-hf-id="hf-4akp" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">U</div></div><div data-hf-id="hf-rpc5" class="k" id="s1-k-I" style="left:686px;top:0px">I<div data-hf-id="hf-5vst" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">I</div></div><div data-hf-id="hf-ctvo" class="k" id="s1-k-O" style="left:784px;top:0px">O<div data-hf-id="hf-89mz" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">O</div></div><div data-hf-id="hf-3w7l" class="k" id="s1-k-P" style="left:882px;top:0px">P<div data-hf-id="hf-33nm" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">P</div></div><div data-hf-id="hf-wugt" class="k" id="s1-k-A" style="left:30px;top:98px">A<div data-hf-id="hf-9291" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">A</div></div><div data-hf-id="hf-08ob" class="k" id="s1-k-S" style="left:128px;top:98px">S<div data-hf-id="hf-3hyn" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">S</div></div><div data-hf-id="hf-fekm" class="k" id="s1-k-D" style="left:226px;top:98px">D<div data-hf-id="hf-b1s6" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">D</div></div><div data-hf-id="hf-3tyt" class="k" id="s1-k-F" style="left:324px;top:98px">F<div data-hf-id="hf-bue8" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">F</div><div data-hf-id="hf-goiq" class="b"></div></div><div data-hf-id="hf-q414" class="k" id="s1-k-G" style="left:422px;top:98px">G<div data-hf-id="hf-bg37" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">G</div></div><div data-hf-id="hf-ftgf" class="k" id="s1-k-H" style="left:520px;top:98px">H<div data-hf-id="hf-6a3u" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">H</div></div><div data-hf-id="hf-qmsp" class="k" id="s1-k-J" style="left:618px;top:98px">J<div data-hf-id="hf-72pw" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">J</div><div data-hf-id="hf-ys5i" class="b"></div></div><div data-hf-id="hf-ixre" class="k" id="s1-k-K" style="left:716px;top:98px">K<div data-hf-id="hf-6oev" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">K</div></div><div data-hf-id="hf-xrxf" class="k" id="s1-k-L" style="left:814px;top:98px">L<div data-hf-id="hf-7vby" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">L</div></div><div data-hf-id="hf-lhj3" class="k" id="s1-k-NN" style="left:912px;top:98px">Ñ<div data-hf-id="hf-hkk5" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Ñ</div></div><div data-hf-id="hf-r7n5" class="k" id="s1-k-Z" style="left:75px;top:196px">Z<div data-hf-id="hf-0ptg" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Z</div></div><div data-hf-id="hf-l69y" class="k" id="s1-k-X" style="left:173px;top:196px">X<div data-hf-id="hf-zx7e" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">X</div></div><div data-hf-id="hf-8nbn" class="k" id="s1-k-C" style="left:271px;top:196px">C<div data-hf-id="hf-9uv3" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">C</div></div><div data-hf-id="hf-nrlf" class="k" id="s1-k-V" style="left:369px;top:196px">V<div data-hf-id="hf-5hhs" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">V</div></div><div data-hf-id="hf-umyk" class="k" id="s1-k-B" style="left:467px;top:196px">B<div data-hf-id="hf-a964" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">B</div></div><div data-hf-id="hf-q0tp" class="k" id="s1-k-N" style="left:565px;top:196px">N<div data-hf-id="hf-8ny0" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">N</div></div><div data-hf-id="hf-uvk0" class="k" id="s1-k-M" style="left:663px;top:196px">M<div data-hf-id="hf-7h0x" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">M</div></div><div data-hf-id="hf-43k6" class="k esp" id="s1-k-ESP" style="left:240px;top:294px"><div data-hf-id="hf-69vd" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D"></div></div></div></div></div>
+    <div data-hf-id="hf-2bku" class="anillo" id="s1-an1" style="left:0;top:0;width:150px;height:150px"></div>
+    <div data-hf-id="hf-2ifh" class="anillo" id="s1-an2" style="left:0;top:0;width:150px;height:150px"></div>
+    <div data-hf-id="hf-4ig7" id="s1-macro" style="position:absolute;inset:0;background:radial-gradient(circle at 50% 58%, #2a2016 0%, #0E0E10 70%)">
+      <div data-hf-id="hf-16pr" class="k" style="left:240px;top:640px;width:600px;height:600px;border-radius:90px;font-size:300px;font-weight:700;
+        box-shadow:0 46px 0 #17171a, 0 70px 90px rgba(0,0,0,0.7), inset 0 6px 0 rgba(255,255,255,0.1)">F
+        <div data-hf-id="hf-ipko" id="s1-bm" style="position:absolute;left:210px;width:180px;bottom:90px;height:30px;border-radius:15px;background:#FFE2A8;box-shadow:0 0 40px #FFC04D, 0 0 90px #EFA32D"></div>
+      </div>
+      <div data-hf-id="hf-24y6" class="etq" id="s1-ray" style="left:600px;top:1330px;padding:12px 30px;border-radius:16px;background:#EFA32D;color:#1a1206;font-size:52px">← RAYITA</div>
+    </div>
+    <div data-hf-id="hf-3ox1" class="vineta"></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    const T0 = 0.0;
+    const at = (s) => Math.max(0, s - T0);
+
+    tl.fromTo("#s1-tab", {rotationX: 58, z: 0}, {rotationX: 50, duration: 3.4, ease: "none"}, 0);
+    tl.fromTo("#s1-cam", {scale: 1.55, x: 0, y: 0}, {scale: 1.85, x: 120, y: -40, duration: 3.36, ease: "power1.inOut"}, 0);
+    tl.fromTo("#s1-k-F .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(0.58));
+tl.fromTo("#s1-k-F", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(0.58));
+    tl.fromTo("#s1-k-J .g", {opacity: 0}, {opacity: 1, duration: 0.12, ease: "power2.out"}, at(1.06));
+tl.fromTo("#s1-k-J", {y: 0}, {keyframes: [{y: 8, duration: 0.06}, {y: 0, duration: 0.14, ease: "back.out(3)"}]}, at(1.06));
+    tl.fromTo(["#s1-an1", "#s1-an2"], {opacity: 0}, {opacity: 0, duration: 0.01}, 0);
+    // primer plano de la F al decir "rayita" (zoom de golpe)
+    tl.fromTo("#s1-macro", {opacity: 0, scale: 0.35, filter: "blur(18px)"}, {opacity: 1, scale: 1, filter: "blur(0px)", duration: 0.25, ease: "power3.out"}, at(2.48));
+    tl.fromTo("#s1-bm", {scaleX: 0}, {scaleX: 1, duration: 0.3, ease: "back.out(2.5)"}, at(2.6) + 0.1);
+    tl.fromTo("#s1-ray", {opacity: 0, x: 60}, {opacity: 1, x: 0, duration: 0.3, ease: "back.out(2)"}, at(2.6) + 0.2);
+    tl.fromTo("#s1-macro", {y: 0}, {y: -30, duration: 0.9, ease: "none"}, at(2.6) + 0.15);
+    tl.fromTo("#s1-k-F .b", {background: "#6a6a70", boxShadow: "0 0 0 rgba(0,0,0,0)"}, {background: "#FFE2A8", boxShadow: "0 0 18px #FFC04D", duration: 0.25}, at(2.6));
+    tl.fromTo("#s1-k-J .b", {background: "#6a6a70"}, {background: "#FFE2A8", boxShadow: "0 0 18px #FFC04D", duration: 0.25}, at(2.6));
+
+    window.__timelines["s01-fj"] = tl;
+  </script>
+</template>

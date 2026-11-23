@@ -1,0 +1,671 @@
+// Primitivas del video "vape vs cigarrillo" (estilo ilustración 2,5D con brillo, como la referencia ref6).
+// Todo es función pura de s (segundos). Coordenadas de mundo = lienzo 1080×1920; cada plano pone su cámara con vista().
+import {G, W, H, FF, rnd, cl, lerp} from '../electro/dibujo';
+export {G, W, H, FF, rnd, cl, lerp};
+
+export const ROSA = '236,72,153';
+export const AMBAR = '255,170,60';
+export const ROJO = '235,64,72';
+export const LILA = '200,120,255';
+export const AZUL = '80,160,255';
+
+export const suave = (p: number) => { const q = cl(p); return q * q * (3 - 2 * q); };
+export const salida = (p: number) => 1 - (1 - cl(p)) ** 3;
+
+/** cámara por claves [t, dur, cx, cy, zoom]: el punto (cx, cy) queda en el centro de la pantalla */
+export type Clave = [number, number, number, number, number];
+export function vista(g: G, s: number, k: Clave[], deriva = 1) {
+  let [, , x, y, z] = k[0];
+  for (let i = 1; i < k.length; i++) {
+    const [t, d, cx, cy, cz] = k[i];
+    if (s <= t) break;
+    const p = suave((s - t) / Math.max(0.01, d));
+    x = lerp(x, cx, p); y = lerp(y, cy, p); z = Math.exp(lerp(Math.log(z), Math.log(cz), p));
+  }
+  x += Math.sin(s * 0.55) * 7 * deriva; y += Math.cos(s * 0.43) * 6 * deriva;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.translate(W / 2, H / 2); g.scale(z, z); g.translate(-x, -y);
+  return z;
+}
+export const pantalla = (g: G) => g.setTransform(1, 0, 0, 1, 0, 0);
+
+export function glow(g: G, x: number, y: number, r: number, col: string, a = 1) {
+  if (a <= 0 || r <= 0) return;
+  const gr = g.createRadialGradient(x, y, 0, x, y, r);
+  gr.addColorStop(0, `rgba(${col},${0.6 * a})`); gr.addColorStop(0.35, `rgba(${col},${0.22 * a})`); gr.addColorStop(1, `rgba(${col},0)`);
+  g.fillStyle = gr; g.fillRect(x - r, y - r, r * 2, r * 2);
+}
+
+// ------------------------------------------------------------------ fondos (en pantalla)
+export function nebulosa(g: G, s: number, c1 = '110,50,190', c2 = '40,70,170', base = '#07060d') {
+  pantalla(g);
+  g.fillStyle = base; g.fillRect(0, 0, W, H);
+  glow(g, 300 + Math.sin(s * 0.2) * 80, 700 + Math.cos(s * 0.17) * 60, 900, c1, 0.75);
+  glow(g, 820 + Math.cos(s * 0.15) * 70, 1350 + Math.sin(s * 0.22) * 80, 950, c2, 0.7);
+  glow(g, 600, 1000, 500, '255,255,255', 0.08);
+  for (let i = 0; i < 90; i++) {
+    const a = 0.15 + 0.35 * rnd(i * 3.1) * (0.6 + 0.4 * Math.sin(s * 2 + i));
+    g.fillStyle = `rgba(255,255,255,${a})`;
+    g.beginPath(); g.arc(rnd(i * 1.7) * W, rnd(i * 2.3) * H, 0.8 + rnd(i * 5.1) * 1.6, 0, 7); g.fill();
+  }
+}
+export function fondoCalido(g: G, s: number, col = '150,70,20', base = '#140a06', y = 1200) {
+  pantalla(g);
+  g.fillStyle = base; g.fillRect(0, 0, W, H);
+  glow(g, 540, y, 1150, col, 0.9 + Math.sin(s * 7) * 0.04);
+}
+export function fondoLiso(g: G, arriba: string, abajo: string) {
+  pantalla(g);
+  const gr = g.createLinearGradient(0, 0, 0, H);
+  gr.addColorStop(0, arriba); gr.addColorStop(1, abajo);
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+}
+export function viñeta(g: G, a = 0.55) {
+  pantalla(g);
+  const v = g.createRadialGradient(540, 1100, 380, 540, 1100, 1250);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, `rgba(0,0,0,${a})`);
+  g.fillStyle = v; g.fillRect(0, 0, W, H);
+}
+/** franja oscura arriba para que se lean los subtítulos */
+export function velo(g: G, a = 1) {
+  pantalla(g);
+  const v = g.createLinearGradient(0, 0, 0, 600);
+  v.addColorStop(0, `rgba(8,7,12,${0.85 * a})`); v.addColorStop(0.7, `rgba(8,7,12,${0.45 * a})`); v.addColorStop(1, 'rgba(8,7,12,0)');
+  g.fillStyle = v; g.fillRect(0, 0, W, 600);
+}
+
+// ------------------------------------------------------------------ volúmenes básicos
+export function esfera(g: G, x: number, y: number, r: number, col: [number, number, number], a = 1) {
+  if (r <= 0 || a <= 0) return;
+  const [R, G2, B] = col;
+  const gr = g.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.05, x, y, r);
+  gr.addColorStop(0, `rgba(${Math.min(255, R + 120)},${Math.min(255, G2 + 120)},${Math.min(255, B + 120)},${a})`);
+  gr.addColorStop(0.25, `rgba(${R},${G2},${B},${a})`);
+  gr.addColorStop(0.85, `rgba(${R * 0.45 | 0},${G2 * 0.45 | 0},${B * 0.45 | 0},${a})`);
+  gr.addColorStop(1, `rgba(${R * 0.25 | 0},${G2 * 0.25 | 0},${B * 0.25 | 0},${a})`);
+  g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
+  g.fillStyle = `rgba(255,255,255,${0.55 * a})`;
+  g.beginPath(); g.ellipse(x - r * 0.38, y - r * 0.42, r * 0.22, r * 0.14, -0.6, 0, 7); g.fill();
+}
+
+/** gradiente de cilindro a lo ancho (eje local x, radio r) */
+function cilGrad(g: G, r: number, stops: [number, string][]) {
+  const gr = g.createLinearGradient(0, -r, 0, r);
+  for (const [p, c] of stops) gr.addColorStop(p, c);
+  return gr;
+}
+
+// ------------------------------------------------------------------ humo
+/** humo de volumen que sube desde (x, y). alto = recorrido; a = opacidad */
+export function humo(g: G, s: number, x: number, y: number, o: {alto?: number; ancho?: number; n?: number; a?: number; vel?: number; semilla?: number; r0?: number; ang?: number} = {}) {
+  const {alto = 900, ancho = 120, n = 46, a = 1, vel = 0.22, semilla = 1, r0 = 26, ang = 0} = o;
+  if (a <= 0) return;
+  g.save(); g.translate(x, y); g.rotate(ang);
+  for (let i = 0; i < n; i++) {
+    const ph = (s * vel + i / n + rnd(i + semilla * 13) * 0.05) % 1;
+    const yy = -ph * alto;
+    const xx = Math.sin(ph * 7 + i * 0.7 + s * 0.8) * ancho * ph * (0.6 + rnd(i * 7 + semilla));
+    const r = r0 + ph * ancho * 1.3;
+    const al = a * 0.16 * Math.sin(Math.PI * Math.min(1, ph * 1.2)) * (0.6 + 0.4 * rnd(i * 3 + semilla));
+    const gr = g.createRadialGradient(xx, yy, 0, xx, yy, r);
+    gr.addColorStop(0, `rgba(225,225,235,${al})`); gr.addColorStop(1, 'rgba(225,225,235,0)');
+    g.fillStyle = gr; g.fillRect(xx - r, yy - r, r * 2, r * 2);
+  }
+  // hilos finos que se enroscan
+  g.lineCap = 'round';
+  for (let k = 0; k < 4; k++) {
+    g.beginPath();
+    for (let j = 0; j <= 40; j++) {
+      const q = j / 40;
+      const yy = -q * alto * 0.9;
+      const xx = Math.sin(q * (9 + k * 2) - s * (1.6 + k * 0.3) + k * 2) * (8 + q * ancho * 0.9) + Math.sin(q * 3 + s * 0.5 + k) * q * 30;
+      if (j === 0) g.moveTo(xx, yy); else g.lineTo(xx, yy);
+    }
+    g.strokeStyle = `rgba(235,235,245,${a * (0.22 - k * 0.03)})`; g.lineWidth = 7 - k;
+    g.stroke();
+  }
+  g.restore();
+}
+
+/** puntos que brillan (sustancias, nicotina, metales) */
+export function puntos(g: G, s: number, n: number, x0: number, y0: number, x1: number, y1: number,
+  o: {col?: string; r?: number; a?: number; semilla?: number; deriva?: number; halo?: number; sube?: number; aparece?: number} = {}) {
+  const {col = '255,255,255', r = 3, a = 1, semilla = 0, deriva = 14, halo = 0, sube = 0, aparece = 1} = o;
+  if (a <= 0) return;
+  for (let i = 0; i < n; i++) {
+    if (rnd(i * 1.37 + semilla) > aparece) continue;
+    const x = x0 + rnd(i * 2.11 + semilla) * (x1 - x0) + Math.sin(s * 0.9 + i) * deriva;
+    let y = y0 + rnd(i * 3.07 + semilla) * (y1 - y0) + Math.cos(s * 0.7 + i * 1.3) * deriva;
+    if (sube) y = y0 + ((((y - y0) - s * sube) % (y1 - y0)) + (y1 - y0)) % (y1 - y0);
+    const tw = 0.55 + 0.45 * Math.sin(s * 3 + i * 2.7);
+    const rr = r * (0.6 + rnd(i * 5.3 + semilla) * 0.8);
+    if (halo) glow(g, x, y, rr * halo, col, a * tw * 0.7);
+    g.fillStyle = `rgba(${col},${a * tw})`;
+    g.beginPath(); g.arc(x, y, rr, 0, 7); g.fill();
+  }
+}
+
+// ------------------------------------------------------------------ cigarrillo
+/** cigarrillo con la brasa en (x, y); el cuerpo va hacia el ángulo ang (rad). */
+export function cigarro(g: G, x: number, y: number, ang: number, largo: number, r: number, s: number, brasa = 1) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  glow(g, -r * 0.2, 0, r * 7, AMBAR, 0.55 * brasa * (0.92 + 0.08 * Math.sin(s * 9)));
+  // papel
+  g.fillStyle = cilGrad(g, r, [[0, '#8a8277'], [0.18, '#e9e4da'], [0.38, '#fbf8f1'], [0.75, '#d6cfc2'], [1, '#6d655b']]);
+  g.beginPath(); g.roundRect(r * 0.2, -r, largo, r * 2, [0, r * 0.3, r * 0.3, 0]); g.fill();
+  // textura del papel
+  g.save(); g.beginPath(); g.rect(r * 0.2, -r, largo, r * 2); g.clip();
+  g.strokeStyle = 'rgba(120,110,95,0.10)'; g.lineWidth = 2;
+  for (let i = 0; i < 26; i++) {
+    const x0 = r * 0.3 + rnd(i * 4.1) * largo, y0 = -r + rnd(i * 6.7) * r * 2;
+    g.beginPath(); g.moveTo(x0, y0);
+    g.bezierCurveTo(x0 + 30, y0 + 15 * Math.sin(i), x0 + 60, y0 - 12, x0 + 110, y0 + 8 * Math.cos(i)); g.stroke();
+  }
+  g.restore();
+  // filtro (lejos)
+  if (largo > r * 6) {
+    g.fillStyle = cilGrad(g, r, [[0, '#7a4a1c'], [0.35, '#e0a25a'], [0.7, '#c07a36'], [1, '#5c3412']]);
+    g.fillRect(r * 0.2 + largo * 0.72, -r, largo * 0.28, r * 2);
+  }
+  // ceniza y brasa
+  g.fillStyle = cilGrad(g, r, [[0, '#3a3a3a'], [0.4, '#9a9690'], [1, '#2a2a2a']]);
+  g.beginPath(); g.ellipse(r * 0.25, 0, r * 0.38, r, 0, 0, 7); g.fill();
+  const fl = 0.85 + 0.15 * Math.sin(s * 11) * Math.sin(s * 7.3);
+  const gr = g.createRadialGradient(-r * 0.05, 0, 0, 0, 0, r * 1.05);
+  gr.addColorStop(0, `rgba(255,250,215,${brasa})`); gr.addColorStop(0.35, `rgba(255,190,70,${brasa * fl})`);
+  gr.addColorStop(0.75, `rgba(240,90,20,${brasa * fl})`); gr.addColorStop(1, `rgba(120,30,8,${brasa})`);
+  g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, r * 0.42, r * 0.98, 0, 0, 7); g.fill();
+  glow(g, 0, 0, r * 2.2, '255,220,140', 0.8 * brasa * fl);
+  g.restore();
+}
+
+/** cara de la brasa vista de frente (primer plano): cilindro con la cara elíptica arriba a la derecha */
+export function brasaCara(g: G, x: number, y: number, R: number, ang: number, s: number, calor = 1) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  const rx = R * 0.62;
+  glow(g, 0, 0, R * 3.2, AMBAR, 0.5 * calor);
+  // cuerpo (hacia +x, que tras la rotación va abajo a la izquierda)
+  g.fillStyle = cilGrad(g, R, [[0, '#7f776b'], [0.2, '#e8e2d6'], [0.45, '#fbf8f1'], [0.8, '#cfc7b8'], [1, '#5e564c']]);
+  g.fillRect(0, -R, 2600, R * 2);
+  g.save(); g.beginPath(); g.rect(0, -R, 2600, R * 2); g.clip();
+  g.strokeStyle = 'rgba(130,120,105,0.13)'; g.lineWidth = 3;
+  for (let i = 0; i < 60; i++) {
+    const x0 = rnd(i * 4.1) * 1500, y0 = -R + rnd(i * 6.7) * R * 2;
+    g.beginPath(); g.moveTo(x0, y0);
+    g.bezierCurveTo(x0 + 40, y0 + 30 * Math.sin(i), x0 + 90, y0 - 25, x0 + 160, y0 + 20 * Math.cos(i)); g.stroke();
+  }
+  // borde quemado del papel
+  const gq = g.createLinearGradient(0, 0, R * 0.5, 0);
+  gq.addColorStop(0, 'rgba(60,25,8,0.95)'); gq.addColorStop(0.5, 'rgba(150,80,30,0.35)'); gq.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gq; g.fillRect(0, -R, R * 0.5, R * 2);
+  g.restore();
+  // cara
+  g.save(); g.beginPath(); g.ellipse(0, 0, rx, R, 0, 0, 7); g.clip();
+  const fl = 0.88 + 0.12 * Math.sin(s * 9) * Math.sin(s * 5.7);
+  const gr = g.createRadialGradient(-rx * 0.1, R * 0.05, 0, 0, 0, R);
+  gr.addColorStop(0, `rgba(255,248,210,1)`); gr.addColorStop(0.25, `rgba(255,205,90,1)`);
+  gr.addColorStop(0.6, `rgba(245,120,30,${fl})`); gr.addColorStop(0.9, 'rgba(170,55,12,1)'); gr.addColorStop(1, 'rgba(90,25,6,1)');
+  g.fillStyle = gr; g.fillRect(-rx, -R, rx * 2, R * 2);
+  // grietas incandescentes (tabaco)
+  g.lineCap = 'round';
+  for (let i = 0; i < 46; i++) {
+    const a0 = rnd(i * 2.9) * 6.283, d0 = Math.sqrt(rnd(i * 5.3)) * 0.92;
+    let px = Math.cos(a0) * d0 * rx, py = Math.sin(a0) * d0 * R;
+    g.beginPath(); g.moveTo(px, py);
+    for (let j = 0; j < 4; j++) {
+      const da = rnd(i * 7 + j) * 6.283;
+      px += Math.cos(da) * R * 0.09; py += Math.sin(da) * R * 0.12;
+      g.quadraticCurveTo(px + R * 0.05 * Math.sin(i + j), py - R * 0.04, px, py);
+    }
+    const tw = 0.5 + 0.5 * Math.sin(s * (3 + rnd(i) * 4) + i);
+    g.strokeStyle = `rgba(255,${200 + 50 * tw | 0},120,${(0.45 + 0.5 * tw) * calor})`;
+    g.lineWidth = 3 + rnd(i * 3.3) * 4;
+    g.stroke();
+  }
+  // motas de ceniza
+  for (let i = 0; i < 30; i++) {
+    const a0 = rnd(i * 8.1) * 6.283, d0 = Math.sqrt(rnd(i * 9.7));
+    g.fillStyle = 'rgba(60,20,6,0.45)';
+    g.beginPath(); g.arc(Math.cos(a0) * d0 * rx, Math.sin(a0) * d0 * R, 3 + rnd(i) * 7, 0, 7); g.fill();
+  }
+  g.restore();
+  g.strokeStyle = 'rgba(70,24,6,0.9)'; g.lineWidth = 8;
+  g.beginPath(); g.ellipse(0, 0, rx, R, 0, 0, 7); g.stroke();
+  glow(g, -rx * 0.1, 0, R * 1.2, '255,235,170', 0.55 * calor * fl);
+  g.restore();
+}
+
+export function chispas(g: G, s: number, x: number, y: number, n = 16, alto = 300, semilla = 0, a = 1) {
+  for (let i = 0; i < n; i++) {
+    const ph = (s * (0.5 + rnd(i + semilla) * 0.5) + rnd(i * 3.3 + semilla)) % 1;
+    const xx = x + (rnd(i * 5.1 + semilla) - 0.5) * 160 + Math.sin(ph * 6 + i) * 40;
+    const yy = y - ph * alto;
+    const al = a * (1 - ph);
+    glow(g, xx, yy, 14, '255,180,80', al);
+    g.fillStyle = `rgba(255,230,160,${al})`; g.beginPath(); g.arc(xx, yy, 2.5, 0, 7); g.fill();
+  }
+}
+
+// ------------------------------------------------------------------ vape
+/** vape: boquilla en (x, y), cuerpo hacia ang */
+export function vape(g: G, x: number, y: number, ang: number, largo: number, r: number, s: number, led = 1) {
+  g.save(); g.translate(x, y); g.rotate(ang);
+  // boquilla
+  const bL = largo * 0.16;
+  g.fillStyle = cilGrad(g, r, [[0, '#0c0c10'], [0.3, '#4a4a52'], [0.45, '#8a8a94'], [0.6, '#2a2a30'], [1, '#08080a']]);
+  g.beginPath(); g.moveTo(0, -r * 0.55); g.lineTo(bL, -r * 0.9); g.lineTo(bL, r * 0.9); g.lineTo(0, r * 0.55); g.closePath(); g.fill();
+  g.fillStyle = '#050507'; g.beginPath(); g.ellipse(0, 0, r * 0.18, r * 0.55, 0, 0, 7); g.fill();
+  g.fillStyle = 'rgba(255,255,255,0.35)'; g.fillRect(bL * 0.15, -r * 0.08, bL * 0.75, r * 0.1);
+  // anillo negro
+  g.fillStyle = cilGrad(g, r, [[0, '#111'], [0.4, '#55555c'], [1, '#0a0a0a']]);
+  g.fillRect(bL, -r * 0.98, largo * 0.05, r * 1.96);
+  // cápsula rosa (líquido)
+  const c0 = bL + largo * 0.05, cL = largo * 0.16;
+  g.fillStyle = cilGrad(g, r, [[0, '#6e0f3a'], [0.25, '#f0569a'], [0.45, '#ff9cc8'], [0.7, '#d93b80'], [1, '#4a0826']]);
+  g.fillRect(c0, -r, cL, r * 2);
+  g.fillStyle = 'rgba(255,255,255,0.55)'; g.fillRect(c0 + cL * 0.1, -r * 0.62, cL * 0.8, r * 0.12);
+  g.fillStyle = 'rgba(255,255,255,0.18)'; g.fillRect(c0 + cL * 0.45, -r, cL * 0.08, r * 2);
+  // cuerpo azul metálico
+  const m0 = c0 + cL;
+  g.fillStyle = cilGrad(g, r, [[0, '#08122e'], [0.2, '#2348a8'], [0.4, '#6f9cf0'], [0.55, '#2c56c0'], [0.85, '#132a6c'], [1, '#050a1c']]);
+  g.beginPath(); g.roundRect(m0, -r, largo - m0, r * 2, [0, r * 0.4, r * 0.4, 0]); g.fill();
+  g.fillStyle = 'rgba(190,215,255,0.45)'; g.fillRect(m0 + 20, -r * 0.55, largo - m0 - 60, r * 0.09);
+  // ranura y led
+  g.fillStyle = '#0a1230'; g.beginPath(); g.roundRect(m0 + (largo - m0) * 0.55, r * 0.15, r * 0.7, r * 0.32, r * 0.16); g.fill();
+  if (led > 0) {
+    const lx = m0 + (largo - m0) * 0.3;
+    glow(g, lx, r * 0.35, r * 2.2, '150,200,255', led * (0.8 + 0.2 * Math.sin(s * 4)));
+    g.fillStyle = `rgba(230,245,255,${led})`; g.beginPath(); g.ellipse(lx, r * 0.35, r * 0.14, r * 0.3, 0, 0, 7); g.fill();
+  }
+  g.restore();
+}
+
+// ------------------------------------------------------------------ pulmones
+type Seg = {x0: number; y0: number; x1: number; y1: number; w: number; nivel: number; padre: number};
+let ARBOL: Seg[] | null = null;
+/** árbol bronquial fijo (coordenadas de pulmón: ancho ±1, alto -1.2..0.85) */
+function arbol(): Seg[] {
+  if (ARBOL) return ARBOL;
+  const out: Seg[] = [];
+  const rama = (x: number, y: number, ang: number, len: number, w: number, nivel: number, padre: number, semilla: number) => {
+    const x1 = x + Math.cos(ang) * len, y1 = y + Math.sin(ang) * len;
+    out.push({x0: x, y0: y, x1, y1, w, nivel, padre});
+    const id = out.length - 1;
+    if (nivel >= 5) return;
+    const abre = 0.38 + rnd(semilla) * 0.25;
+    rama(x1, y1, ang - abre, len * 0.74, w * 0.68, nivel + 1, id, semilla * 1.7 + 1);
+    rama(x1, y1, ang + abre * 0.9, len * 0.7, w * 0.68, nivel + 1, id, semilla * 2.3 + 2);
+  };
+  // tráquea: 0
+  out.push({x0: 0, y0: -1.25, x1: 0, y1: -0.42, w: 0.1, nivel: 0, padre: -1});
+  rama(0, -0.42, Math.PI * 0.72, 0.36, 0.07, 1, 0, 3.1);
+  rama(0, -0.42, Math.PI * 0.28, 0.36, 0.07, 1, 0, 5.7);
+  ARBOL = out;
+  return out;
+}
+function lobulo(g: G, lado: number) {
+  const m = (x: number) => x * lado;
+  g.moveTo(m(0.2), m(0) * 0 - 0.78);
+  g.bezierCurveTo(m(0.5), -1.0, m(0.92), -0.4, m(0.95), 0.2);
+  g.bezierCurveTo(m(0.98), 0.6, m(0.9), 0.86, m(0.6), 0.86);
+  g.bezierCurveTo(m(0.38), 0.86, m(0.22), 0.8, m(0.14), 0.74);
+  g.bezierCurveTo(m(0.2), 0.4, m(0.1), 0.0, m(0.12), -0.4);
+  g.closePath();
+}
+export function pulmones(g: G, x: number, y: number, sc: number, s: number, o: {tar?: number; gotas?: number[]; respira?: number; a?: number} = {}) {
+  const {tar = 0, gotas = [], respira = 1, a = 1} = o;
+  const e = 1 + 0.025 * Math.sin(s * 2.2) * respira;
+  g.save(); g.translate(x, y); g.scale(sc * e, sc * e); g.globalAlpha = a;
+  const px = 1 / sc;
+  // lóbulos
+  for (const lado of [-1, 1]) {
+    g.beginPath(); lobulo(g, lado);
+    const gr = g.createRadialGradient(lado * 0.5, 0.1, 0.05, lado * 0.5, 0.1, 1.0);
+    gr.addColorStop(0, '#fbd3dd'); gr.addColorStop(0.55, '#ee9fb4'); gr.addColorStop(1, '#b65270');
+    g.fillStyle = gr; g.fill();
+    g.save(); g.clip();
+    // lobulillos
+    g.strokeStyle = 'rgba(255,235,240,0.35)'; g.lineWidth = 4 * px;
+    for (let i = 0; i < 30; i++) {
+      const cx = lado * (0.15 + rnd(i * 3.1 + lado) * 0.85), cy = -0.8 + rnd(i * 4.7 + lado) * 1.65;
+      g.beginPath();
+      for (let k = 0; k < 6; k++) { const an = k / 6 * 6.283 + i; const rr = 0.11 + rnd(i * 9 + k) * 0.05; const qx = cx + Math.cos(an) * rr, qy = cy + Math.sin(an) * rr; if (k) g.lineTo(qx, qy); else g.moveTo(qx, qy); }
+      g.closePath(); g.stroke();
+    }
+    if (tar > 0) { g.fillStyle = `rgba(32,14,18,${0.82 * tar})`; g.fillRect(-1.2, -1.3, 2.4, 2.4); }
+    g.restore();
+    g.strokeStyle = tar > 0.5 ? 'rgba(120,60,70,0.8)' : 'rgba(255,200,215,0.9)'; g.lineWidth = 4 * px; g.stroke();
+  }
+  // tráquea con anillos
+  const tq = g.createLinearGradient(-0.07, 0, 0.07, 0);
+  tq.addColorStop(0, '#b35a74'); tq.addColorStop(0.4, '#f7c2d0'); tq.addColorStop(1, '#a24c66');
+  g.fillStyle = tq; g.beginPath(); g.roundRect(-0.065, -1.3, 0.13, 0.9, 0.05); g.fill();
+  g.strokeStyle = 'rgba(150,60,85,0.6)'; g.lineWidth = 5 * px;
+  for (let k = 0; k < 11; k++) { const yy = -1.25 + k * 0.075; g.beginPath(); g.moveTo(-0.06, yy); g.quadraticCurveTo(0, yy + 0.02, 0.06, yy); g.stroke(); }
+  // bronquios
+  const A = arbol();
+  g.lineCap = 'round';
+  for (const sg of A.slice(1)) {
+    g.strokeStyle = 'rgba(150,60,85,0.45)'; g.lineWidth = sg.w + 6 * px;
+    g.beginPath(); g.moveTo(sg.x0, sg.y0); g.lineTo(sg.x1, sg.y1); g.stroke();
+    g.strokeStyle = tar > 0.6 ? '#9b6b74' : '#fde4eb'; g.lineWidth = sg.w;
+    g.beginPath(); g.moveTo(sg.x0, sg.y0); g.lineTo(sg.x1, sg.y1); g.stroke();
+  }
+  // alvéolos en las puntas
+  for (const [i, sg] of A.entries()) {
+    if (sg.nivel < 5) continue;
+    for (let k = 0; k < 3; k++) {
+      const an = rnd(i * 3 + k) * 6.283, d = 0.02 + rnd(i * 5 + k) * 0.03;
+      const r = 0.018 + rnd(i + k * 7) * 0.012;
+      const c: [number, number, number] = tar > 0.6 ? [110, 60, 70] : [232, 110, 145];
+      esfera(g, sg.x1 + Math.cos(an) * d, sg.y1 + Math.sin(an) * d, r, c);
+    }
+  }
+  // gotas de alquitrán bajando por el árbol: cada gota = progreso 0..1 por una cadena
+  for (const [j, p] of gotas.entries()) {
+    if (p <= 0) continue;
+    const cad = cadena(A, j);
+    const pos = recorrer(A, cad, Math.min(p, 1));
+    const r = 0.022 + rnd(j * 3.3) * 0.02;
+    esfera(g, pos[0], pos[1], r * (p > 1 ? 1 + Math.min(0.5, (p - 1) * 0.6) : 1), [40, 26, 26]);
+  }
+  g.restore();
+}
+function cadena(A: Seg[], j: number): number[] {
+  const hojas = A.map((sg, i) => [sg, i] as const).filter(([sg]) => sg.nivel >= 3 + (j % 3));
+  let id = hojas[Math.floor(rnd(j * 7.7 + 1) * hojas.length)][1];
+  const out: number[] = [];
+  while (id >= 0) { out.unshift(id); id = A[id].padre; }
+  return out;
+}
+function recorrer(A: Seg[], cad: number[], p: number): [number, number] {
+  const largos = cad.map((i) => Math.hypot(A[i].x1 - A[i].x0, A[i].y1 - A[i].y0));
+  let d = p * largos.reduce((a, b) => a + b, 0);
+  for (const [k, i] of cad.entries()) {
+    if (d <= largos[k] || k === cad.length - 1) { const q = Math.min(1, d / largos[k]); return [lerp(A[i].x0, A[i].x1, q), lerp(A[i].y0, A[i].y1, q)]; }
+    d -= largos[k];
+  }
+  return [0, 0];
+}
+
+/** tejido pulmonar en macro (llena el área x0..x1, y0..y1 de mundo) */
+export function tejido(g: G, s: number, x0: number, y0: number, x1: number, y1: number, paso = 280) {
+  const gr = g.createLinearGradient(0, y0, 0, y1);
+  gr.addColorStop(0, '#f6c5d2'); gr.addColorStop(1, '#e597ab');
+  g.fillStyle = gr; g.fillRect(x0, y0, x1 - x0, y1 - y0);
+  const cols = Math.ceil((x1 - x0) / paso) + 2, filas = Math.ceil((y1 - y0) / paso) + 2;
+  const P = (i: number, j: number): [number, number] => [x0 + (i - 0.5) * paso + (rnd(i * 13.1 + j * 7.3) - 0.5) * paso * 0.7 + Math.sin(s * 0.8 + i + j) * 4,
+    y0 + (j - 0.5) * paso + (rnd(i * 5.9 + j * 11.7) - 0.5) * paso * 0.7 + Math.cos(s * 0.7 + i * 2 + j) * 4];
+  // manchas internas de cada celda
+  for (let i = 0; i < cols; i++) for (let j = 0; j < filas; j++) {
+    const [x, y] = P(i, j);
+    const gg = g.createRadialGradient(x + paso * 0.3, y + paso * 0.3, 0, x + paso * 0.3, y + paso * 0.3, paso * 0.6);
+    gg.addColorStop(0, 'rgba(255,225,232,0.5)'); gg.addColorStop(1, 'rgba(255,225,232,0)');
+    g.fillStyle = gg; g.fillRect(x - paso * 0.3, y - paso * 0.3, paso * 1.2, paso * 1.2);
+  }
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  for (const pase of [0, 1]) {
+    for (let i = 0; i < cols; i++) for (let j = 0; j < filas; j++) {
+      const a = P(i, j);
+      const vec: [number, number][] = [[i + 1, j], [i, j + 1]];
+      if (rnd(i * 3 + j * 17) > 0.5) vec.push([i + 1, j + 1]);
+      for (const [ii, jj] of vec) {
+        if (ii >= cols || jj >= filas) continue;
+        const b = P(ii, jj);
+        g.strokeStyle = pase === 0 ? 'rgba(190,90,120,0.55)' : 'rgba(255,240,244,0.95)';
+        g.lineWidth = pase === 0 ? 26 : 14;
+        g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke();
+      }
+    }
+  }
+  // alvéolos redondos en algunos nudos
+  for (let i = 0; i < cols; i++) for (let j = 0; j < filas; j++) {
+    if (rnd(i * 7.7 + j * 3.1) < 0.6) continue;
+    const [x, y] = P(i, j);
+    g.fillStyle = 'rgba(255,210,222,0.55)'; g.beginPath(); g.arc(x + 30, y + 40, 46, 0, 7); g.fill();
+    g.strokeStyle = 'rgba(200,100,130,0.5)'; g.lineWidth = 4; g.stroke();
+    g.fillStyle = 'rgba(255,255,255,0.5)'; g.beginPath(); g.ellipse(x + 16, y + 24, 14, 9, -0.6, 0, 7); g.fill();
+  }
+}
+
+// ------------------------------------------------------------------ sangre y moléculas
+export function globulo(g: G, x: number, y: number, r: number, giro: number, a = 1) {
+  g.save(); g.translate(x, y); g.rotate(giro); g.globalAlpha = a;
+  const sq = 0.62 + 0.18 * Math.sin(giro * 2);
+  g.scale(1, sq);
+  const gr = g.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.1, 0, 0, r);
+  gr.addColorStop(0, '#ff6b74'); gr.addColorStop(0.6, '#c8162a'); gr.addColorStop(1, '#6a0612');
+  g.fillStyle = gr; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill();
+  const gi = g.createRadialGradient(r * 0.05, r * 0.05, 0, 0, 0, r * 0.55);
+  gi.addColorStop(0, 'rgba(90,4,14,0.75)'); gi.addColorStop(1, 'rgba(90,4,14,0)');
+  g.fillStyle = gi; g.beginPath(); g.arc(0, 0, r * 0.6, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(255,140,150,0.35)'; g.lineWidth = r * 0.06; g.beginPath(); g.arc(0, 0, r * 0.82, 3.6, 5.4); g.stroke();
+  g.restore();
+}
+/** O₂: dos esferas azules */
+export function o2(g: G, x: number, y: number, r: number, ang: number, a = 1) {
+  const dx = Math.cos(ang) * r * 0.8, dy = Math.sin(ang) * r * 0.8;
+  glow(g, x, y, r * 3, AZUL, 0.35 * a);
+  esfera(g, x - dx, y - dy, r, [60, 150, 255], a); esfera(g, x + dx, y + dy, r, [60, 150, 255], a);
+}
+/** CO: carbono negro + oxígeno rojo */
+export function co(g: G, x: number, y: number, r: number, ang: number, a = 1) {
+  const dx = Math.cos(ang) * r * 0.85, dy = Math.sin(ang) * r * 0.85;
+  esfera(g, x - dx, y - dy, r * 1.05, [60, 62, 70], a); esfera(g, x + dx, y + dy, r * 0.95, [225, 30, 40], a);
+}
+export function tuboEscape(g: G, x: number, y: number, r: number, largo: number) {
+  // cuerpo hacia la derecha, boca en (x, y) mirando a la izquierda
+  g.save(); g.translate(x, y);
+  g.fillStyle = cilGrad(g, r, [[0, '#2a2c30'], [0.25, '#d8dbe0'], [0.4, '#ffffff'], [0.6, '#9a9ea6'], [1, '#2a2c30']]);
+  g.fillRect(0, -r, largo, r * 2);
+  g.fillStyle = cilGrad(g, r, [[0, '#55585e'], [0.3, '#f2f3f5'], [0.7, '#80848c'], [1, '#3a3c40']]);
+  g.beginPath(); g.ellipse(0, 0, r * 0.42, r, 0, 0, 7); g.fill();
+  const gi = g.createRadialGradient(0, 0, 0, 0, 0, r * 0.8);
+  gi.addColorStop(0, '#000'); gi.addColorStop(1, '#1a1b1e');
+  g.fillStyle = gi; g.beginPath(); g.ellipse(r * 0.02, 0, r * 0.32, r * 0.8, 0, 0, 7); g.fill();
+  g.restore();
+}
+
+// ------------------------------------------------------------------ vape por dentro
+export function vapeCorte(g: G, s: number, calor: number, liquido: number, nube: number, y = 1350) {
+  // paredes
+  for (const [xa, xb] of [[60, 175], [905, 1020]]) {
+    const gr = g.createLinearGradient(xa, 0, xb, 0);
+    gr.addColorStop(0, '#7a1446'); gr.addColorStop(0.35, '#f0569a'); gr.addColorStop(0.55, '#ff8fc0'); gr.addColorStop(1, '#8a1a52');
+    g.fillStyle = gr; g.fillRect(xa, 500, xb - xa, 1500);
+    g.fillStyle = 'rgba(255,220,240,0.5)'; g.fillRect(xa + 30, 540, 8, 1400);
+  }
+  glow(g, 540, y, 520, AMBAR, 0.55 * calor);
+  // mecha
+  const mw = cilGrad(g, 60, [[0, '#b0466e'], [0.35, '#ffc6dc'], [0.6, '#f59bbd'], [1, '#9a3a60']]);
+  g.save(); g.translate(0, y); g.fillStyle = mw; g.beginPath(); g.roundRect(175, -60, 730, 120, 20); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,0.18)'; g.lineWidth = 3;
+  for (let i = 0; i < 40; i++) { const xx = 190 + rnd(i * 3.7) * 700; g.beginPath(); g.moveTo(xx, -55 + rnd(i) * 30); g.lineTo(xx + 30, 50 - rnd(i * 2) * 30); g.stroke(); }
+  g.restore();
+  // bobina (espiral alrededor de la mecha)
+  const col = (q: number) => `rgb(${lerp(200, 255, calor) | 0},${lerp(205, 175 - 60 * q, calor) | 0},${lerp(215, 60, calor) | 0})`;
+  const vueltas = 10, x0 = 230, x1 = 850;
+  g.lineCap = 'round';
+  for (const delante of [false, true]) {
+    for (let k = 0; k < vueltas; k++) {
+      const cx = lerp(x0, x1, k / (vueltas - 1));
+      g.strokeStyle = col(rnd(k)); g.lineWidth = 12;
+      if (calor > 0.3 && delante) { g.shadowColor = 'rgba(255,170,60,0.9)'; g.shadowBlur = 24 * calor; }
+      g.beginPath(); g.ellipse(cx, y, 26, 84, 0.18, delante ? -Math.PI / 2 : Math.PI / 2, delante ? Math.PI / 2 : Math.PI * 1.5); g.stroke();
+      g.shadowBlur = 0;
+      if (delante) { g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 3; g.beginPath(); g.ellipse(cx - 3, y, 24, 80, 0.18, -1.2, 0.2); g.stroke(); }
+    }
+  }
+  // gotitas de líquido que suben
+  for (let i = 0; i < 40; i++) {
+    const ph = (s * 0.35 + rnd(i * 2.7)) % 1;
+    const xx = 220 + rnd(i * 5.1) * 640, yy = y - 90 - ph * 600 * (0.4 + liquido);
+    const a = liquido * (1 - ph) * 0.9;
+    if (a <= 0) continue;
+    g.fillStyle = `rgba(240,90,150,${a})`; g.beginPath(); g.arc(xx, yy, 5 + rnd(i) * 7, 0, 7); g.fill();
+  }
+  if (nube > 0) nubeVapor(g, s, 540, y - 330, nube);
+}
+export function nubeVapor(g: G, s: number, x: number, y: number, p: number) {
+  for (let i = 0; i < 40; i++) {
+    const an = rnd(i * 1.9) * 6.283, d = Math.sqrt(rnd(i * 4.3)) * 360 * p;
+    const xx = x + Math.cos(an) * d * 1.25 + Math.sin(s * 0.6 + i) * 20, yy = y + Math.sin(an) * d * 0.7 - p * 120 * rnd(i * 6.1) + Math.cos(s * 0.5 + i) * 16;
+    const r = (110 + rnd(i * 8.3) * 140) * (0.4 + 0.6 * p);
+    const gr = g.createRadialGradient(xx, yy, 0, xx, yy, r);
+    gr.addColorStop(0, `rgba(245,245,250,${0.32 * p})`); gr.addColorStop(1, 'rgba(245,245,250,0)');
+    g.fillStyle = gr; g.fillRect(xx - r, yy - r, r * 2, r * 2);
+  }
+}
+
+// ------------------------------------------------------------------ carretera nocturna (línea de tiempo)
+export const HORIZ = 1000;
+/** proyección en metros: X lateral, Y altura, Z profundidad (>0); cámara a 1,6 m. Devuelve [x, y, px por metro] */
+export const proy = (X: number, Y: number, Z: number): [number, number, number] => { const k = 560 / Z; return [540 + X * k, HORIZ + (1.6 - Y) * k, k]; };
+export function carretera(g: G, s: number, avance: number, niebla = 0) {
+  pantalla(g);
+  const cielo = g.createLinearGradient(0, 0, 0, HORIZ);
+  cielo.addColorStop(0, '#05060d'); cielo.addColorStop(1, '#1b1a33');
+  g.fillStyle = cielo; g.fillRect(0, 0, W, HORIZ);
+  const suelo = g.createLinearGradient(0, HORIZ, 0, H);
+  suelo.addColorStop(0, '#15151c'); suelo.addColorStop(1, '#0a0a0e');
+  g.fillStyle = suelo; g.fillRect(0, HORIZ, W, H - HORIZ);
+  glow(g, 540, HORIZ, 600, '120,110,200', 0.35);
+  // asfalto
+  const [ax, ay] = proy(-3, 0, 0.5), [bx] = proy(3, 0, 0.5);
+  const asf = g.createLinearGradient(0, HORIZ, 0, H);
+  asf.addColorStop(0, '#2a2b34'); asf.addColorStop(1, '#1a1b21');
+  g.fillStyle = asf; g.beginPath(); g.moveTo(538, HORIZ); g.lineTo(542, HORIZ); g.lineTo(bx, ay); g.lineTo(ax, ay); g.closePath(); g.fill();
+  // líneas del centro
+  for (let k = 0; k < 30; k++) {
+    const z = ((k * 4 - avance) % 120 + 120) % 120 + 0.5;
+    const [x0, y0, e0] = proy(0, 0, z), [, y1] = proy(0, 0, z + 1.6);
+    if (y0 > H + 400) continue;
+    g.fillStyle = `rgba(220,185,110,${cl(1.6 - z / 70)})`;
+    g.fillRect(x0 - 0.09 * e0, y1, 0.18 * e0, y0 - y1);
+  }
+  // farolas a los lados
+  for (let k = 0; k < 14; k++) {
+    const z = ((k * 9 - avance) % 126 + 126) % 126 + 1;
+    for (const lado of [-1, 1]) {
+      const [x0, y0, e] = proy(lado * 4.2, 0, z), [x1, y1] = proy(lado * 4.2, 5.5, z), [x2] = proy(lado * 3.4, 5.5, z);
+      const a = cl(1.5 - z / 90);
+      g.strokeStyle = `rgba(110,110,130,${a})`; g.lineWidth = Math.max(1.5, 0.12 * e); g.lineCap = 'round';
+      g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.lineTo(x2, y1); g.stroke();
+      glow(g, x2, y1 + 0.1 * e, 1.6 * e + 30, '255,190,110', a * 0.9);
+      glow(g, x2, y0, 2.4 * e + 20, '255,180,100', a * 0.25);
+      g.fillStyle = `rgba(255,235,190,${a})`; g.beginPath(); g.arc(x2, y1 + 0.1 * e, Math.max(2.5, 0.14 * e), 0, 7); g.fill();
+    }
+  }
+  if (niebla > 0) {
+    const ng = g.createLinearGradient(0, HORIZ - 260, 0, HORIZ + 160);
+    ng.addColorStop(0, 'rgba(180,185,215,0)'); ng.addColorStop(0.55, `rgba(180,185,215,${0.55 * niebla})`); ng.addColorStop(1, 'rgba(180,185,215,0)');
+    g.fillStyle = ng; g.fillRect(0, HORIZ - 260, W, 420);
+    for (let i = 0; i < 14; i++) {
+      const xx = ((rnd(i * 3.3) * W + s * 30 * (0.5 + rnd(i))) % (W + 400)) - 200;
+      glow(g, xx, HORIZ - 60 + rnd(i * 2) * 120, 220, '200,205,230', niebla * 0.5);
+    }
+  }
+}
+
+// ------------------------------------------------------------------ público fumando (como un cine)
+export function publico(g: G, s: number, o: {filas?: number; mueren?: number; humo?: number} = {}) {
+  const {filas = 6, mueren = 0, humo: hu = 1} = o;
+  const bg = g.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#0b0a18'); bg.addColorStop(0.5, '#1d1638'); bg.addColorStop(1, '#0d0b18');
+  g.fillStyle = bg; g.fillRect(-800, -600, W + 1600, H + 1200);
+  glow(g, 540, 500, 900, '140,90,230', 0.45);
+  for (let f = 0; f < filas; f++) {
+    const q = f / Math.max(1, filas - 1);
+    const y = lerp(620, 1650, q ** 1.15), e = lerp(0.42, 1.25, q);
+    const n = Math.round(lerp(13, 5, q));
+    const paso = W / (n - 0.2);
+    // respaldo de la fila
+    g.fillStyle = `rgba(${lerp(40, 22, q) | 0},${lerp(30, 18, q) | 0},${lerp(70, 40, q) | 0},1)`;
+    g.fillRect(0, y + 60 * e, W, 260 * e);
+    g.strokeStyle = 'rgba(150,120,230,0.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, y + 60 * e); g.lineTo(W, y + 60 * e); g.stroke();
+    for (let i = 0; i < n; i++) {
+      const x = (i + 0.4 + (f % 2) * 0.5) * paso - paso * 0.3;
+      const id = f * 31 + i;
+      const muere = rnd(id * 1.91) < 0.5 ? cl(mueren * 1.6 - rnd(id * 4.3) * 0.6) : 0;
+      const al = 1 - muere * 0.85;
+      // cabeza y hombros
+      g.fillStyle = `rgba(10,8,18,${al})`;
+      g.beginPath(); g.ellipse(x, y + 70 * e, 92 * e, 64 * e, 0, Math.PI, 0); g.fill();
+      g.beginPath(); g.arc(x, y - 18 * e, 44 * e, 0, 7); g.fill();
+      g.strokeStyle = `rgba(160,120,255,${0.35 * al})`; g.lineWidth = 2.5 * e;
+      g.beginPath(); g.arc(x, y - 18 * e, 44 * e, 3.6, 5.6); g.stroke();
+      if (muere > 0.05) {
+        g.strokeStyle = `rgba(200,190,230,${0.3 * muere})`; g.lineWidth = 2 * e; g.setLineDash([6 * e, 6 * e]);
+        g.beginPath(); g.arc(x, y - 18 * e, 44 * e, 0, 7); g.stroke();
+        g.beginPath(); g.ellipse(x, y + 70 * e, 92 * e, 64 * e, 0, Math.PI, 0); g.stroke(); g.setLineDash([]);
+      }
+      // cigarrillo encendido
+      const lado = rnd(id * 2.7) < 0.5 ? -1 : 1;
+      const cx = x + lado * 40 * e, cy = y + 4 * e;
+      const b = (1 - muere) * (0.75 + 0.25 * Math.sin(s * (2 + rnd(id) * 2) + id));
+      if (b > 0.02) {
+        g.strokeStyle = `rgba(235,230,220,${1 - muere})`; g.lineWidth = 7 * e; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(x + lado * 8 * e, cy + 2 * e); g.lineTo(cx, cy); g.stroke();
+        glow(g, cx, cy, 46 * e, '255,160,60', b);
+        g.fillStyle = `rgba(255,220,140,${b})`; g.beginPath(); g.arc(cx, cy, 5 * e, 0, 7); g.fill();
+        if (hu > 0) {
+          g.strokeStyle = `rgba(220,220,235,${0.18 * hu * (1 - muere)})`; g.lineWidth = 4 * e;
+          g.beginPath();
+          for (let j = 0; j <= 16; j++) { const qq = j / 16; const yy = cy - qq * 230 * e; const xx = cx + Math.sin(qq * 8 - s * 2 + id) * 14 * e * qq * 2; if (j) g.lineTo(xx, yy); else g.moveTo(xx, yy); }
+          g.stroke();
+        }
+      }
+    }
+  }
+}
+
+// ------------------------------------------------------------------ rótulos
+export function numero(g: G, x: number, y: number, txt: string, p: number, o: {tam?: number; unidad?: string; col?: string} = {}) {
+  if (p <= 0) return;
+  const {tam = 110, unidad = '', col = '#ffffff'} = o;
+  g.save(); pantalla(g); g.translate(x, y); g.scale(p, p);
+  g.font = `800 ${tam}px ${FF}`; const tw = g.measureText(txt).width;
+  g.font = `700 ${tam * 0.32}px ${FF}`; const uw = unidad ? g.measureText(unidad).width + 10 : 0;
+  const ww = tw + uw + 64, hh = tam * 1.3;
+  g.shadowColor = 'rgba(0,0,0,0.5)'; g.shadowBlur = 30;
+  g.fillStyle = 'rgba(16,16,20,0.88)'; g.beginPath(); g.roundRect(-ww / 2, -hh / 2, ww, hh, 26); g.fill();
+  g.shadowBlur = 0; g.strokeStyle = 'rgba(255,255,255,0.14)'; g.lineWidth = 2; g.stroke();
+  g.textBaseline = 'middle';
+  g.font = `800 ${tam}px ${FF}`; g.fillStyle = col; g.textAlign = 'left';
+  g.shadowColor = col === '#ffffff' ? 'rgba(255,255,255,0.35)' : col; g.shadowBlur = 18;
+  g.fillText(txt, -ww / 2 + 32, tam * 0.04);
+  g.shadowBlur = 0;
+  if (unidad) { g.font = `700 ${tam * 0.32}px ${FF}`; g.fillStyle = col; g.fillText(unidad, -ww / 2 + 32 + tw + 10, tam * 0.2); }
+  g.restore();
+}
+export function pildora(g: G, x: number, y: number, txt: string, p: number, o: {col?: string; tam?: number; fondo?: string; tachar?: number} = {}) {
+  if (p <= 0) return;
+  const {col = '#ffffff', tam: tam0 = 38, fondo = 'rgba(16,16,20,0.9)', tachar = 0} = o;
+  const tam = tam0 * 1.3;
+  g.save(); pantalla(g); g.translate(x, y); g.scale(p, p);
+  g.font = `800 ${tam}px ${FF}`; g.letterSpacing = `${Math.round(tam * 0.06)}px`;
+  const tw = g.measureText(txt).width, ww = tw + tam * 1.1, hh = tam * 1.6;
+  g.fillStyle = fondo; g.beginPath(); g.roundRect(-ww / 2, -hh / 2, ww, hh, hh * 0.3); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,0.16)'; g.lineWidth = 2; g.stroke();
+  g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = col; g.fillText(txt, 0, tam * 0.05);
+  if (tachar > 0) {
+    g.strokeStyle = `rgb(${ROJO})`; g.lineWidth = tam * 0.14; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(-tw / 2 - 10, 0); g.lineTo(-tw / 2 - 10 + (tw + 20) * cl(tachar), 0); g.stroke();
+  }
+  g.letterSpacing = '0px';
+  g.restore();
+}
+/** "Fuente: …" pequeño, como en la referencia */
+export function fuente(g: G, x: number, y: number, txt: string, a: number) {
+  if (a <= 0) return;
+  g.save(); pantalla(g); g.globalAlpha = cl(a);
+  g.font = `700 30px ${FF}`; const tw = g.measureText(txt).width;
+  g.fillStyle = 'rgba(16,16,20,0.85)'; g.beginPath(); g.roundRect(x - tw / 2 - 20, y - 26, tw + 40, 52, 14); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,0.55)'; g.lineWidth = 2; g.stroke();
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, x, y + 1);
+  g.restore();
+}
+export function texto(g: G, t: string, x: number, y: number, tam: number, col = '#fff', peso = 800, al: CanvasTextAlign = 'center', track = 0) {
+  g.font = `${peso} ${tam}px ${FF}`; g.letterSpacing = `${track}px`; g.fillStyle = col; g.textAlign = al; g.textBaseline = 'alphabetic';
+  g.fillText(t, x, y); g.textAlign = 'left'; g.letterSpacing = '0px';
+}

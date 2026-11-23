@@ -1,0 +1,35 @@
+"""Niveles de audio cada 50 ms: total (mid) y diferencia estéreo (side).
+La voz suele ser mono (side ~ 0); música/efectos estéreo aparecen en side.
+Si hay transcripción, mide el nivel en los silencios entre palabras (música de fondo)."""
+import subprocess, json, os, sys
+import numpy as np
+
+SR = 16000
+for name in ["metros", "ia_aprender", "teclado", "electrocutarte"]:
+    src = f"videos_referencia/originales/{name}.mp4"
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", src, "-ac", "2", "-ar", str(SR), "-f", "s16le", "-"],
+                         capture_output=True).stdout
+    a = np.frombuffer(raw, dtype=np.int16).reshape(-1, 2).astype(np.float32) / 32768
+    mid, side = (a[:, 0] + a[:, 1]) / 2, (a[:, 0] - a[:, 1]) / 2
+    win = SR // 20
+    n = len(mid) // win
+    db = lambda x: 20 * np.log10(np.sqrt((x[: n * win].reshape(n, win) ** 2).mean(1)) + 1e-9)
+    m, s = db(mid), db(side)
+    print(f"== {name}: mid p50={np.median(m):.1f}dB p95={np.percentile(m,95):.1f}  side p50={np.median(s):.1f}dB p95={np.percentile(s,95):.1f}")
+    tj = f"videos_referencia/transcripciones/{name}.json"
+    if os.path.exists(tj):
+        w = json.load(open(tj, encoding="utf-8"))["words"]
+        gaps = []
+        for a1, b1 in zip(w, w[1:]):
+            if b1["start"] - a1["end"] > 0.25:
+                i0, i1 = int((a1["end"] + 0.05) * 20), int((b1["start"] - 0.05) * 20)
+                if i1 > i0:
+                    gaps.append(m[i0:i1].mean())
+        if gaps:
+            print(f"   nivel en silencios entre palabras ({len(gaps)} huecos): media={np.mean(gaps):.1f}dB min={np.min(gaps):.1f}dB")
+        # picos fuertes fuera de la voz (posibles efectos)
+        voiced = np.zeros(n, bool)
+        for x in w:
+            voiced[int(x["start"] * 20):int(x["end"] * 20) + 1] = True
+        cand = [round(i / 20, 2) for i in range(n) if not voiced[i] and m[i] > np.median(m) - 6]
+        print(f"   ventanas fuertes sin voz: {len(cand)} -> {cand[:30]}")

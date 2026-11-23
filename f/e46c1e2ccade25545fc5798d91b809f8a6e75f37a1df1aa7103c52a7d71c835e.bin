@@ -1,0 +1,55 @@
+# Biblioteca de planos — modelo "electrocutarte"
+
+Análisis plano por plano (32 planos, `planos/plano_NN.jpg`) + medición de cámara cuadro a cuadro (`camara.csv`, `camara.png`).
+Herramientas: `herramientas/camara_ref.py` (movimiento), `herramientas/planos_ref.py` (corte en planos + tiras).
+
+## Números del modelo (comparar siempre contra estos)
+
+| Métrica | electrocutarte | mi versión 3D anterior (teclado-fj-3d) |
+|---|---|---|
+| Planos | 32 en 87 s | 20 en 72 s |
+| Duración de plano (mediana) | **2,1 s** (0,7–8 s) | 3,5 s |
+| Velocidad de cámara (mediana) | **0,5 px/cuadro** (casi quieta) | 1,8 px/cuadro (deriva siempre) |
+| Movimiento de cámara | ráfagas de 0,2–0,4 s solo en los cambios de plano | paseo continuo |
+| Lo que se mueve entre ráfagas | **el contenido** (arcos, cargas, números, dedos) | casi nada (teclas que se encienden) |
+| Carteles grandes | 0 | ~25 |
+| Etiquetas | finas: MAYÚSCULAS chicas + línea de 1 px (CABLES, CRISTAL, CARGA, CRUCE, LANA, HILO CONDUCTOR) | chips de color y títulos de 120–200 px |
+
+**Conclusión:** la cámara del modelo casi no se mueve; lo que da vida es que *el mundo* está siempre animado y cambia de estado en cada palabra clave. Mis videos hicieron lo contrario.
+
+## Las 7 reglas del estilo
+
+1. **Objeto héroe enorme y cortado por el cuadro.** El dedo ocupa 40–60 % del cuadro y sale por el borde; el bolígrafo cruza en diagonal; el guante llena la mitad inferior. Nunca un objeto chico centrado con aire alrededor.
+2. **Pocos "sets" que vuelven.** Todo el video usa 3 mundos: (A) corte transversal de la pantalla con arcos dorados, (B) mano con guante + teléfono, (C) rejilla de cables. Se vuelve a ellos con variaciones (cambia el dedo, cambian los números). Da coherencia y ahorra explicación.
+3. **El mundo está vivo siempre.** Los arcos dorados oscilan sin parar, hay partículas, la fila de píxeles RGB brilla, los números "100" tiemblan. Aunque la cámara esté quieta, cada cuadro es distinto.
+4. **Cambio de estado en la palabra clave.** "apretar" → chispas blancas; "cuerpo" → el dedo se vuelve dorado; "notando" → los arcos se doblan hacia la yema; "filas" → una fila se ilumina en barrido; "columnas" → una columna; "cruza" → zoom al cruce. Uno por frase, en el cuadro exacto.
+5. **Vistas de rayos X / corte.** El dedo se abre y muestra iones Na⁺ Cl⁻; el cristal se ve de canto con sus capas. La explicación ocurre *dentro* del objeto.
+6. **Transiciones "el objeto se vuelve el mundo".** La pantalla del teléfono se agranda hasta llenar el cuadro → su textura se vuelve la rejilla → la rejilla se inclina en 3D → zoom al cruce. Las pocas transiciones restantes son empujones con desenfoque de 4–8 cuadros.
+7. **Datos dentro del mundo, no encima.** Los valores (100, 83, 62…) están pegados a cada cruce o debajo de la fila de píxeles, con una llave fina que agrupa los que bajan. Un solo contador de UI pequeño ("107 lecturas por segundo").
+
+## Recetas de plano (con ejemplo exacto en el original)
+
+| # | Receta | Ejemplo | Duración | Cómo se anima |
+|---|---|---|---|---|
+| R1 | **Corte transversal vivo** | planos 01–05, 13, 19–20, 22 | 2–5 s | capa de cristal de canto, arcos dorados oscilando en bucle (fase por arco), fila RGB debajo; objeto (dedo/boli) entra en diagonal desde arriba |
+| R2 | **Toque con reacción** | 01 (0,8 s), 14 (36 s) | 0,5–1 s | el dedo baja 6 % del alto; los arcos bajo la yema se doblan hacia ella y se iluminan; los números bajo esa zona bajan (100 → 82/63/84) |
+| R3 | **Golpe sin efecto** | 02–03 | 1–2 s | el boli aprieta: chispas blancas que saltan y caen, el campo NO cambia |
+| R4 | **Rayos X del objeto** | 14 (32–34 s) | 2 s | el dedo se vuelve contorno + interior con partículas etiquetadas; luego se "encienden" (dorado) |
+| R5 | **Mano + teléfono (situación cotidiana)** | 06–07, 21, 23 | 2–4 s | mano/guante estilizado sostiene el teléfono, el otro dedo entra a tocar; la pantalla responde (o no) |
+| R6 | **Zoom a través de la pantalla** | 07→08→09 | 2 s | la cámara empuja hasta que la pantalla llena el cuadro; aparece la rejilla por transparencia |
+| R7 | **Barrido de fila / columna** | 09 | 1–1,5 s cada uno | una fila de cruces se ilumina de izquierda a derecha con etiqueta "FILA"; después columna "COLUMNA" |
+| R8 | **Inclinación 3D + macro del cruce** | 10→11 | 0,8 + 5 s | la rejilla plana rota a perspectiva y la cámara baja a un cruce; zona ámbar + arcos en el cruce |
+| R9 | **Campo de lecturas** | 12, 15–16 | 2–4 s | rejilla enorme con un valor por cruce; un círculo marca la zona que baja; contador de UI pequeño |
+| R10 | **Material en macro** | 24 (tejido) | 1 s | textura a pantalla completa (lana) y un hilo que se ilumina con etiqueta |
+| R11 | **Recurso cotidiano breve** | 18 (zoom con pellizco), 21 (lluvia) | 1–4 s | demostración rápida de la consecuencia en la vida real |
+
+## Transiciones medidas
+- Ráfaga de cámara típica: 6–12 cuadros, velocidad pico > 30 px/cuadro, con desenfoque.
+- Entre ráfagas: 0–1 px/cuadro (cámara quieta o empuje muy lento).
+- 2 cortes duros en todo el video (68,4 s y 69,4 s): solo para cambiar de material.
+
+## Aplicado al video de la F y la J (borrador de sets)
+- **Set A — Macro de la tecla de canto:** corte transversal de la tecla F (capuchón, rayita en relieve, mecanismo debajo), el dedo enorme entra en diagonal. Equivale a R1/R2.
+- **Set B — Manos sobre el teclado:** manos estilizadas grandes cortadas por el cuadro (como el guante), que escriben. Equivale a R5.
+- **Set C — Mapa del teclado visto desde arriba:** "campo" de teclas con zonas que se iluminan en barridos (fila guía, alcance de cada dedo) y datos pegados a las teclas. Equivale a R7/R9.
+- Transiciones "el objeto se vuelve el mundo": la rayita de la F se agranda hasta ser un "mapa" (Set C); el 5 del teclado numérico se vuelve el 5 de un teléfono y un cajero.

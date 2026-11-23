@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mg:*)",
+      "Bash(./mg.cmd:*)",
+      "Bash(bash instalar/instalar.sh)",
+      "Bash(bash instalar/actualizar.sh)",
+      "Bash(bash instalar/version.sh)",
+      "Bash(powershell -ExecutionPolicy Bypass -File instalar/instalar.ps1)"
+    ]
+  }
+}

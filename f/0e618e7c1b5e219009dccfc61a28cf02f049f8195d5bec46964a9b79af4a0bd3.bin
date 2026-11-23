@@ -1,0 +1,29 @@
+"""Lee los puntajes de cambio por cuadro (ffmpeg scene) y lista picos = eventos visuales."""
+import re, glob, os, json
+
+out = {}
+for f in sorted(glob.glob("videos_referencia/escenas/*_scores.txt")):
+    name = os.path.basename(f).replace("_scores.txt", "")
+    times, scores, t = [], [], None
+    for line in open(f, encoding="utf-8", errors="ignore"):
+        m = re.search(r"pts_time:([\d.]+)", line)
+        if m:
+            t = float(m.group(1))
+        m = re.search(r"scene_score=([\d.]+)", line)
+        if m and t is not None:
+            times.append(t); scores.append(float(m.group(1)))
+    def picos(th, gap=0.4):
+        res, last = [], -9
+        for i, s in enumerate(scores):
+            if s >= th and times[i] - last >= gap and s == max(scores[max(0, i-3):i+4]):
+                res.append(round(times[i], 2)); last = times[i]
+        return res
+    dur = times[-1] if times else 0
+    fuertes = picos(0.25)
+    medios = picos(0.08)
+    out[name] = {"duracion": round(dur, 2), "cortes_fuertes": fuertes, "eventos": medios,
+                 "seg_por_evento": round(dur / max(1, len(medios)), 2)}
+    print(f"{name}: dur={dur:.1f}s  cortes>0.25={len(fuertes)}  eventos>0.08={len(medios)}  "
+          f"=> 1 evento cada {dur/max(1,len(medios)):.2f}s")
+    print("   eventos:", medios)
+json.dump(out, open("videos_referencia/escenas/eventos.json", "w"), indent=1)

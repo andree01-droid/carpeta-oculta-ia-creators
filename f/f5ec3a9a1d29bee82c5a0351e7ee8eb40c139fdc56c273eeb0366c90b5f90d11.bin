@@ -1,0 +1,49 @@
+"""Une dos tomas de voz: la toma A hasta la palabra N (sin incluirla) + la toma B, alargando las pausas entre frases de B.
+
+Uso: unir_voz.py <a.mp3> <a.palabras.json> <N> <b.mp3> <b.palabras.json> <salida.mp3> <salida.palabras.json> [--pausa=0.4]
+Las palabras de salida = palabras 0..N-1 de A + las de B corridas en el tiempo.
+"""
+import json, subprocess, sys
+import numpy as np
+
+SR = 24000
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+pausa = float(next((a.split("=")[1] for a in sys.argv if a.startswith("--pausa=")), 0.4))
+a_mp3, a_json, n, b_mp3, b_json, out_mp3, out_json = args
+n = int(n)
+
+
+def leer(p):
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", p, "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], capture_output=True, check=True).stdout
+    return np.frombuffer(raw, dtype=np.float32)
+
+
+PA = json.load(open(a_json, encoding="utf-8-sig"))
+PB = json.load(open(b_json, encoding="utf-8-sig"))
+A, B = leer(a_mp3), leer(b_mp3)
+
+# corte de A justo antes de la palabra n (a mitad del silencio previo)
+corte_a = (PA[n - 1]["end"] + PA[n]["start"]) / 2
+inicio_b = max(0.0, PB[0]["start"] - (PA[n]["start"] - corte_a))
+trozos = [A[: int(corte_a * SR)]]
+desfase = corte_a - inicio_b
+salida_palabras = PA[:n]
+
+# B en tramos separados por los finales de frase, con silencio extra entre ellos
+pos = inicio_b
+extra = 0.0
+for i, p in enumerate(PB):
+    salida_palabras.append({"word": p["word"], "start": round(p["start"] + desfase + extra, 3), "end": round(p["end"] + desfase + extra, 3)})
+    fin_frase = p["word"].rstrip()[-1:] in ".?!:" and i + 1 < len(PB)
+    if fin_frase:
+        medio = (p["end"] + PB[i + 1]["start"]) / 2
+        trozos.append(B[int(pos * SR): int(medio * SR)])
+        trozos.append(np.zeros(int(pausa * SR), dtype=np.float32))
+        pos = medio
+        extra += pausa
+trozos.append(B[int(pos * SR):])
+voz = np.concatenate(trozos)
+
+subprocess.run(["ffmpeg", "-y", "-v", "error", "-f", "f32le", "-ac", "1", "-ar", str(SR), "-i", "-", "-b:a", "192k", out_mp3], input=voz.tobytes(), check=True)
+open(out_json, "w", encoding="utf-8").write(json.dumps(salida_palabras, ensure_ascii=False))
+print(f"{len(voz) / SR:.2f}s · {len(salida_palabras)} palabras · pausas extra {extra:.1f}s")

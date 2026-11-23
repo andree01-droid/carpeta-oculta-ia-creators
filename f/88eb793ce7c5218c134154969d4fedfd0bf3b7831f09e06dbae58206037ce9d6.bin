@@ -1,0 +1,27 @@
+"""Reparte los <audio id="sfx-…"> en pistas para que nunca se superpongan dos en la misma (aviso duplicate_audio_track).
+
+Uso: hf_sfx_pistas.py <proyecto> [--primera 5]
+"""
+import os, re, sys
+
+p = sys.argv[1]
+primera = int(sys.argv[sys.argv.index("--primera") + 1]) if "--primera" in sys.argv else 5
+f = os.path.join(p, "index.html")
+s = open(f, encoding="utf-8").read()
+fin_pista = {}
+
+
+def cambiar(m):
+    tag = m.group(0)
+    ini = float(re.search(r'data-start="([\d.]+)"', tag).group(1))
+    dur = float(re.search(r'data-duration="([\d.]+)"', tag).group(1))
+    k = primera
+    while fin_pista.get(k, -1) > ini:
+        k += 1
+    fin_pista[k] = ini + dur
+    return re.sub(r'data-track-index="\d+"', f'data-track-index="{k}"', tag)
+
+
+s2 = re.sub(r'<audio id="sfx-[^>]+>', cambiar, s)
+open(f, "w", encoding="utf-8").write(s2)
+print("pistas usadas:", sorted(fin_pista))

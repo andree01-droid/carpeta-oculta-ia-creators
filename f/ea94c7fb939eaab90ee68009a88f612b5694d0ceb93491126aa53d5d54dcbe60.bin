@@ -1,0 +1,62 @@
+<template>
+  <style>
+#root { position: absolute; inset: 0; overflow: hidden; font-family: "Inter", sans-serif; background: #0E0E10; }
+.fondo { position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.035) 1.5px, transparent 1.5px), linear-gradient(90deg, rgba(255,255,255,0.035) 1.5px, transparent 1.5px);
+  background-size: 120px 120px; background-position: -60px -60px; }
+.halo { position: absolute; left: -300px; top: 300px; width: 1680px; height: 1680px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(239,163,45,0.22) 0%, rgba(239,163,45,0.06) 40%, transparent 70%); }
+.vineta { position: absolute; inset: 0; background: radial-gradient(ellipse 80% 62% at 50% 55%, transparent 55%, rgba(0,0,0,0.75) 100%); pointer-events: none; }
+.cam { position: absolute; inset: 0; }
+.persp { position: absolute; inset: 0; perspective: 1800px; perspective-origin: 540px 1000px; }
+.tablero { position: absolute; width: 1000px; height: 392px; transform-style: preserve-3d; }
+.base { position: absolute; left: -36px; top: -36px; right: -36px; bottom: -36px; border-radius: 42px;
+  background: linear-gradient(180deg, #1d1d20, #141416); box-shadow: 0 30px 0 #0a0a0b, 0 50px 90px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.06); }
+.k { position: absolute; width: 88px; height: 88px; border-radius: 16px;
+  background: linear-gradient(180deg, #3b3b3f 0%, #2c2c30 100%);
+  box-shadow: 0 10px 0 #17171a, 0 16px 24px rgba(0,0,0,0.55), inset 0 2px 0 rgba(255,255,255,0.09);
+  color: #d7d7da; font-weight: 600; font-size: 40px; display: grid; place-items: center; }
+.k.esp { width: 520px; }
+.k .g { position: absolute; inset: 0; border-radius: 16px; opacity: 0; display: grid; place-items: center; color: #1a1206; font-weight: 800; }
+.k .b { position: absolute; left: 30px; width: 28px; bottom: 14px; height: 6px; border-radius: 3px; background: #6a6a70;
+  box-shadow: 0 1px 0 rgba(255,255,255,0.25); }
+.fila { position: absolute; left: 0; right: 0; display: flex; justify-content: center; }
+.chip { padding: 14px 38px; border-radius: 999px; font-weight: 800; font-size: 50px; white-space: nowrap; }
+.etq { position: absolute; font-weight: 800; font-size: 40px; color: #fff; white-space: nowrap; }
+.dedo { position: absolute; width: 74px; height: 104px; border-radius: 37px 37px 30px 30px;
+  background: linear-gradient(180deg, #E8B496 0%, #C98B6B 100%); box-shadow: 0 12px 24px rgba(0,0,0,0.5); }
+.dedo::after { content: ""; position: absolute; left: 14px; right: 14px; top: 8px; height: 40px; border-radius: 20px 20px 12px 12px;
+  background: linear-gradient(180deg, #F6D9CF, #E7C1B3); opacity: 0.9; }
+.anillo { position: absolute; border-radius: 50%; border: 4px solid #EFA32D; }
+</style>
+  <div data-hf-id="hf-qbc6" id="root" data-composition-id="s02-nodeco" data-width="1080" data-height="1920" data-layout-allow-overlap data-layout-allow-overflow>
+
+    <div data-hf-id="hf-anbe" class="fondo"></div><div data-hf-id="hf-d1uq" class="halo"></div>
+    <div data-hf-id="hf-zsvz" class="cam" id="s2-cam" style="filter: blur(7px); opacity: 0.55"><div data-hf-id="hf-aqwk" class="persp"><div data-hf-id="hf-b0ha" class="tablero" id="s2-tab" style="left:40px;top:1000px"><div data-hf-id="hf-9327" class="base"></div><div data-hf-id="hf-vm2m" class="k" id="s2-k-Q" style="left:0px;top:0px">Q<div data-hf-id="hf-2pcl" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Q</div></div><div data-hf-id="hf-3vwp" class="k" id="s2-k-W" style="left:98px;top:0px">W<div data-hf-id="hf-536r" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">W</div></div><div data-hf-id="hf-dn2y" class="k" id="s2-k-E" style="left:196px;top:0px">E<div data-hf-id="hf-anh5" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">E</div></div><div data-hf-id="hf-x8gj" class="k" id="s2-k-R" style="left:294px;top:0px">R<div data-hf-id="hf-3w9o" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">R</div></div><div data-hf-id="hf-9lbe" class="k" id="s2-k-T" style="left:392px;top:0px">T<div data-hf-id="hf-4ovq" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">T</div></div><div data-hf-id="hf-l8t3" class="k" id="s2-k-Y" style="left:490px;top:0px">Y<div data-hf-id="hf-ziwd" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Y</div></div><div data-hf-id="hf-7ftd" class="k" id="s2-k-U" style="left:588px;top:0px">U<div data-hf-id="hf-4akp" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">U</div></div><div data-hf-id="hf-yxam" class="k" id="s2-k-I" style="left:686px;top:0px">I<div data-hf-id="hf-5vst" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">I</div></div><div data-hf-id="hf-ekq7" class="k" id="s2-k-O" style="left:784px;top:0px">O<div data-hf-id="hf-89mz" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">O</div></div><div data-hf-id="hf-2yi6" class="k" id="s2-k-P" style="left:882px;top:0px">P<div data-hf-id="hf-33nm" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">P</div></div><div data-hf-id="hf-v9qu" class="k" id="s2-k-A" style="left:30px;top:98px">A<div data-hf-id="hf-9291" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">A</div></div><div data-hf-id="hf-0bue" class="k" id="s2-k-S" style="left:128px;top:98px">S<div data-hf-id="hf-3hyn" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">S</div></div><div data-hf-id="hf-7gsr" class="k" id="s2-k-D" style="left:226px;top:98px">D<div data-hf-id="hf-b1s6" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">D</div></div><div data-hf-id="hf-nq0g" class="k" id="s2-k-F" style="left:324px;top:98px">F<div data-hf-id="hf-bue8" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">F</div><div data-hf-id="hf-goiq" class="b"></div></div><div data-hf-id="hf-ezx9" class="k" id="s2-k-G" style="left:422px;top:98px">G<div data-hf-id="hf-bg37" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">G</div></div><div data-hf-id="hf-t3ia" class="k" id="s2-k-H" style="left:520px;top:98px">H<div data-hf-id="hf-6a3u" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">H</div></div><div data-hf-id="hf-p2z0" class="k" id="s2-k-J" style="left:618px;top:98px">J<div data-hf-id="hf-72pw" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">J</div><div data-hf-id="hf-ys5i" class="b"></div></div><div data-hf-id="hf-g79z" class="k" id="s2-k-K" style="left:716px;top:98px">K<div data-hf-id="hf-6oev" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">K</div></div><div data-hf-id="hf-7teu" class="k" id="s2-k-L" style="left:814px;top:98px">L<div data-hf-id="hf-7vby" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">L</div></div><div data-hf-id="hf-2sm0" class="k" id="s2-k-NN" style="left:912px;top:98px">Ñ<div data-hf-id="hf-hkk5" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Ñ</div></div><div data-hf-id="hf-h0sw" class="k" id="s2-k-Z" style="left:75px;top:196px">Z<div data-hf-id="hf-0ptg" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">Z</div></div><div data-hf-id="hf-bmhp" class="k" id="s2-k-X" style="left:173px;top:196px">X<div data-hf-id="hf-zx7e" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">X</div></div><div data-hf-id="hf-arss" class="k" id="s2-k-C" style="left:271px;top:196px">C<div data-hf-id="hf-9uv3" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">C</div></div><div data-hf-id="hf-w0jg" class="k" id="s2-k-V" style="left:369px;top:196px">V<div data-hf-id="hf-5hhs" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">V</div></div><div data-hf-id="hf-pi37" class="k" id="s2-k-B" style="left:467px;top:196px">B<div data-hf-id="hf-a964" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">B</div></div><div data-hf-id="hf-j00m" class="k" id="s2-k-N" style="left:565px;top:196px">N<div data-hf-id="hf-8ny0" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">N</div></div><div data-hf-id="hf-zyw7" class="k" id="s2-k-M" style="left:663px;top:196px">M<div data-hf-id="hf-7h0x" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D, 0 10px 0 rgba(0,0,0,0.25)">M</div></div><div data-hf-id="hf-g3wv" class="k esp" id="s2-k-ESP" style="left:240px;top:294px"><div data-hf-id="hf-69vd" class="g" style="background:#EFA32D;box-shadow:0 0 34px #EFA32D"></div></div></div></div></div>
+    <div data-hf-id="hf-66ez" class="fila" style="top:640px"><div data-hf-id="hf-htc0" class="chip" id="s2-c1" style="background:#2A2A2E;color:#fff;border:3px solid #444">✨ Decoración</div></div>
+    <div data-hf-id="hf-ubi7" class="fila" style="top:860px"><div data-hf-id="hf-pypy" class="chip" id="s2-c2" style="background:#2A2A2E;color:#fff;border:3px solid #444">🛠️ Defecto</div></div>
+    <svg data-hf-id="hf-d77t" id="s2-x1" style="position:absolute;left:300px;top:610px" width="480" height="160"><path data-hf-id="hf-qzwb" d="M10 80 L470 80" stroke="#E5484D" stroke-width="12" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/></svg>
+    <svg data-hf-id="hf-l56r" id="s2-x2" style="position:absolute;left:330px;top:830px" width="420" height="160"><path data-hf-id="hf-ulyp" d="M10 80 L410 80" stroke="#E5484D" stroke-width="12" stroke-linecap="round" pathLength="1" stroke-dasharray="1"/></svg>
+    <div data-hf-id="hf-01hv" class="fila" style="top:1120px"><div data-hf-id="hf-9v1p" id="s2-no" style="font-weight:900;font-size:220px;color:#E5484D;text-shadow:0 12px 0 #7a1f22">NO</div></div>
+    <div data-hf-id="hf-3ox1" class="vineta"></div>
+  </div>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    const T0 = 3.36;
+    const at = (s) => Math.max(0, s - T0);
+
+    tl.fromTo("#s2-cam", {scale: 1.3}, {scale: 1.2, duration: 3.8, ease: "none"}, 0);
+    tl.fromTo("#s2-tab", {rotationX: 50}, {rotationX: 50, duration: 0.1}, 0);
+    tl.fromTo("#s2-no", {scale: 2.6, opacity: 0, rotation: -8}, {scale: 1, opacity: 1, rotation: -4, duration: 0.22, ease: "power4.in"}, at(3.88));
+    tl.to("#s2-no", {opacity: 0, scale: 0.6, duration: 0.2}, at(4.53));
+    tl.fromTo("#s2-c1", {scale: 0}, {scale: 1, duration: 0.35, ease: "back.out(2.4)"}, at(4.680000000000001));
+    tl.fromTo("#s2-x1 path", {strokeDashoffset: 1}, {strokeDashoffset: 0, duration: 0.18, ease: "power2.out"}, at(5.23));
+    tl.to("#s2-c1", {opacity: 0.45, duration: 0.2}, at(5.33));
+    tl.fromTo("#s2-c2", {scale: 0}, {scale: 1, duration: 0.35, ease: "back.out(2.4)"}, at(6.0600000000000005));
+    tl.fromTo("#s2-x2 path", {strokeDashoffset: 1}, {strokeDashoffset: 0, duration: 0.18, ease: "power2.out"}, at(6.5600000000000005));
+    tl.to("#s2-c2", {opacity: 0.45, duration: 0.2}, at(6.66));
+
+    window.__timelines["s02-nodeco"] = tl;
+  </script>
+</template>

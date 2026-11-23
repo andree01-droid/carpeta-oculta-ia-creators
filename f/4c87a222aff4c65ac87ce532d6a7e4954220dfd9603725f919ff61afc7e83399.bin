@@ -1,0 +1,67 @@
+// Catálogo de tipos de elemento disponibles en el JSON ("tipo": "...").
+// Para agregar uno nuevo: crear el componente (PropsElemento) y registrarlo aquí.
+import {
+  AnilloFoco,
+  Brillo,
+  Caja,
+  Contador,
+  Corchete,
+  Etiqueta,
+  Flecha,
+  Grupo,
+  Imagen,
+  Pastilla,
+  PlanoReferencia,
+  Resaltado,
+  Reticula,
+  Ruta,
+  Texto,
+} from './basicos';
+import {Avatar, Dedo, Yema} from './personajes';
+import {HilosTeclado} from './HilosTeclado';
+import {Billete, PantallaPropina, PrecioCongelado, Sello, Ticket} from './dinero';
+import {BarraPorcentaje, GraficaLineas, MapaEEUU} from './datos';
+import {Icono, Ondas, Particulas, Rayos, TextoCinetico} from './cinetica';
+import {Mesero} from './Mesero';
+import {PANEL_H, PANEL_W, TecladoIOS} from './TecladoIOS';
+import {CTACompartir, Telefono} from './Telefono';
+import type {Registro} from './tipos';
+
+export const REGISTRO: Record<string, Registro> = {
+  Grupo: {comp: Grupo, ancho: 1080, alto: 1920},
+  Texto: {comp: Texto, ancho: 0, alto: 0},
+  Etiqueta: {comp: Etiqueta, ancho: 0, alto: 0},
+  Contador: {comp: Contador, ancho: 0, alto: 0},
+  Pastilla: {comp: Pastilla, ancho: 0, alto: 0, entrada: 'pop'},
+  Ruta: {comp: Ruta, ancho: 1080, alto: 1920},
+  Flecha: {comp: Flecha, ancho: 0, alto: 0},
+  PlanoReferencia: {comp: PlanoReferencia, ancho: 200, alto: 400},
+  Corchete: {comp: Corchete, ancho: 200, alto: 30},
+  AnilloFoco: {comp: AnilloFoco, ancho: 500, alto: 500},
+  Resaltado: {comp: Resaltado, ancho: 200, alto: 200, entrada: 'fundido'},
+  Reticula: {comp: Reticula, ancho: 130, alto: 130},
+  Brillo: {comp: Brillo, ancho: 800, alto: 800},
+  Imagen: {comp: Imagen, ancho: 500, alto: 500},
+  Caja: {comp: Caja, ancho: 200, alto: 200},
+  Dedo: {comp: Dedo, ancho: 260, alto: 820},
+  Yema: {comp: Yema, ancho: 1100, alto: 480},
+  HilosTeclado: {comp: HilosTeclado, ancho: 1080, alto: 1920},
+  Avatar: {comp: Avatar, ancho: 104, alto: 104},
+  Telefono: {comp: Telefono, ancho: 600, alto: 1240},
+  CTACompartir: {comp: CTACompartir, ancho: 600, alto: 1240},
+  TecladoIOS: {comp: TecladoIOS, ancho: PANEL_W, alto: PANEL_H},
+  Ticket: {comp: Ticket, ancho: 620, alto: 860},
+  Billete: {comp: Billete, ancho: 900, alto: 390},
+  PantallaPropina: {comp: PantallaPropina, ancho: 760, alto: 1060},
+  PrecioCongelado: {comp: PrecioCongelado, ancho: 620, alto: 260},
+  Sello: {comp: Sello, ancho: 0, alto: 0},
+  GraficaLineas: {comp: GraficaLineas, ancho: 960, alto: 760},
+  BarraPorcentaje: {comp: BarraPorcentaje, ancho: 860, alto: 90},
+  MapaEEUU: {comp: MapaEEUU, ancho: 1008, alto: 672},
+  TextoCinetico: {comp: TextoCinetico, ancho: 0, alto: 0},
+  Particulas: {comp: Particulas, ancho: 1080, alto: 1920},
+  Icono: {comp: Icono, ancho: 0, alto: 0, entrada: 'rebote'},
+  Rayos: {comp: Rayos, ancho: 1100, alto: 1100, entrada: 'fundido'},
+  Ondas: {comp: Ondas, ancho: 500, alto: 500},
+  Mesero: {comp: Mesero, ancho: 420, alto: 760},
+};

@@ -1,0 +1,54 @@
+"""Transcribe audio/video con tiempos por palabra (faster-whisper).
+
+Uso:
+  .venv/Scripts/python.exe herramientas/transcribir.py <archivo> [<archivo> ...] [--out carpeta] [--model large-v3-turbo]
+
+Por cada archivo escribe <nombre>.json con:
+  { "language", "duration", "words": [{"word","start","end"}], "segments": [{"text","start","end"}] }
+"""
+import argparse
+import json
+import os
+import subprocess
+import sys
+import time
+
+import numpy as np
+
+from faster_whisper import WhisperModel
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("files", nargs="+")
+    p.add_argument("--out", default="videos_referencia/transcripciones")
+    p.add_argument("--model", default="large-v3-turbo")
+    p.add_argument("--lang", default="es")
+    a = p.parse_args()
+
+    os.makedirs(a.out, exist_ok=True)
+    model = WhisperModel(a.model, device="cpu", compute_type="int8")
+    for f in a.files:
+        t0 = time.time()
+        # ffmpeg decodifica el audio (evita problemas de versión de PyAV)
+        raw = subprocess.run(["ffmpeg", "-v", "error", "-i", f, "-ac", "1", "-ar", "16000", "-f", "s16le", "-"],
+                             capture_output=True, check=True).stdout
+        audio = np.frombuffer(raw, dtype=np.int16).astype(np.float32) / 32768.0
+        segs, info = model.transcribe(
+            audio, language=None if a.lang == "auto" else a.lang, word_timestamps=True, vad_filter=False, beam_size=5
+        )
+        words, segments = [], []
+        for s in segs:
+            segments.append({"text": s.text.strip(), "start": round(s.start, 3), "end": round(s.end, 3)})
+            for w in s.words or []:
+                words.append({"word": w.word.strip(), "start": round(w.start, 3), "end": round(w.end, 3)})
+        name = os.path.splitext(os.path.basename(f))[0]
+        out = {"file": os.path.basename(f), "language": info.language, "duration": round(info.duration, 3),
+               "words": words, "segments": segments}
+        with open(os.path.join(a.out, name + ".json"), "w", encoding="utf-8") as fh:
+            json.dump(out, fh, ensure_ascii=False, indent=1)
+        print(f"{name}: {len(words)} palabras en {time.time()-t0:.0f}s", flush=True)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

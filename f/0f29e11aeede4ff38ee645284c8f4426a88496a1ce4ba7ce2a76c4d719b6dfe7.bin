@@ -1,0 +1,151 @@
+// Subtítulos palabra por palabra con palabra clave en "caja de selección" (CLAUDE.md §3).
+import React, {useMemo} from 'react';
+import {AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig, Easing} from 'remotion';
+import {armarBloques, type Bloque, type PalabraSub} from '../motor/bloques';
+import {COLORES} from '../motor/estilos';
+import {FUENTE} from '../motor/fuentes';
+import {useVideo} from '../motor/contexto';
+import type {Palabra, SubtitulosSpec} from '../motor/tipos';
+
+const DEF = {y: 383, tamano: 68, interlineado: 82, anchoMax: 840, maxPalabras: 7};
+
+export const Subtitulos: React.FC<{palabras: Palabra[]; config?: SubtitulosSpec}> = ({
+  palabras,
+  config,
+}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const c = {...DEF, ...config};
+  const {reloj} = useVideo();
+  const cortes = useMemo(() => (c.cortes ?? []).map((x) => reloj.seg(x)), [c.cortes, reloj]);
+  const bloques = useMemo(() => armarBloques(palabras, c.maxPalabras, cortes), [palabras, c.maxPalabras, cortes]);
+  if (c.ocultar) return null;
+
+  const t = frame / fps;
+  // bloque visible: empezó y no llegó todavía el siguiente (con 2 cuadros vacíos de separación)
+  const idx = bloques.findIndex((b, i) => {
+    const sig = bloques[i + 1];
+    const finVisible = sig ? sig.inicio - 2 / fps : b.fin + 0.6;
+    return t >= b.inicio && t < finVisible;
+  });
+  if (idx < 0) return null;
+  const bloque = bloques[idx];
+
+  return (
+    <AbsoluteFill style={{pointerEvents: 'none'}}>
+      <div
+        style={{
+          position: 'absolute',
+          left: 540 - c.anchoMax / 2,
+          width: c.anchoMax,
+          // la línea base de la 1.ª línea queda en c.y
+          top: c.y - c.interlineado * 0.78,
+          fontFamily: FUENTE,
+          fontSize: c.tamano,
+          lineHeight: `${c.interlineado}px`,
+          textAlign: 'center',
+          color: COLORES.blanco,
+        }}
+      >
+        {bloque.lineas.map((linea, li) => (
+          <div key={li} style={{display: 'flex', justifyContent: 'center', gap: '0.26em', whiteSpace: 'nowrap'}}>
+            {linea
+              .filter((p) => p.start <= t)
+              .map((p) => (
+                <PalabraVisible key={p.indice} p={p} t={t} frame={frame} fps={fps} bloque={bloque} />
+              ))}
+          </div>
+        ))}
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+const PalabraVisible: React.FC<{p: PalabraSub; t: number; frame: number; fps: number; bloque: Bloque}> = ({
+  p,
+  t,
+  frame,
+  fps,
+}) => {
+  const f0 = Math.round(p.start * fps);
+  const activa = t >= p.start && t < p.end;
+  const clave = !!p.clave;
+  const blanca = activa || clave;
+  const entrada = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+  const texto = (
+    <span
+      style={{
+        fontWeight: blanca ? 700 : 400,
+        color: blanca ? COLORES.blanco : COLORES.grisSub,
+        filter: `blur(${interpolate(frame, [f0, f0 + 2], [9, 0], entrada)}px)`,
+        opacity: interpolate(frame, [f0, f0 + 2], [0.7, 1], entrada),
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 8,
+      }}
+    >
+      {clave && p.emoji ? <span style={{fontSize: '0.82em'}}>{p.emoji}</span> : null}
+      {p.word}
+    </span>
+  );
+  if (!clave) return texto;
+  return <CajaSeleccion f0={f0} frame={frame}>{texto}</CajaSeleccion>;
+};
+
+/** Caja azul con dos manijas, estilo selección de Figma. 4 cuadros de animación. */
+export const CajaSeleccion: React.FC<{f0: number; frame: number; children: React.ReactNode}> = ({
+  f0,
+  frame,
+  children,
+}) => {
+  const cl = {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'} as const;
+  const manija = interpolate(frame, [f0, f0 + 1], [0.3, 1], {...cl, easing: Easing.out(Easing.cubic)});
+  const borde = interpolate(frame, [f0 + 1, f0 + 3], [0, 1], cl);
+  const relleno = interpolate(frame, [f0 + 2, f0 + 3], [0, 0.18], cl);
+  const visible = frame >= f0;
+  const azul = COLORES.azulSeleccion;
+  const m = (pos: React.CSSProperties) => (
+    <div
+      style={{
+        position: 'absolute',
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        background: azul,
+        border: '2px solid #fff',
+        boxSizing: 'border-box',
+        scale: String(manija),
+        opacity: visible ? 1 : 0,
+        ...pos,
+      }}
+    />
+  );
+  return (
+    <span style={{position: 'relative', display: 'inline-flex', padding: '0 12px', margin: '0 -4px'}}>
+      {/* relleno */}
+      <span
+        style={{
+          position: 'absolute',
+          inset: '9px 0 5px 0',
+          borderRadius: 4,
+          background: azul,
+          opacity: relleno,
+        }}
+      />
+      {/* borde que se dibuja desde las esquinas (clip) */}
+      <span
+        style={{
+          position: 'absolute',
+          inset: '9px 0 5px 0',
+          borderRadius: 4,
+          border: `3px solid ${azul}`,
+          clipPath: `inset(0 ${(1 - borde) * 50}% 0 ${(1 - borde) * 50}%)`,
+          opacity: borde > 0 ? 1 : 0,
+        }}
+      />
+      <span style={{position: 'relative'}}>{children}</span>
+      {m({left: -6, top: 3})}
+      {m({right: -6, bottom: -1})}
+    </span>
+  );
+};
